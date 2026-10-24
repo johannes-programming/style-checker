@@ -1,0 +1,3 @@
+4: declarations not in alphabetical order
+12: missing declarations: missing, wrong; declaration assigns a value: wrong
+20: declarations not in alphabetical order; duplicate declarations: alpha
