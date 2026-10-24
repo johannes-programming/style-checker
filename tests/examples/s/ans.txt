@@ -1,0 +1,1 @@
+1: declarations not at beginning: beta; missing declarations: beta

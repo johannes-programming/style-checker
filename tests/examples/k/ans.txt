@@ -1,0 +1,1 @@
+4: declarations not at beginning: zebra; missing declarations: zebra
