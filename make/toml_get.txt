@@ -1,0 +1,5 @@
+--infile=pyproject.toml
+--key=project
+--key=version
+--default=unknown
+--outstring=-mVersion %s

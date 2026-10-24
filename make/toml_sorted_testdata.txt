@@ -1,0 +1,3 @@
+--sort
+--
+tests/testdata.toml
