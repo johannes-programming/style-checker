@@ -1,3 +1,7 @@
 include run_tests.py
 recursive-include docs *.rst
+recursive-include src *.toml
 recursive-include src/style-checker *.toml
+recursive-include tests *.py
+recursive-include tests *.toml
+recursive-include tests *.txt

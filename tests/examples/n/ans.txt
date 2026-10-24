@@ -1,0 +1,1 @@
+1: declarations not at beginning: late; declarations not in alphabetical order; duplicate declarations: duplicate; missing declarations: initialized, late, missing; declaration assigns a value: initialized

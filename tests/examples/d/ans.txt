@@ -1,0 +1,1 @@
+4: declarations not at beginning: beta; duplicate declarations: beta; declaration assigns a value: beta

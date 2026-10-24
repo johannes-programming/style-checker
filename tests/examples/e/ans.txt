@@ -1,0 +1,3 @@
+4: missing declarations: file
+14: missing declarations: line
+24: missing declarations: stream
