@@ -520,6 +520,10 @@ def _check_scope(
         issues.append(
             "unannotated arguments: " + ", ".join(unannotated_parameters)
         )
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and [
+        arg.arg for arg in node.args.kwonlyargs
+    ] != sorted(arg.arg for arg in node.args.kwonlyargs):
+        issues.append("keyword-only arguments not in alphabetical order")
 
     # A bare annotation later in the body is itself evidence that the
     # declaration block is not at the beginning.

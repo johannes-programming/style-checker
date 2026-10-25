@@ -77,6 +77,7 @@ Every function parameter must have a type annotation, regardless of parameter ki
 This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
+The single keyword-only parameters should be alphabetically ordered.
 
 Explicit Namespace Assignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
