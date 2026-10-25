@@ -32,6 +32,7 @@ __all__: list[str] = [
 ]
 
 import ast
+from collections import abc as collections_abc
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -188,6 +189,21 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.typevar_bindings: set[str] = set()
         self.typevar_factories: set[str] = set()
         self.typevar_modules: set[str] = {"typing", "typing_extensions"}
+        self.wildcard_import: bool = False
+        self.forbidden_typing_imports: set[str] = set()
+
+    def import_issues(self: Self) -> list[str]:
+        issues: list[str]
+
+        issues = []
+        if self.wildcard_import:
+            issues.append("wildcard imports are forbidden")
+        if self.forbidden_typing_imports:
+            issues.append(
+                "typing imports available in collections.abc: "
+                + ", ".join(sorted(self.forbidden_typing_imports))
+            )
+        return issues
 
     def _is_typevar_call(self: Self, value: ast.expr) -> bool:
         func: ast.expr
@@ -232,8 +248,16 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         alias: ast.alias
 
         for alias in node.names:
-            if alias.name != "*":
+            if alias.name == "*":
+                self.wildcard_import = True
+            else:
                 self.non_variable_bindings.add(alias.asname or alias.name)
+                if (
+                    node.level == 0
+                    and node.module == "typing"
+                    and alias.name in collections_abc.__all__
+                ):
+                    self.forbidden_typing_imports.add(alias.name)
             if node.module in {
                 "typing",
                 "typing_extensions",
@@ -516,6 +540,7 @@ def _check_scope(
     )
 
     issues = _check_module_all(node.body) if is_module else []
+    issues.extend(facts.import_issues())
     if unannotated_parameters:
         issues.append(
             "unannotated arguments: " + ", ".join(unannotated_parameters)
@@ -706,6 +731,18 @@ class _FunctionChecker(ast.NodeVisitor):
 
     def visit_AsyncFunctionDef(self: Self, node: ast.AsyncFunctionDef) -> None:
         self._visit_function(node)
+
+    def visit_ClassDef(self: Self, node: ast.ClassDef) -> None:
+        issues: list[str]
+
+        issues = _collect_body_facts(node.body, set()).import_issues()
+        if issues:
+            self.violations.append(
+                FunctionViolation(
+                    self.filename, node.lineno, "; ".join(issues)
+                )
+            )
+        self.generic_visit(node)
 
 
 def check_file(path: str) -> list[FunctionViolation]:
