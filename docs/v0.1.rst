@@ -24,7 +24,6 @@ that meets all of these requirements:
 * It is listed in alphabetical order by variable name.
 * It occurs exactly once.
 
-Each ``TypeVar`` and every similar construct is exempt from type annotation.
 A declaration is required whenever the variable is subject to these rules.
 Conversely, a declaration for a variable that does not require one is an error.
 
@@ -39,6 +38,7 @@ The declaration requirement does not apply to:
 * Names bound by ``import`` statements.
 * Temporary exception names introduced by ``except ... as ...``, which remain
     bound only for the duration of the exception handler.
+* Each ``TypeVar`` and every similar construct is exempt from type annotation.
 
 Declaration Placement
 ~~~~~~~~~~~~~~~~~~~~~
@@ -85,6 +85,14 @@ Explicit Namespace Assignments
 These rules do not restrict assignments performed explicitly through namespace
 dictionaries or dictionary-like objects using string keys, such as
 ``globals()["name"] = value``.
+
+Imports
+~~~~~~~
+
+The following ``import`` statements are forbidden:
+
+* Wildcard imports (using ``*``)
+* Importing annotations from ``typing`` that also exist in ``collections.abc``, e.g. ``Iterable``
 
 Example
 ~~~~~~~
