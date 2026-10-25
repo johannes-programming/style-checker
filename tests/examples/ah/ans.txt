@@ -1,0 +1,2 @@
+1: missing declarations: count
+11: missing declarations: result

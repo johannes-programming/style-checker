@@ -1,0 +1,2 @@
+1: declarations for def/class/import names: Alias
+11: declarations for def/class/import names: Local
