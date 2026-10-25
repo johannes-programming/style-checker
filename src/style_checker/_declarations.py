@@ -356,6 +356,11 @@ class _FunctionBodyFacts(ast.NodeVisitor):
     def visit_ClassDef(self: Self, node: ast.ClassDef) -> None:
         self.non_variable_bindings.add(node.name)
 
+    def visit_TypeAlias(self: Self, node: ast.TypeAlias) -> None:
+        # PEP 695 `type Name = ...` binds a type alias, not a variable.
+        # The alias expression is evaluated in a separate annotation scope.
+        self.non_variable_bindings.add(node.name.id)
+
     def visit_Lambda(self: Self, node: ast.Lambda) -> None:
         return
 
