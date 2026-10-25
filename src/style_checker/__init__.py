@@ -33,11 +33,10 @@ __all__: list[str] = [
 import argparse
 import contextlib
 import glob
-import io
 import os
 import sys
-from collections.abc import Iterable, Sequence
-from typing import Any
+from collections.abc import Iterable
+from typing import Any, TextIO
 
 from style_checker import _declarations
 
@@ -46,7 +45,7 @@ ERRMSG_DEFAULT: str
 ERRMSG_DEFAULT = "{file}:{line}: {desc}"
 
 
-def main(args: Sequence[str] | None = None, /) -> int:
+def main(args: Iterable[str] | None = None, /) -> int:
     kwargs: dict[str, Any]
     parser: argparse.ArgumentParser
 
@@ -104,8 +103,8 @@ def run(
     file: str
     files: list[str]
     line: str
-    opener: contextlib.AbstractContextManager[io.TextIOWrapper]
-    stream: io.TextIOWrapper
+    opener: contextlib.AbstractContextManager[TextIO]
+    stream: TextIO
     files = get_files(include=include, exclude=exclude)
 
     if errfile == "-":
@@ -124,4 +123,4 @@ def run(
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

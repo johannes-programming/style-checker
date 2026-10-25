@@ -20,11 +20,11 @@ that meets all of these requirements:
 
 * It appears before the variable is used.
 * It appears in the declaration block at the beginning of the scope.
-* It does not assign a value (for example, ``count: int``, not
-        ``count: int = 0``).
+* It does not assign a value (for example, ``count: int``, not ``count: int = 0``).
 * It is listed in alphabetical order by variable name.
 * It occurs exactly once.
 
+Each ``TypeVar`` and every similar construct is exempt from type annotation.
 A declaration is required whenever the variable is subject to these rules.
 Conversely, a declaration for a variable that does not require one is an error.
 
@@ -35,10 +35,10 @@ The declaration requirement does not apply to:
 
 * Names automatically provided in a module's namespace.
 * Names bound by nested ``class`` and ``def`` statements,
-        i.e. of the classes and functions they define.
+    i.e. of the classes and functions they define.
 * Names bound by ``import`` statements.
 * Temporary exception names introduced by ``except ... as ...``, which remain
-        bound only for the duration of the exception handler.
+    bound only for the duration of the exception handler.
 
 Declaration Placement
 ~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ This single block should be at the beginning of the module or function body.
 Only the following may precede that block:
 
 * A module or function docstring, if present. The docstring must be the first
-        statement in its scope.
+    statement in its scope.
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
@@ -93,21 +93,20 @@ separation between declarations and assignments:
 
 .. code-block:: python
 
-            """An example module."""
+    """An example module."""
 
-            from __future__ import annotations
+    from __future__ import annotations
 
-            __all__: list[str] = ["double"]
+    __all__: list[str] = ["double"]
 
-            count: int
+    count: int
 
-            count = 2
+    count = 2
 
-            def double(value: int) -> int:
-                            result: int
-
-                            result = value * 2
-                            return result
+    def double(value: int) -> int:
+        result: int
+        result = value * 2
+        return result
 
 
 Installation
@@ -118,7 +117,7 @@ Open your terminal and run:
 
 .. code-block:: shell
 
-                                pip install style-checker
+    pip install style-checker
 
 Typing
 ------
@@ -131,8 +130,8 @@ Features
 Inherited features are only explained again
 if there is further noteworthy information.
 
-``style_checker.main(args: list[str] | None = None, /) -> int``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``style_checker.main(args: Iterable[str] | None = None, /) -> int``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This function is the CLI-rendering of ``run``.
 
