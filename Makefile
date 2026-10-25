@@ -63,12 +63,13 @@ reset:
 
 test: dist
 	mkdir dist/out/ ;
-	conda run -n base python make/env.py test_style-checker --python=3.11 --recreate >/dev/null;
-	conda run -n test_style-checker pip install dist/*.tar.gz >/dev/null;
-	conda run -n test_style-checker python run_tests.py > dist/out/tests_out.txt 2> dist/out/tests_err.txt || true;
-	conda run -n test_style-checker pip install mypy >/dev/null;
-	conda run -n test_style-checker python -m mypy --exclude build --exclude dist --strict . > dist/out/mypy_dir_out.txt 2> dist/out/mypy_dir_err.txt || true;
-	conda run -n test_style-checker python -m mypy --strict -p datahold > dist/out/mypy_pkg_out.txt 2> dist/out/mypy_pkg_err.txt || true;
+	conda run -n base python make/env.py test_style_checker --python=3.11 --recreate >/dev/null;
+	conda run -n test_style_checker pip install dist/*.tar.gz >/dev/null;
+	conda run -n test_style_checker python run_tests.py > dist/out/tests_out.txt 2> dist/out/tests_err.txt || true;
+	conda run -n test_style_checker pip install mypy >/dev/null;
+	conda run -n test_style_checker python -m mypy --exclude build --exclude dist --exclude tests/examples --strict . > dist/out/mypy_dir_out.txt 2> dist/out/mypy_dir_err.txt || true;
+	conda run -n test_style_checker python -m mypy --strict -p style_checker > dist/out/mypy_pkg_out.txt 2> dist/out/mypy_pkg_err.txt || true;
+	conda run -n test_style_checker python -m style_checker "--exclude=tests/examples/**/*.py" -- "**/*.py" > dist/out/style_checker_out.txt 2> dist/out/style_checker_err.txt || true;
 	zip -r dist/out.zip dist/out;
 
 toml_sorted: py311
