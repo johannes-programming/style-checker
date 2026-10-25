@@ -1,0 +1,4 @@
+--exclude=tests/examples/**/*.py
+--indent=4
+--
+**/*.py

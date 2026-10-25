@@ -1,0 +1,61 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=77.0",
+]
+
+[project]
+name = "canonicalize"
+version = "0.0.0+make"
+description = "..."
+readme = "README.rst"
+keywords = []
+license = "MIT"
+license-files = [
+    "LICENSE.txt",
+]
+authors = [
+    { name = "Johannes", email = "johannes.programming@gmail.com" },
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Typing :: Typed",
+]
+dependencies = [
+    "packaging<27,>=26.3",
+    "tomli-w<2,>=1.2",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = [
+    "ANN001",
+    "ANN002",
+    "ANN003",
+    "F",
+    "I",
+    "PLE0604",
+    "PLE0605",
+    "RUF022",
+    "RUF068",
+    "UP035",
+]
+
+[tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
+max_supported_python = "3.11"
+
+[tool.mypy]
+files = [
+    ".",
+]
+python_version = "3.11"
+strict = true

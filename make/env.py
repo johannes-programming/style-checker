@@ -1,16 +1,17 @@
-__all__: list[str] = ["main", "run"]
+from __future__ import annotations
+
+__all__: list[str] = ["main", "parse_args", "run"]
 
 import argparse
 import json
 import logging
 import subprocess
+import sys
+from collections import abc
 from typing import Any
 
 
-def env_create(
-    env: str,
-    python: str | None,
-) -> subprocess.CompletedProcess:  # type: ignore[type-arg]
+def env_create(env: str, python: str | None) -> subprocess.CompletedProcess:  # type: ignore[type-arg]
     """Create conda env."""
     args: list[str]
     args = [
@@ -37,6 +38,7 @@ def env_list() -> list[str]:
     """List conda envs."""
     ans: list[str]
     data: Any
+    details: dict[str, Any]
     result: subprocess.CompletedProcess  # type: ignore[type-arg]
     try:
         result = subprocess.run(
@@ -61,9 +63,29 @@ def env_remove(env: str) -> subprocess.CompletedProcess:  # type: ignore[type-ar
     return subprocess.run(args, check=True)
 
 
-def main(args: list[str] | None = None, /) -> None:
+def main(args: abc.Iterable[str] | None = None) -> int:
     """Run script through its main CLI."""
+    envs: abc.Sequence[str]
     kwargs: dict[str, Any]
+    space: argparse.Namespace
+    try:
+        space = parse_args(args)
+        kwargs = vars(space)
+        envs = kwargs.pop("envs")
+        run(*envs, **kwargs)
+    except SystemExit as exit:
+        if isinstance(exit.code, int):
+            return int(exit.code)
+        else:
+            return int(bool(exit.code))
+    except BaseException as exc:
+        logging.exception(exc)
+        return 1
+    else:
+        return 0
+
+
+def parse_args(args: abc.Iterable[str] | None = None, /) -> argparse.Namespace:
     parser: argparse.ArgumentParser
     parser = argparse.ArgumentParser(fromfile_prefix_chars="@")
     # parser.add_argument("--errfile", default="-")
@@ -71,11 +93,7 @@ def main(args: list[str] | None = None, /) -> None:
     parser.add_argument("--python")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument("envs", default=[], nargs="*")
-    kwargs = vars(parser.parse_args(args))
-    try:
-        run(*kwargs.pop("envs"), **kwargs)
-    except Exception as exc:
-        logging.exception(exc)
+    return parser.parse_args(args)
 
 
 def run(*envs: str, python: str | None = None, recreate: bool = False) -> None:
@@ -92,4 +110,4 @@ def run(*envs: str, python: str | None = None, recreate: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

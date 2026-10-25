@@ -5,9 +5,7 @@
 **/*.html
 **/*.js
 **/*.json
-**/*.py
 **/*.rst
-**/*.toml
 **/*.txt
 **/*.typed
 **/*.zsh
