@@ -35,7 +35,7 @@ import ast
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 ERRMSG_DEFAULT: str
 
@@ -84,9 +84,11 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
     """Validate the special module-level ``__all__`` declaration."""
     index: int
     issues: list[str]
+    item: Any
     matches: list[tuple[int, ast.stmt]]
     stmt: ast.stmt
     value: ast.expr | None
+    valuelist: list[Any]
 
     matches = [
         (index, stmt)
@@ -119,19 +121,23 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
         and stmt.annotation.slice.id == "str"
     ):
         issues.append("__all__ must be annotated as list[str]")
-    value = (
-        stmt.value if isinstance(stmt, (ast.AnnAssign, ast.Assign)) else None
-    )
+    if isinstance(stmt, (ast.AnnAssign, ast.Assign)):
+        value = stmt.value
+    else:
+        value = None
     if not isinstance(value, ast.List):
         issues.append("__all__ must be assigned a list literal")
-    elif any(
-        not isinstance(item, ast.Constant) or not isinstance(item.value, str)
-        for item in value.elts
-    ):
-        issues.append("__all__ items must be string literals")
-    elif [item.value for item in value.elts] != sorted(
-        item.value for item in value.elts
-    ):
+        return issues
+    for item in value.elts:
+        if not isinstance(item, ast.Constant) or not isinstance(
+            item.value, str
+        ):
+            issues.append("__all__ items must be string literals")
+            return issues
+    valuelist = [
+        item_.value for item_ in value.elts  # type: ignore[attr-defined]
+    ]
+    if valuelist != sorted(valuelist):
         issues.append("__all__ items not in alphabetical order")
     return issues
 
@@ -179,6 +185,24 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.nonlocals: set[str] = set()
         self.non_variable_bindings: set[str] = set()
         self.exception_bindings: set[str] = set()
+        self.typevar_bindings: set[str] = set()
+        self.typevar_factories: set[str] = set()
+        self.typevar_modules: set[str] = {"typing", "typing_extensions"}
+
+    def _is_typevar_call(self: Self, value: ast.expr) -> bool:
+        func: ast.expr
+
+        if not isinstance(value, ast.Call):
+            return False
+        func = value.func
+        if isinstance(func, ast.Name):
+            return func.id in self.typevar_factories
+        return (
+            isinstance(func, ast.Attribute)
+            and func.attr in {"TypeVar", "ParamSpec", "TypeVarTuple"}
+            and isinstance(func.value, ast.Name)
+            and func.value.id in self.typevar_modules
+        )
 
     def _record(self: Self, name: str, kind: str) -> None:
         if name not in self.first_kind:
@@ -201,6 +225,8 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             self.non_variable_bindings.add(
                 alias.asname or alias.name.split(".", 1)[0]
             )
+            if alias.name in {"typing", "typing_extensions"}:
+                self.typevar_modules.add(alias.asname or alias.name)
 
     def visit_ImportFrom(self: Self, node: ast.ImportFrom) -> None:
         alias: ast.alias
@@ -208,12 +234,23 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for alias in node.names:
             if alias.name != "*":
                 self.non_variable_bindings.add(alias.asname or alias.name)
+            if node.module in {
+                "typing",
+                "typing_extensions",
+            } and alias.name in {"TypeVar", "ParamSpec", "TypeVarTuple"}:
+                self.typevar_factories.add(alias.asname or alias.name)
 
     def visit_Assign(self: Self, node: ast.Assign) -> None:
         # Python evaluates the RHS before binding assignment targets.
         target: ast.expr
 
         self.visit(node.value)
+        if self._is_typevar_call(node.value):
+            self.typevar_bindings.update(
+                target.id
+                for target in node.targets
+                if isinstance(target, ast.Name)
+            )
         for target in node.targets:
             self.visit(target)
 
@@ -458,14 +495,25 @@ def _check_scope(
 
     facts = _collect_body_facts(body, declaration_nodes)
     if isinstance(node, ast.Module):
-        exempt = set()
+        exempt = {
+            "__annotations__",
+            "__builtins__",
+            "__cached__",
+            "__doc__",
+            "__file__",
+            "__loader__",
+            "__name__",
+            "__package__",
+            "__path__",
+            "__spec__",
+        }
         unannotated_parameters = []
     else:
         exempt = _parameter_names(node) | facts.globals | facts.nonlocals
         unannotated_parameters = sorted(_unannotated_parameter_names(node))
     locals_that_need_declarations = (
-        facts.bound | external_assignments
-    ) - exempt
+        (facts.bound | external_assignments) - exempt - facts.typevar_bindings
+    )
 
     issues = _check_module_all(node.body) if is_module else []
     if unannotated_parameters:
@@ -559,7 +607,7 @@ def _check_scope(
 
     return FunctionViolation(
         file=filename,
-        line=1 if is_module else node.lineno,
+        line=1 if isinstance(node, ast.Module) else node.lineno,
         desc="; ".join(issues),
     )
 
