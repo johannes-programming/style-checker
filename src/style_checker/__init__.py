@@ -79,7 +79,7 @@ def main(args: Iterable[str] | None = None, /) -> int:
     return run(*args, **kwargs)
 
 
-def get_files(*, include: Iterable[str], exclude: Iterable[str]) -> list[str]:
+def get_files(*, exclude: Iterable[str], include: Iterable[str]) -> list[str]:
     ans: dict[str, str]
     file: str
     pattern: str
