@@ -4,11 +4,10 @@ __all__: list[str] = ["main", "run"]
 
 import sys
 import unittest
-from typing import Never
 
 
-def main() -> Never:
-    sys.exit(not run().wasSuccessful())
+def main() -> int:
+    return 1 - run().wasSuccessful()
 
 
 def run() -> unittest.TextTestResult:
@@ -22,4 +21,4 @@ def run() -> unittest.TextTestResult:
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
