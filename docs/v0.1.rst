@@ -86,6 +86,22 @@ These rules do not restrict assignments performed explicitly through namespace
 dictionaries or dictionary-like objects using string keys, such as
 ``globals()["name"] = value``.
 
+Dead Module-Level Names
+~~~~~~~~~~~~~~~~~~~~~~~
+
+An import, assigned variable, function, or class defined in the module scope
+(including module-level control-flow blocks) is an error if its name is neither
+listed in the module's literal ``__all__`` list nor read elsewhere within that
+module. Names referenced inside nested functions and classes count as used;
+references to a shadowing local variable do not. Uses solely in postponed
+annotations also count. Python's predefined module names and ``__all__`` are
+exempt.
+
+This is static name analysis, not an inspection of other modules or dynamic
+lookups (such as ``globals()[name]``). It intentionally treats ``__all__`` as
+the sole declaration of a public export, even though Python permits importing
+other names explicitly.
+
 Imports
 ~~~~~~~
 
@@ -106,7 +122,7 @@ separation between declarations and assignments:
 
     from __future__ import annotations
 
-    __all__: list[str] = ["double"]
+    __all__: list[str] = ["count", "double"]
 
     count: int
 

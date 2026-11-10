@@ -32,15 +32,12 @@ __all__: list[str] = [
 ]
 
 import ast
+import symtable
 from collections import abc as collections_abc
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Self
-
-ERRMSG_DEFAULT: str
-
-ERRMSG_DEFAULT = "{file}:{line}: {desc}"
 
 
 @dataclass(frozen=True)
@@ -247,6 +244,8 @@ class _FunctionBodyFacts(ast.NodeVisitor):
     def visit_ImportFrom(self: Self, node: ast.ImportFrom) -> None:
         alias: ast.alias
 
+        if node.level == 0 and node.module == "__future__":
+            return  # Compiler directives do not bind runtime names.
         for alias in node.names:
             if alias.name == "*":
                 self.wildcard_import = True
@@ -450,10 +449,94 @@ def _collect_body_facts(
     return facts
 
 
+def _dead_module_names(
+    module: ast.Module, source: str, filename: str
+) -> list[str]:
+    """Find module bindings neither exported through __all__ nor read here."""
+    annotation: ast.expr | None
+    candidates: set[str]
+    exported: set[str]
+    facts: _FunctionBodyFacts
+    node: ast.AST
+    refs: set[str]
+    scope: symtable.SymbolTable
+    scopes: list[symtable.SymbolTable]
+    statement: ast.stmt
+    symbol: symtable.Symbol
+
+    facts = _collect_body_facts(module.body, set())
+    candidates = facts.bound | facts.non_variable_bindings
+    candidates -= {
+        "__all__",
+        "__annotations__",
+        "__builtins__",
+        "__cached__",
+        "__doc__",
+        "__file__",
+        "__loader__",
+        "__name__",
+        "__package__",
+        "__path__",
+        "__spec__",
+    }
+    exported = set()
+    for statement in module.body:
+        if (
+            _is_module_all_statement(statement)
+            and isinstance(statement, (ast.Assign, ast.AnnAssign))
+            and isinstance(statement.value, ast.List)
+        ):
+            exported.update(
+                item.value
+                for item in statement.value.elts
+                if isinstance(item, ast.Constant)
+                and isinstance(item.value, str)
+            )
+
+    refs = set()
+    scopes = [symtable.symtable(source, filename, "exec")]
+    while scopes:
+        scope = scopes.pop()
+        for symbol in scope.get_symbols():
+            if symbol.is_referenced() and (
+                scope.get_type() == "module" or symbol.is_global()
+            ):
+                refs.add(symbol.get_name())
+        scopes.extend(scope.get_children())
+
+    # Postponed annotations are not counted as reads by symtable, but they
+    # still refer to imported or declared types in the source.
+    if any(
+        isinstance(stmt, ast.ImportFrom)
+        and stmt.level == 0
+        and stmt.module == "__future__"
+        and any(alias.name == "annotations" for alias in stmt.names)
+        for stmt in module.body
+    ):
+        for node in ast.walk(module):
+            annotation = None
+            if isinstance(node, ast.AnnAssign):
+                annotation = node.annotation
+            elif isinstance(node, ast.arg):
+                annotation = node.annotation
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                annotation = node.returns
+            if annotation is not None:
+                refs.update(
+                    name.id
+                    for name in ast.walk(annotation)
+                    if isinstance(name, ast.Name)
+                    and isinstance(name.ctx, ast.Load)
+                )
+
+    return sorted(candidates - exported - refs)
+
+
 def _check_scope(
     filename: str,
     node: ast.Module | ast.FunctionDef | ast.AsyncFunctionDef,
     external_assignments: set[str],
+    dead_module_names: list[str] | None = None,
 ) -> FunctionViolation | None:
     annotations: list[ast.AnnAssign]
     assigned_declarations: set[str]
@@ -541,6 +624,8 @@ def _check_scope(
 
     issues = _check_module_all(node.body) if is_module else []
     issues.extend(facts.import_issues())
+    if dead_module_names:
+        issues.append("dead module names: " + ", ".join(dead_module_names))
     if unannotated_parameters:
         issues.append(
             "unannotated arguments: " + ", ".join(unannotated_parameters)
@@ -692,8 +777,9 @@ def _external_assignments(module: ast.Module) -> dict[int, set[str]]:
 
 
 class _FunctionChecker(ast.NodeVisitor):
-    def __init__(self: Self, filename: str) -> None:
+    def __init__(self: Self, filename: str, source: str) -> None:
         self.filename = filename
+        self.source = source
         self.violations: list[FunctionViolation] = []
         self.external_assignments: dict[int, set[str]] = {}
 
@@ -702,7 +788,10 @@ class _FunctionChecker(ast.NodeVisitor):
 
         self.external_assignments = _external_assignments(node)
         violation = _check_scope(
-            self.filename, node, self.external_assignments.get(id(node), set())
+            self.filename,
+            node,
+            self.external_assignments.get(id(node), set()),
+            _dead_module_names(node, self.source, self.filename),
         )
         if violation is not None:
             self.violations.append(violation)
@@ -752,7 +841,7 @@ def check_file(path: str) -> list[FunctionViolation]:
 
     source = Path(path).read_text(encoding="utf-8")
     tree = ast.parse(source, filename=path)
-    checker = _FunctionChecker(path)
+    checker = _FunctionChecker(path, source)
     checker.visit(tree)
     return checker.violations
 

@@ -1,1 +1,1 @@
-1: missing __all__
+1: missing __all__; dead module names: example

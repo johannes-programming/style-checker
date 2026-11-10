@@ -1,3 +1,4 @@
+1: dead module names: bar, baz, foo
 4: missing declarations: file
 14: missing declarations: line
 24: missing declarations: stream
