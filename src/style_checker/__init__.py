@@ -35,7 +35,8 @@ import contextlib
 import glob
 import os
 import sys
-from collections.abc import Iterable
+from collections import abc
+from importlib import metadata
 from typing import Any, TextIO
 
 from style_checker import _declarations
@@ -45,12 +46,48 @@ ERRMSG_DEFAULT: str
 ERRMSG_DEFAULT = "{file}:{line}: {desc}"
 
 
-def main(args: Iterable[str] | None = None, /) -> int:
-    kwargs: dict[str, Any]
-    parser: argparse.ArgumentParser
+def get_files(
+    *, exclude: abc.Iterable[str], include: abc.Iterable[str]
+) -> list[str]:
+    ans: dict[str, str]
+    file: str
+    pattern: str
+    ans = dict()
+    for pattern in include:
+        for file in glob.glob(pattern, recursive=True):
+            ans[os.path.abspath(file)] = file
+    for pattern in exclude:
+        for file in glob.glob(pattern, recursive=True):
+            ans.pop(os.path.abspath(file), "")
+    return list(ans.values())
 
+
+def main(args: abc.Iterable[str] | None = None) -> int:
+    include: abc.Sequence[str]
+    kwargs: dict[str, Any]
+    space: argparse.Namespace
+    try:
+        space = parse_args(args)
+        kwargs = vars(space)
+        include = kwargs.pop("include")
+        run(*include, **kwargs)
+    except SystemExit as exit:
+        if isinstance(exit.code, int):
+            return int(exit.code)
+        else:
+            return int(bool(exit.code))
+    except BaseException:
+        return 1
+    else:
+        return 0
+
+
+def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
+    parser: argparse.ArgumentParser
+    version: str
     parser = argparse.ArgumentParser(
-        description="Check module and function variable declaration style."
+        description="Check module and function variable declaration style.",
+        fromfile_prefix_chars="@",
     )
     parser.add_argument(
         "--errfile",
@@ -69,35 +106,25 @@ def main(args: Iterable[str] | None = None, /) -> int:
         help="exclude files",
         metavar="exclude",
     )
+    version = "%(prog)s, version " + metadata.version("style-checker")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=version,
+    )
     parser.add_argument(
         "include",
         nargs="*",
         help="Python source files to check",
     )
-    kwargs = vars(parser.parse_args(args))
-    args = kwargs.pop("include")
-    return run(*args, **kwargs)
-
-
-def get_files(*, exclude: Iterable[str], include: Iterable[str]) -> list[str]:
-    ans: dict[str, str]
-    file: str
-    pattern: str
-    ans = dict()
-    for pattern in include:
-        for file in glob.glob(pattern, recursive=True):
-            ans[os.path.abspath(file)] = file
-    for pattern in exclude:
-        for file in glob.glob(pattern, recursive=True):
-            ans.pop(os.path.abspath(file), "")
-    return list(ans.values())
+    return parser.parse_args(args)
 
 
 def run(
     *include: str,
     errfile: str = "-",
     errmsg: str = ERRMSG_DEFAULT,
-    exclude: Iterable[str] = (),
+    exclude: abc.Iterable[str] = (),
 ) -> int:
     ans: int
     file: str

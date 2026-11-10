@@ -4,7 +4,7 @@ __all__: list[str] = ["main"]
 
 import sys
 
-from . import main
+from style_checker import main
 
 if __name__ == "__main__":
     sys.exit(main())
