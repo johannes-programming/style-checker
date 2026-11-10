@@ -1,1 +1,1 @@
-1: declarations not at beginning: beta; missing declarations: beta
+1: dead module names: alpha, beta; declarations not at beginning: beta; missing declarations: beta
