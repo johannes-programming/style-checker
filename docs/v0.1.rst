@@ -43,9 +43,9 @@ The declaration requirement does not apply to:
 Declaration Placement
 ~~~~~~~~~~~~~~~~~~~~~
 
-The annotations of a namespace may never be intermixed with other code,
-but should form one continuous block.
-This single block should be at the beginning of the module or function body.
+The annotations of a namespace should form one block at the beginning of the
+module or function body. Within a function body, class definitions may be
+intermixed with the declarations in that initial block.
 Only the following may precede that block:
 
 * A module or function docstring, if present. The docstring must be the first

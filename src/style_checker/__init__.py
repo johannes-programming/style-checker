@@ -8,8 +8,8 @@ At module level and inside every ``def`` or ``async def``:
 
 * local variables that are bound by assignment-like syntax in that function
     must first be declared with a bare type annotation, e.g. ``count: int``;
-* those declarations must form one contiguous block at the beginning of the
-    function body (an optional docstring may precede them);
+* those declarations must form one block at the beginning of the function
+    body (an optional docstring and interleaved classes are permitted);
 * declarations must not assign a value;
 * declaration names must be in alphabetical order;
 * the first non-declaration occurrence of each local variable must be a binding

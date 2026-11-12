@@ -8,8 +8,9 @@ At module level and inside every ``def`` or ``async def``:
 
 * variables bound by assignment-like syntax in their scope must first be
     declared with a bare type annotation, e.g. ``count: int``;
-* declarations must form one contiguous block at the beginning of the scope
-    (an optional docstring may precede them);
+* declarations must form one block at the beginning of the scope
+    (an optional docstring may precede them; nested classes may be interleaved
+    within the block in function scopes);
 * declarations must not assign a value;
 * declaration names must be in alphabetical order;
 * every function parameter must have a type annotation.
@@ -584,10 +585,12 @@ def _check_scope(
 
     leading_decls = []
     index = start
-    while index < len(ordering_body) and _is_bare_name_declaration(
-        ordering_body[index]
+    while index < len(ordering_body) and (
+        _is_bare_name_declaration(ordering_body[index])
+        or (not is_module and isinstance(ordering_body[index], ast.ClassDef))
     ):
-        leading_decls.append(ordering_body[index])  # type: ignore[arg-type]
+        if _is_bare_name_declaration(ordering_body[index]):
+            leading_decls.append(ordering_body[index])  # type: ignore[arg-type]
         index += 1
 
     declaration_nodes = {id(decl) for decl in leading_decls}
