@@ -213,7 +213,8 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             return func.id in self.typevar_factories
         return (
             isinstance(func, ast.Attribute)
-            and func.attr in {"TypeVar", "ParamSpec", "TypeVarTuple"}
+            and func.attr
+            in {"TypeVar", "ParamSpec", "TypeVarTuple", "TypeAliasType"}
             and isinstance(func.value, ast.Name)
             and func.value.id in self.typevar_modules
         )
@@ -261,7 +262,12 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             if node.module in {
                 "typing",
                 "typing_extensions",
-            } and alias.name in {"TypeVar", "ParamSpec", "TypeVarTuple"}:
+            } and alias.name in {
+                "TypeVar",
+                "ParamSpec",
+                "TypeVarTuple",
+                "TypeAliasType",
+            }:
                 self.typevar_factories.add(alias.asname or alias.name)
 
     def visit_Assign(self: Self, node: ast.Assign) -> None:
