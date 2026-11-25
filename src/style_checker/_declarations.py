@@ -254,14 +254,15 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for alias in node.names:
             if alias.name == "*":
                 self.wildcard_import = True
+            elif (
+                node.level == 0
+                and node.module == "typing"
+                and alias.name in collections_abc.__all__
+            ):
+                self.non_variable_bindings.add(alias.asname or alias.name)
+                self.forbidden_typing_imports.add(alias.name)
             else:
                 self.non_variable_bindings.add(alias.asname or alias.name)
-                if (
-                    node.level == 0
-                    and node.module == "typing"
-                    and alias.name in collections_abc.__all__
-                ):
-                    self.forbidden_typing_imports.add(alias.name)
             if node.module in {
                 "typing",
                 "typing_extensions",
@@ -579,6 +580,8 @@ def _physical_line_issues(
     """Group physical lines by statement, header or decorator and scope."""
     at_line_start: bool
     deep: dict[int, set[int]]
+    deep_start_lines: set[int]
+    deep_starts: dict[int, set[int]]
     description: str
     findings: dict[int, set[int]]
     first: int
@@ -595,10 +598,12 @@ def _physical_line_issues(
     line_numbers: set[int]
     lines: list[str]
     node: ast.AST
+    node_types: tuple[type[Any], ...]
     nodes: list[ast.AST]
     owner: int
     owners: list[int]
     previous_end: int
+    simple_starts: set[tuple[int, int]]
     starts: set[tuple[int, int]]
     text: str
     token: tokenize.TokenInfo
@@ -606,15 +611,33 @@ def _physical_line_issues(
     used: set[int]
     wrong_indent: dict[int, set[int]]
 
+    node_types = (
+        ast.AsyncFor,
+        ast.AsyncFunctionDef,
+        ast.AsyncWith,
+        ast.ClassDef,
+        ast.For,
+        ast.FunctionDef,
+        ast.If,
+        ast.Match,
+        ast.Try,
+        ast.TryStar,
+        ast.While,
+        ast.With,
+    )
+
     lines = source.split("\n")
     nodes = list(ast.walk(module))
     # AST columns are UTF-8 byte offsets; tokenize uses character offsets.
     starts = set()
+    simple_starts = set()
     for node in nodes:
         if isinstance(node, ast.stmt):
             text = lines[node.lineno - 1]
             text = text.encode("utf-8")[: node.col_offset].decode("utf-8")
             starts.add((node.lineno, len(text)))
+            if not isinstance(node, node_types):
+                simple_starts.add((node.lineno, len(text)))
     groups = []
     used = set()
     first_by_line = {}
@@ -622,6 +645,7 @@ def _physical_line_issues(
     previous_end = 0
     indent_level = 0
     incorrect_indentation = set()
+    deep_start_lines = set()
     at_line_start = True
 
     def finish(end_line: int) -> None:
@@ -672,6 +696,8 @@ def _physical_line_issues(
             at_line_start = False
         # Inline suites share a logical line with their header; an AST
         # statement start separates the header from the first simple statement.
+        if indent_level > 4 and token.start in simple_starts:
+            deep_start_lines.add(token.start[0])
         if token.start in starts:
             finish(token.start[0] - 1)
         used.update(range(token.start[0], token.end[0] + 1))
@@ -695,7 +721,10 @@ def _physical_line_issues(
 
     trailing = {}
     deep = {}
+    deep_starts = {}
     wrong_indent = {}
+    for line in deep_start_lines:
+        deep_starts.setdefault(owners[line], set()).add(line)
     for line in incorrect_indentation:
         wrong_indent.setdefault(owners[line], set()).add(line)
     for line, text in enumerate(lines, 1):
@@ -723,6 +752,7 @@ def _physical_line_issues(
         ("trailing whitespace on physical lines: ", trailing),
         ("indentation must be four spaces per level: ", wrong_indent),
         ("physical lines indented two or more levels deeper: ", deep),
+        ("simple statements indented more than four levels: ", deep_starts),
     ):
         for owner, line_numbers in findings.items():
             issues.setdefault(owner, []).append(
@@ -957,26 +987,34 @@ def _external_assignments_visit(
     name: str
     outer: ast.FunctionDef | ast.AsyncFunctionDef
 
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        facts = _collect_body_facts(node.body, set())
-        assignments.setdefault(id(module), set()).update(
-            (facts.bound & facts.globals) - {"__all__"}
-        )
-        for name in facts.bound & facts.nonlocals:
-            for outer, local_names in reversed(enclosing):
-                if name in local_names:
-                    assignments.setdefault(id(outer), set()).add(name)
-                    break
-        local_names = facts.bound
-        local_names |= _parameter_names(node)
-        local_names |= {
-            annotation.target.id
-            for annotation in _function_annotations(node.body)
-            if isinstance(annotation.target, ast.Name) and annotation.simple
-        }
-        local_names -= facts.globals
-        local_names -= facts.nonlocals
-        enclosing = [*enclosing, (node, local_names)]
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        for child in ast.iter_child_nodes(node):
+            _external_assignments_visit(
+                node=child,
+                enclosing=enclosing,
+                assignments=assignments,
+                module=module,
+            )
+        return
+    facts = _collect_body_facts(node.body, set())
+    assignments.setdefault(id(module), set()).update(
+        (facts.bound & facts.globals) - {"__all__"}
+    )
+    for name in facts.bound & facts.nonlocals:
+        for outer, local_names in reversed(enclosing):
+            if name in local_names:
+                assignments.setdefault(id(outer), set()).add(name)
+                break
+    local_names = facts.bound
+    local_names |= _parameter_names(node)
+    local_names |= {
+        annotation.target.id
+        for annotation in _function_annotations(node.body)
+        if isinstance(annotation.target, ast.Name) and annotation.simple
+    }
+    local_names -= facts.globals
+    local_names -= facts.nonlocals
+    enclosing = [*enclosing, (node, local_names)]
     for child in ast.iter_child_nodes(node):
         _external_assignments_visit(
             node=child,

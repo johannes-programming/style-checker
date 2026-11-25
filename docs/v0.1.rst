@@ -33,6 +33,9 @@ Block indentation must consist of exactly four spaces per nesting level
 Blank lines, comment-only lines and continuation lines do not determine block
 indentation.
 
+Each simple statement must start at no more than four indentation levels
+deep, counted from the module level (level zero).
+
 For each simple statement, compound-statement header and decorator separately,
 no physical line used by it may start two or more indentation levels deeper
 than its first physical line. The indentation width is inferred from the most
