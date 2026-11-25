@@ -12,6 +12,15 @@ They concern variables bound through ordinary assignment syntax; names that
 are exempt from these rules are described below. This style guide does not consider comments.
 They can be anywhere without violating the style.
 
+Physical Statement Placement
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every decorator, compound-statement header and simple statement must start on
+a physical line with only whitespace to its left. Python syntax already
+enforces this for decorators and compound-statement headers. In particular,
+multiple simple statements on one physical line and simple statements on the
+same physical line as a compound-statement header are forbidden.
+
 Required Variable Declarations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

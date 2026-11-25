@@ -539,10 +539,42 @@ def _dead_module_names(
     return sorted(candidates - exported - refs)
 
 
+def _statement_placement_issues(
+    body: list[ast.stmt], source_lines: list[bytes]
+) -> list[str]:
+    """Find statements preceded by non-whitespace on their physical line."""
+    line_numbers: set[int]
+    statement: ast.stmt
+
+    line_numbers = set()
+
+    def visit(node: ast.AST) -> None:
+        child: ast.AST
+        if isinstance(node, ast.stmt):
+            if source_lines[node.lineno - 1][: node.col_offset].strip():
+                line_numbers.add(node.lineno)
+            if isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+            ):
+                return
+        for child in ast.iter_child_nodes(node):
+            visit(child)
+
+    for statement in body:
+        visit(statement)
+    if not line_numbers:
+        return []
+    return [
+        "simple statements not at beginning of physical line: "
+        + ", ".join(str(line) for line in sorted(line_numbers))
+    ]
+
+
 def _check_scope(
     filename: str,
     node: ast.Module | ast.FunctionDef | ast.AsyncFunctionDef,
     external_assignments: set[str],
+    source_lines: list[bytes],
     dead_module_names: list[str] | None = None,
 ) -> FunctionViolation | None:
     annotations: list[ast.AnnAssign]
@@ -633,6 +665,7 @@ def _check_scope(
 
     issues = _check_module_all(node.body) if is_module else []
     issues.extend(facts.import_issues())
+    issues.extend(_statement_placement_issues(node.body, source_lines))
     if dead_module_names:
         issues.append("dead module names: " + ", ".join(dead_module_names))
     if unannotated_parameters:
@@ -789,6 +822,7 @@ class _FunctionChecker(ast.NodeVisitor):
     def __init__(self: Self, filename: str, source: str) -> None:
         self.filename = filename
         self.source = source
+        self.source_lines = source.encode("utf-8").split(b"\n")
         self.violations: list[FunctionViolation] = []
         self.external_assignments: dict[int, set[str]] = {}
 
@@ -800,6 +834,7 @@ class _FunctionChecker(ast.NodeVisitor):
             self.filename,
             node,
             self.external_assignments.get(id(node), set()),
+            self.source_lines,
             _dead_module_names(node, self.source, self.filename),
         )
         if violation is not None:
@@ -814,7 +849,10 @@ class _FunctionChecker(ast.NodeVisitor):
         violation: FunctionViolation | None
 
         violation = _check_scope(
-            self.filename, node, self.external_assignments.get(id(node), set())
+            self.filename,
+            node,
+            self.external_assignments.get(id(node), set()),
+            self.source_lines,
         )
         if violation is not None:
             self.violations.append(violation)
@@ -834,6 +872,9 @@ class _FunctionChecker(ast.NodeVisitor):
         issues: list[str]
 
         issues = _collect_body_facts(node.body, set()).import_issues()
+        issues.extend(
+            _statement_placement_issues(node.body, self.source_lines)
+        )
         if issues:
             self.violations.append(
                 FunctionViolation(
