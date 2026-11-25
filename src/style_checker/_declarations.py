@@ -33,7 +33,9 @@ __all__: list[str] = [
 ]
 
 import ast
+import io
 import symtable
+import tokenize
 from collections import abc as collections_abc
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -571,11 +573,171 @@ def _statement_placement_issues(
     ]
 
 
+def _physical_line_issues(
+    module: ast.Module, source: str
+) -> dict[int, list[str]]:
+    """Group physical lines by statement, header or decorator and scope."""
+    deep: dict[int, set[int]]
+    description: str
+    findings: dict[int, set[int]]
+    first: int
+    first_by_line: dict[int, int]
+    group: set[int]
+    groups: list[set[int]]
+    indent_levels: list[int]
+    indent_width: int
+    indent_widths: dict[int, int]
+    issues: dict[int, list[str]]
+    last: int
+    last_by_line: dict[int, int]
+    limit: int
+    line: int
+    line_numbers: set[int]
+    lines: list[str]
+    node: ast.AST
+    nodes: list[ast.AST]
+    owner: int
+    owners: list[int]
+    previous_end: int
+    starts: set[tuple[int, int]]
+    text: str
+    token: tokenize.TokenInfo
+    trailing: dict[int, set[int]]
+    used: set[int]
+    width: int
+
+    lines = source.split("\n")
+    nodes = list(ast.walk(module))
+    # AST columns are UTF-8 byte offsets; tokenize uses character offsets.
+    starts = set()
+    for node in nodes:
+        if isinstance(node, ast.stmt):
+            text = lines[node.lineno - 1]
+            text = text.encode("utf-8")[: node.col_offset].decode("utf-8")
+            starts.add((node.lineno, len(text)))
+    groups = []
+    used = set()
+    first_by_line = {}
+    last_by_line = {}
+    previous_end = 0
+    indent_levels = [0]
+    indent_widths = {}
+
+    def finish(end_line: int) -> None:
+        first: int
+        last: int
+        line: int
+
+        nonlocal previous_end
+        if not used:
+            return
+        first, last = min(used), max(used)
+        # Explicit continuation lines containing only a backslash have no
+        # token of their own. Include them in the physical extent.
+        while first > previous_end + 1 and lines[first - 2].strip() == "\\":
+            first -= 1
+        while last < end_line and lines[last].strip() == "\\":
+            last += 1
+        used.update(
+            line
+            for line in range(first, last + 1)
+            if lines[line - 1].strip() == "\\"
+        )
+        groups.append(set(used))
+        for line in used:
+            first_by_line[line] = min(first_by_line.get(line, first), first)
+            last_by_line[line] = max(last_by_line.get(line, last), last)
+        used.clear()
+        previous_end = last
+
+    for token in tokenize.generate_tokens(io.StringIO(source).readline):
+        if token.type in (tokenize.NEWLINE, tokenize.ENDMARKER):
+            finish(min(token.start[0], len(lines)))
+            previous_end = token.start[0]
+            continue
+        if token.type == tokenize.INDENT:
+            width = len(token.string.rsplit("\f", 1)[-1].expandtabs(8))
+            indent_width = width - indent_levels[-1]
+            indent_widths[indent_width] = (
+                indent_widths.get(indent_width, 0) + 1
+            )
+            indent_levels.append(width)
+            continue
+        if token.type == tokenize.DEDENT:
+            indent_levels.pop()
+            continue
+        if token.type in (tokenize.NL, tokenize.COMMENT):
+            continue
+        # Inline suites share a logical line with their header; an AST
+        # statement start separates the header from the first simple statement.
+        if token.start in starts:
+            finish(token.start[0] - 1)
+        used.update(range(token.start[0], token.end[0] + 1))
+        if token.type == tokenize.OP and token.string == ";":
+            finish(token.end[0])
+
+    # Attribute headers and decorators to their own class/function, just as
+    # body diagnostics are attributed to the innermost scope.
+    owners = [id(module)] * (len(lines) + 1)
+    for node in nodes:
+        if isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+        ):
+            first = min(
+                [node.lineno, *(d.lineno for d in node.decorator_list)]
+            )
+            first = first_by_line.get(first, first)
+            last = node.end_lineno or node.lineno
+            last = last_by_line.get(last, last)
+            owners[first : last + 1] = [id(node)] * (last - first + 1)
+
+    trailing = {}
+    deep = {}
+    for line, text in enumerate(lines, 1):
+        if text != text.rstrip():
+            trailing.setdefault(owners[line], set()).add(line)
+
+    def indentation(line: int) -> int:
+        prefix: str
+        text: str
+
+        text = lines[line - 1]
+        prefix = text[: len(text) - len(text.lstrip(" \t\f"))]
+        # Python resets the indentation column at a form feed.
+        return len(prefix.rsplit("\f", 1)[-1].expandtabs(8))
+
+    # Continuation alignment is not evidence of block indentation. If no
+    # indented suite exists, the indentation width cannot be determined.
+    if indent_widths:
+        indent_width = min(
+            indent_widths, key=lambda width: (-indent_widths[width], width)
+        )
+        for group in groups:
+            first = min(group)
+            limit = indentation(first) + 2 * indent_width
+            for line in group:
+                if indentation(line) >= limit:
+                    deep.setdefault(owners[first], set()).add(line)
+
+    issues = {}
+    for description, findings in (
+        ("trailing whitespace on physical lines: ", trailing),
+        ("physical lines indented two or more levels deeper: ", deep),
+    ):
+        for owner, line_numbers in findings.items():
+            issues.setdefault(owner, []).append(
+                description
+                + ", ".join(str(line) for line in sorted(line_numbers))
+            )
+    return issues
+
+
 def _check_scope(
     filename: str,
     node: ast.Module | ast.FunctionDef | ast.AsyncFunctionDef,
     external_assignments: set[str],
     source_lines: list[bytes],
+    physical_line_issues: list[str],
     dead_module_names: list[str] | None = None,
 ) -> FunctionViolation | None:
     annotations: list[ast.AnnAssign]
@@ -667,6 +829,7 @@ def _check_scope(
     issues = _check_module_all(node.body) if is_module else []
     issues.extend(facts.import_issues())
     issues.extend(_statement_placement_issues(node.body, source_lines))
+    issues.extend(physical_line_issues)
     if dead_module_names:
         issues.append("dead module names: " + ", ".join(dead_module_names))
     if unannotated_parameters:
@@ -826,16 +989,19 @@ class _FunctionChecker(ast.NodeVisitor):
         self.source_lines = source.encode("utf-8").split(b"\n")
         self.violations: list[FunctionViolation] = []
         self.external_assignments: dict[int, set[str]] = {}
+        self.physical_line_issues: dict[int, list[str]] = {}
 
     def visit_Module(self: Self, node: ast.Module) -> None:
         violation: FunctionViolation | None
 
         self.external_assignments = _external_assignments(node)
+        self.physical_line_issues = _physical_line_issues(node, self.source)
         violation = _check_scope(
             self.filename,
             node,
             self.external_assignments.get(id(node), set()),
             self.source_lines,
+            self.physical_line_issues.get(id(node), []),
             _dead_module_names(node, self.source, self.filename),
         )
         if violation is not None:
@@ -854,6 +1020,7 @@ class _FunctionChecker(ast.NodeVisitor):
             node,
             self.external_assignments.get(id(node), set()),
             self.source_lines,
+            self.physical_line_issues.get(id(node), []),
         )
         if violation is not None:
             self.violations.append(violation)
@@ -876,6 +1043,7 @@ class _FunctionChecker(ast.NodeVisitor):
         issues.extend(
             _statement_placement_issues(node.body, self.source_lines)
         )
+        issues.extend(self.physical_line_issues.get(id(node), []))
         if issues:
             self.violations.append(
                 FunctionViolation(
