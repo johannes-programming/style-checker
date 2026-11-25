@@ -577,6 +577,7 @@ def _physical_line_issues(
     module: ast.Module, source: str
 ) -> dict[int, list[str]]:
     """Group physical lines by statement, header or decorator and scope."""
+    at_line_start: bool
     deep: dict[int, set[int]]
     description: str
     findings: dict[int, set[int]]
@@ -584,9 +585,8 @@ def _physical_line_issues(
     first_by_line: dict[int, int]
     group: set[int]
     groups: list[set[int]]
-    indent_levels: list[int]
-    indent_width: int
-    indent_widths: dict[int, int]
+    incorrect_indentation: set[int]
+    indent_level: int
     issues: dict[int, list[str]]
     last: int
     last_by_line: dict[int, int]
@@ -604,7 +604,7 @@ def _physical_line_issues(
     token: tokenize.TokenInfo
     trailing: dict[int, set[int]]
     used: set[int]
-    width: int
+    wrong_indent: dict[int, set[int]]
 
     lines = source.split("\n")
     nodes = list(ast.walk(module))
@@ -620,8 +620,9 @@ def _physical_line_issues(
     first_by_line = {}
     last_by_line = {}
     previous_end = 0
-    indent_levels = [0]
-    indent_widths = {}
+    indent_level = 0
+    incorrect_indentation = set()
+    at_line_start = True
 
     def finish(end_line: int) -> None:
         first: int
@@ -654,20 +655,21 @@ def _physical_line_issues(
         if token.type in (tokenize.NEWLINE, tokenize.ENDMARKER):
             finish(min(token.start[0], len(lines)))
             previous_end = token.start[0]
+            at_line_start = True
             continue
         if token.type == tokenize.INDENT:
-            width = len(token.string.rsplit("\f", 1)[-1].expandtabs(8))
-            indent_width = width - indent_levels[-1]
-            indent_widths[indent_width] = (
-                indent_widths.get(indent_width, 0) + 1
-            )
-            indent_levels.append(width)
+            indent_level += 1
             continue
         if token.type == tokenize.DEDENT:
-            indent_levels.pop()
+            indent_level -= 1
             continue
         if token.type in (tokenize.NL, tokenize.COMMENT):
             continue
+        if at_line_start:
+            line = token.start[0]
+            if lines[line - 1][: token.start[1]] != "    " * indent_level:
+                incorrect_indentation.add(line)
+            at_line_start = False
         # Inline suites share a logical line with their header; an AST
         # statement start separates the header from the first simple statement.
         if token.start in starts:
@@ -693,6 +695,9 @@ def _physical_line_issues(
 
     trailing = {}
     deep = {}
+    wrong_indent = {}
+    for line in incorrect_indentation:
+        wrong_indent.setdefault(owners[line], set()).add(line)
     for line, text in enumerate(lines, 1):
         if text != text.rstrip():
             trailing.setdefault(owners[line], set()).add(line)
@@ -706,22 +711,17 @@ def _physical_line_issues(
         # Python resets the indentation column at a form feed.
         return len(prefix.rsplit("\f", 1)[-1].expandtabs(8))
 
-    # Continuation alignment is not evidence of block indentation. If no
-    # indented suite exists, the indentation width cannot be determined.
-    if indent_widths:
-        indent_width = min(
-            indent_widths, key=lambda width: (-indent_widths[width], width)
-        )
-        for group in groups:
-            first = min(group)
-            limit = indentation(first) + 2 * indent_width
-            for line in group:
-                if indentation(line) >= limit:
-                    deep.setdefault(owners[first], set()).add(line)
+    for group in groups:
+        first = min(group)
+        limit = indentation(first) + 8
+        for line in group:
+            if indentation(line) >= limit:
+                deep.setdefault(owners[first], set()).add(line)
 
     issues = {}
     for description, findings in (
         ("trailing whitespace on physical lines: ", trailing),
+        ("indentation must be four spaces per level: ", wrong_indent),
         ("physical lines indented two or more levels deeper: ", deep),
     ):
         for owner, line_numbers in findings.items():

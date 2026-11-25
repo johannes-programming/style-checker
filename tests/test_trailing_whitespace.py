@@ -74,14 +74,17 @@ class TestTrailingWhitespace(unittest.TestCase):
             ["3: trailing whitespace on physical lines: 2, 3, 4"],
         )
 
-    def test_trailing_whitespace_without_indentation_evidence(
+    def test_trailing_whitespace_and_deep_indentation(
         self: Self,
     ) -> None:
         self.assertEqual(
             self.diagnostics(
                 b"__all__: list[str] = []\nprint(\n        1\n)  \n"
             ),
-            ["1: trailing whitespace on physical lines: 4"],
+            [
+                "1: trailing whitespace on physical lines: 4; "
+                "physical lines indented two or more levels deeper: 3"
+            ],
         )
 
 

@@ -1,4 +1,4 @@
 __all__: list[str] = []
 print(
-    "unknown indentation width"
+    "one indentation level without an indented suite"
 )

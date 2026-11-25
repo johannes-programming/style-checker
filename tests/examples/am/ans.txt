@@ -1,2 +1,2 @@
 1: physical lines indented two or more levels deeper: 3
-8: physical lines indented two or more levels deeper: 6, 12, 17
+8: indentation must be four spaces per level: 11, 14; physical lines indented two or more levels deeper: 6, 9, 12, 15, 16, 17

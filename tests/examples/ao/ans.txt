@@ -1,1 +1,1 @@
-2: physical lines indented two or more levels deeper: 5
+2: indentation must be four spaces per level: 3; physical lines indented two or more levels deeper: 4, 5
