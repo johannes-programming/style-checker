@@ -87,6 +87,7 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
     issues: list[str]
     item: Any
     matches: list[tuple[int, ast.stmt]]
+    previous: ast.stmt
     stmt: ast.stmt
     value: ast.expr | None
     valuelist: list[Any]
@@ -103,15 +104,14 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
     if len(matches) != 1:
         issues.append("multiple __all__ assignments")
     index, stmt = matches[0]
-    if any(
-        isinstance(previous, (ast.Import, ast.ImportFrom))
-        and not (
-            isinstance(previous, ast.ImportFrom)
-            and previous.module == "__future__"
-        )
-        for previous in body[:index]
-    ):
-        issues.append("__all__ must precede imports")
+    for previous in body[:index]:
+        if isinstance(previous, (ast.Import, ast.ImportFrom)):
+            if not (
+                isinstance(previous, ast.ImportFrom)
+                and previous.module == "__future__"
+            ):
+                issues.append("__all__ must precede imports")
+                break
 
     if not (
         isinstance(stmt, ast.AnnAssign)
@@ -766,6 +766,7 @@ def _check_scope(
     statement: ast.AnnAssign
     unannotated_parameters: list[str]
     unnecessary: list[str]
+    unsorted_duplicates: set[str]
 
     is_module = isinstance(node, ast.Module)
     body = (
@@ -873,23 +874,21 @@ def _check_scope(
             + ", ".join(exception_declarations)
         )
 
-    nested_declaration_names = [
-        statement.target.id
-        for statement in annotations
+    nested_declaration_names = []
+    for statement in annotations:
         if (
             id(statement) not in direct_annotation_nodes
             and _is_bare_name_declaration(statement)
             and isinstance(statement.target, ast.Name)
-        )
-    ]
+        ):
+            nested_declaration_names.append(statement.target.id)
     names_for_duplicate_check = declaration_names + nested_declaration_names
-    duplicates = sorted(
-        {
-            name
-            for name in names_for_duplicate_check
-            if names_for_duplicate_check.count(name) > 1
-        }
-    )
+    unsorted_duplicates = {
+        name
+        for name in names_for_duplicate_check
+        if names_for_duplicate_check.count(name) > 1
+    }
+    duplicates = sorted(unsorted_duplicates)
     if duplicates:
         issues.append("duplicate declarations: " + ", ".join(duplicates))
 
@@ -935,51 +934,56 @@ def _check_scope(
 def _external_assignments(module: ast.Module) -> dict[int, set[str]]:
     """Find global/nonlocal assignments belonging to an enclosing scope."""
     assignments: dict[int, set[str]]
-
     assignments = {}
-
-    def visit(
-        node: ast.AST,
-        enclosing: list[
-            tuple[ast.FunctionDef | ast.AsyncFunctionDef, set[str]]
-        ],
-    ) -> None:
-        child: ast.AST
-        facts: _FunctionBodyFacts
-        local_names: set[str]
-        name: str
-        outer: ast.FunctionDef | ast.AsyncFunctionDef
-
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            facts = _collect_body_facts(node.body, set())
-            assignments.setdefault(id(module), set()).update(
-                (facts.bound & facts.globals) - {"__all__"}
-            )
-            for name in facts.bound & facts.nonlocals:
-                for outer, local_names in reversed(enclosing):
-                    if name in local_names:
-                        assignments.setdefault(id(outer), set()).add(name)
-                        break
-            local_names = (
-                (
-                    facts.bound
-                    | _parameter_names(node)
-                    | {
-                        annotation.target.id
-                        for annotation in _function_annotations(node.body)
-                        if isinstance(annotation.target, ast.Name)
-                        and annotation.simple
-                    }
-                )
-                - facts.globals
-                - facts.nonlocals
-            )
-            enclosing = [*enclosing, (node, local_names)]
-        for child in ast.iter_child_nodes(node):
-            visit(child, enclosing)
-
-    visit(module, [])
+    _external_assignments_visit(
+        node=module,
+        enclosing=[],
+        assignments=assignments,
+        module=module,
+    )
     return assignments
+
+
+def _external_assignments_visit(
+    *,
+    assignments: dict[int, set[str]],
+    enclosing: list[tuple[ast.FunctionDef | ast.AsyncFunctionDef, set[str]]],
+    module: ast.Module,
+    node: ast.AST,
+) -> None:
+    child: ast.AST
+    facts: _FunctionBodyFacts
+    local_names: set[str]
+    name: str
+    outer: ast.FunctionDef | ast.AsyncFunctionDef
+
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        facts = _collect_body_facts(node.body, set())
+        assignments.setdefault(id(module), set()).update(
+            (facts.bound & facts.globals) - {"__all__"}
+        )
+        for name in facts.bound & facts.nonlocals:
+            for outer, local_names in reversed(enclosing):
+                if name in local_names:
+                    assignments.setdefault(id(outer), set()).add(name)
+                    break
+        local_names = facts.bound
+        local_names |= _parameter_names(node)
+        local_names |= {
+            annotation.target.id
+            for annotation in _function_annotations(node.body)
+            if isinstance(annotation.target, ast.Name) and annotation.simple
+        }
+        local_names -= facts.globals
+        local_names -= facts.nonlocals
+        enclosing = [*enclosing, (node, local_names)]
+    for child in ast.iter_child_nodes(node):
+        _external_assignments_visit(
+            node=child,
+            enclosing=enclosing,
+            assignments=assignments,
+            module=module,
+        )
 
 
 class _FunctionChecker(ast.NodeVisitor):
@@ -1037,6 +1041,7 @@ class _FunctionChecker(ast.NodeVisitor):
         self._visit_function(node)
 
     def visit_ClassDef(self: Self, node: ast.ClassDef) -> None:
+        functionViolation: FunctionViolation
         issues: list[str]
 
         issues = _collect_body_facts(node.body, set()).import_issues()
@@ -1045,11 +1050,10 @@ class _FunctionChecker(ast.NodeVisitor):
         )
         issues.extend(self.physical_line_issues.get(id(node), []))
         if issues:
-            self.violations.append(
-                FunctionViolation(
-                    self.filename, node.lineno, "; ".join(issues)
-                )
+            functionViolation = FunctionViolation(
+                self.filename, node.lineno, "; ".join(issues)
             )
+            self.violations.append(functionViolation)
         self.generic_visit(node)
 
 
