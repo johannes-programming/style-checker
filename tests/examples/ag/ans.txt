@@ -1,0 +1,3 @@
+2: simple statements not at beginning of physical line: 2
+3: simple statements not at beginning of physical line: 4, 5, 8, 10
+11: simple statements not at beginning of physical line: 11

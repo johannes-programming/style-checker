@@ -5,34 +5,55 @@ requires = [
 ]
 
 [project]
-authors = [
-    { email = "johannes.programming@gmail.com", name = "Johannes" },
-]
-classifiers = [
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Typing :: Typed",
-]
-dependencies = []
+name = "style-checker"
+version = "0.1.10"
 description = "Check style."
+readme = "README.rst"
 keywords = []
 license = "MIT"
 license-files = [
     "LICENSE.txt",
 ]
-name = "style-checker"
-readme = "README.rst"
+authors = [
+    { name = "Johannes", email = "johannes.programming@gmail.com" },
+]
 requires-python = ">=3.11"
-version = "0.1.9"
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Typing :: Typed",
+]
+dependencies = []
+urls.Download = "https://pypi.org/project/style-checker/#files"
+urls.Index = "https://pypi.org/project/style-checker/"
+urls.Source = "https://github.com/johannes-programming/style-checker/"
+urls.Website = "https://style-checker.johannes-programming.online/"
 
-[project.urls]
-Download = "https://pypi.org/project/style-checker/#files"
-Index = "https://pypi.org/project/style-checker/"
-Source = "https://github.com/johannes-programming/style-checker/"
-Website = "https://style-checker.johannes-programming.online/"
+[tool.ruff]
+line-length = 79
+extend-exclude = [
+    "tests/examples",
+]
+lint.select = [
+    "ANN001",
+    "ANN002",
+    "ANN003",
+    "F",
+    "I",
+    "PLE0604",
+    "PLE0605",
+    "RUF022",
+    "RUF068",
+    "UP035",
+]
+
+[tool.pyproject-fmt]
+indent = 4
+keep_full_version = true
+max_supported_python = "3.11"
 
 [tool.mypy]
 files = [

@@ -97,7 +97,7 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--errmsg",
         default=ERRMSG_DEFAULT,
-        help=f"diagnostic format",
+        help="diagnostic format",
     )
     parser.add_argument(
         "--exclude",

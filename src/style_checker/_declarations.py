@@ -134,7 +134,8 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
             issues.append("__all__ items must be string literals")
             return issues
     valuelist = [
-        item_.value for item_ in value.elts  # type: ignore[attr-defined]
+        item_.value  # type: ignore[attr-defined]
+        for item_ in value.elts
     ]
     if valuelist != sorted(valuelist):
         issues.append("__all__ items not in alphabetical order")
