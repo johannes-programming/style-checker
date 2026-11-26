@@ -86,9 +86,69 @@ class TestTrailingWhitespace(unittest.TestCase):
         self.assertEqual(
             self.diagnostics(source),
             [
+                "3: trailing whitespace on physical lines!",
+                "4: trailing whitespace on physical lines!",
+            ],
+        )
+        self.assertEqual(
+            self.diagnostics(source + b"if True:\n    pass\n"),
+            [
                 "3: trailing whitespace on physical lines! "
                 "physical lines indented two or more levels deeper!",
                 "4: trailing whitespace on physical lines!",
+            ],
+        )
+
+    def test_suite_indentation_reported_once(self: Self, /) -> None:
+        source = (
+            b"if True:\n"
+            b'          print("hello")\n'
+            b'          print("world")\n'
+            b"__all__: list[str] = []\n"
+        )
+        self.assertEqual(
+            self.diagnostics(source),
+            ["2: indentation must be four spaces per level!"],
+        )
+
+    def test_nested_and_sibling_suite_indentation(self: Self, /) -> None:
+        source = (
+            b"__all__: list[str] = []\n"
+            b"if True:\n"
+            b"          if True:\n"
+            b"              pass\n"
+            b'          print("world")\n'
+            b"          if True:\n"
+            b"                pass\n"
+            b"                pass\n"
+            b"          pass\n"
+            b"else:\n"
+            b"          pass\n"
+            b"          pass\n"
+        )
+        self.assertEqual(
+            self.diagnostics(source),
+            [
+                f"{line}: indentation must be four spaces per level!"
+                for line in (3, 7, 11)
+            ],
+        )
+
+    def test_two_space_continuation_width(self: Self, /) -> None:
+        source = (
+            b"__all__: list[str] = []\n"
+            b"if True:\n"
+            b"  pass\n"
+            b"print(\n"
+            b"  1,\n"
+            b"    2,\n"
+            b")\n"
+        )
+        self.assertEqual(
+            self.diagnostics(source),
+            [
+                "3: indentation must be four spaces per level!",
+                "6: physical lines indented two or more levels deeper!",
             ],
         )
 

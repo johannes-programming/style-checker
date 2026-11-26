@@ -1,3 +1,2 @@
 3: indentation must be four spaces per level!
-4: physical lines indented two or more levels deeper!
 5: physical lines indented two or more levels deeper!

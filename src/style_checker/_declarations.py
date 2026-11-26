@@ -39,6 +39,7 @@ import io
 import symtable
 import tokenize
 from bisect import bisect_left
+from collections import Counter
 from collections import abc as collections_abc
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -867,10 +868,18 @@ def _physical_line_issues(
     groups = []
     used = set()
     previous_end = 0
-    indent_level = 0
+    indents = [""]
+    indent_widths: Counter[int] = Counter()
     incorrect_indentation = set()
     deep_start_lines = set()
     at_line_start = True
+
+    def indentation(text: str) -> int:
+        prefix: str
+
+        prefix = text[: len(text) - len(text.lstrip(" \t\f"))]
+        # Python resets the indentation column at a form feed.
+        return len(prefix.rsplit("\f", 1)[-1].expandtabs(8))
 
     def finish(end_line: int) -> None:
         first: int
@@ -902,21 +911,26 @@ def _physical_line_issues(
             at_line_start = True
             continue
         if token.type == tokenize.INDENT:
-            indent_level += 1
+            # Diagnose the new indentation step, not inherited errors.
+            parent = indents[-1]
+            indent_widths[indentation(token.string) - indentation(parent)] += 1
+            if token.string != parent + "    ":
+                incorrect_indentation.add(token.start[0])
+            indents.append(token.string)
             continue
         if token.type == tokenize.DEDENT:
-            indent_level -= 1
+            indents.pop()
             continue
         if token.type in (tokenize.NL, tokenize.COMMENT):
             continue
         if at_line_start:
             line = token.start[0]
-            if lines[line - 1][: token.start[1]] != "    " * indent_level:
+            if lines[line - 1][: token.start[1]] != indents[-1]:
                 incorrect_indentation.add(line)
             at_line_start = False
         # Inline suites share a logical line with their header; an AST
         # statement start separates the header from the first simple statement.
-        if indent_level > 4 and token.start in simple_starts:
+        if len(indents) > 5 and token.start in simple_starts:
             deep_start_lines.add(token.start[0])
         if token.start in starts:
             finish(token.start[0] - 1)
@@ -929,21 +943,15 @@ def _physical_line_issues(
     }
     deep: set[int] = set()
 
-    def indentation(line: int) -> int:
-        prefix: str
-        text: str
-
-        text = lines[line - 1]
-        prefix = text[: len(text) - len(text.lstrip(" \t\f"))]
-        # Python resets the indentation column at a form feed.
-        return len(prefix.rsplit("\f", 1)[-1].expandtabs(8))
-
-    for group in groups:
-        first = min(group)
-        limit = indentation(first) + 8
-        for line in group:
-            if indentation(line) >= limit:
-                deep.add(line)
+    # Infer the continuation width from suites; prefer smaller tied widths.
+    if indent_widths:
+        width = min(indent_widths, key=lambda n: (-indent_widths[n], n))
+        for group in groups:
+            first = min(group)
+            limit = indentation(lines[first - 1]) + 2 * width
+            for line in group:
+                if indentation(lines[line - 1]) >= limit:
+                    deep.add(line)
 
     for description, findings in (
         ("trailing whitespace on physical lines", trailing),
