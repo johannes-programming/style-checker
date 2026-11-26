@@ -108,7 +108,7 @@ ruff: make-style-checker out
 	conda run -n make-style-checker ruff format . ;
 
 test: dist make-style-checker out
-	conda run -n make-style-checker pip install "style-checker<0.2,>=0.1.13";
+	conda run -n make-style-checker pip install "style-checker<0.3,>=0.2.5";
 	conda run -n make-style-checker python -m style_checker --exclude 'tests/examples/**/*.py' -- "**/*.py" > dist/out/style-out.txt 2> dist/out/style-err.txt || true;
 	conda run -n base python make/env.py --python=3.11 --recreate -- mypy-style-checker >/dev/null;
 	conda run -n mypy-style-checker pip install dist/*.tar.gz >/dev/null;
