@@ -110,11 +110,11 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
         if _is_module_all_statement(stmt)
     ]
     if not matches:
-        return ["missing __all__"]
+        return ["missing '__all__'"]
 
     issues = []
     if len(matches) != 1:
-        issues.append("multiple __all__ assignments")
+        issues.append("multiple '__all__' assignments")
     index, stmt = matches[0]
     for previous in body[:index]:
         if isinstance(previous, (ast.Import, ast.ImportFrom)):
@@ -122,7 +122,7 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
                 isinstance(previous, ast.ImportFrom)
                 and previous.module == "__future__"
             ):
-                issues.append("__all__ must precede imports")
+                issues.append("'__all__' must precede imports")
                 break
 
     if not (
@@ -133,26 +133,26 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
         and isinstance(stmt.annotation.slice, ast.Name)
         and stmt.annotation.slice.id == "str"
     ):
-        issues.append("__all__ must be annotated as list[str]")
+        issues.append("'__all__' must be annotated as 'list[str]'")
     if isinstance(stmt, (ast.AnnAssign, ast.Assign)):
         value = stmt.value
     else:
         value = None
     if not isinstance(value, ast.List):
-        issues.append("__all__ must be assigned a list literal")
+        issues.append("'__all__' must be assigned a list literal")
         return issues
     for item in value.elts:
         if not isinstance(item, ast.Constant) or not isinstance(
             item.value, str
         ):
-            issues.append("__all__ items must be string literals")
+            issues.append("'__all__' items must be string literals")
             return issues
     valuelist = [
         item_.value  # type: ignore[attr-defined]
         for item_ in value.elts
     ]
     if valuelist != sorted(valuelist):
-        issues.append("__all__ items not in alphabetical order")
+        issues.append("'__all__' items not in alphabetical order")
     return issues
 
 
@@ -215,8 +215,8 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             issues.append("wildcard imports are forbidden")
         if self.forbidden_typing_imports:
             issues.append(
-                "typing imports available in collections.abc: "
-                + ", ".join(sorted(self.forbidden_typing_imports))
+                "'typing' imports available in 'collections.abc': "
+                + ", ".join(map(repr, sorted(self.forbidden_typing_imports)))
             )
         return issues
 
@@ -881,10 +881,13 @@ def _check_scope(
     issues.extend(_statement_placement_issues(node.body, source_lines))
     issues.extend(physical_line_issues)
     if dead_module_names:
-        issues.append("dead module names: " + ", ".join(dead_module_names))
+        issues.append(
+            "dead module names: " + ", ".join(map(repr, dead_module_names))
+        )
     if unannotated_parameters:
         issues.append(
-            "unannotated arguments: " + ", ".join(unannotated_parameters)
+            "unannotated arguments: "
+            + ", ".join(map(repr, unannotated_parameters))
         )
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and [
         arg.arg for arg in node.args.kwonlyargs
@@ -914,7 +917,7 @@ def _check_scope(
     if late_declarations:
         issues.append(
             "declarations not at beginning: "
-            + ", ".join(sorted(set(late_declarations)))
+            + ", ".join(map(repr, sorted(set(late_declarations))))
         )
 
     if declaration_names != sorted(declaration_names):
@@ -923,15 +926,15 @@ def _check_scope(
     non_variable_declarations = sorted(declared & facts.non_variable_bindings)
     if non_variable_declarations:
         issues.append(
-            "declarations for def/class/import names: "
-            + ", ".join(non_variable_declarations)
+            "declarations for 'def'/'class'/'import' names: "
+            + ", ".join(map(repr, non_variable_declarations))
         )
 
     exception_declarations = sorted(declared & facts.exception_bindings)
     if exception_declarations:
         issues.append(
-            "declarations for except names: "
-            + ", ".join(exception_declarations)
+            "declarations for 'except' names: "
+            + ", ".join(map(repr, exception_declarations))
         )
 
     nested_declaration_names = []
@@ -950,11 +953,13 @@ def _check_scope(
     }
     duplicates = sorted(unsorted_duplicates)
     if duplicates:
-        issues.append("duplicate declarations: " + ", ".join(duplicates))
+        issues.append(
+            "duplicate declarations: " + ", ".join(map(repr, duplicates))
+        )
 
     missing = sorted(locals_that_need_declarations - declared)
     if missing:
-        issues.append("missing declarations: " + ", ".join(missing))
+        issues.append("missing declarations: " + ", ".join(map(repr, missing)))
 
     unnecessary = sorted(
         declared
@@ -963,7 +968,9 @@ def _check_scope(
         - facts.exception_bindings
     )
     if unnecessary:
-        issues.append("unnecessary declarations: " + ", ".join(unnecessary))
+        issues.append(
+            "unnecessary declarations: " + ", ".join(map(repr, unnecessary))
+        )
 
     # Explicitly reject annotation-with-assignment anywhere in the function
     # body when its target is a simple local name.
@@ -978,7 +985,7 @@ def _check_scope(
     if assigned_declarations:
         issues.append(
             "declaration assigns a value: "
-            + ", ".join(sorted(assigned_declarations))
+            + ", ".join(map(repr, sorted(assigned_declarations)))
         )
 
     if not issues:

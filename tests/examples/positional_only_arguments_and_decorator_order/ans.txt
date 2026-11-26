@@ -10,4 +10,4 @@
 63: first argument must be positional-only!
 66: first argument must be positional-only!
 70: first argument must be positional-only!
-77: unannotated arguments: self! first argument must be positional-only!
+77: unannotated arguments: 'self'! first argument must be positional-only!
