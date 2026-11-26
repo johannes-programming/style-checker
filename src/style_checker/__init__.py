@@ -86,6 +86,7 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
     parser: argparse.ArgumentParser
     version: str
     parser = argparse.ArgumentParser(
+        add_help=False,
         description="Check module and function variable declaration style.",
         fromfile_prefix_chars="@",
     )
@@ -108,9 +109,17 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
     )
     version = "%(prog)s, version " + metadata.version("style-checker")
     parser.add_argument(
+        "-V",
         "--version",
         action="version",
+        help="print the version and abort",
         version=version,
+    )
+    parser.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="print this message and abort",
     )
     parser.add_argument(
         "include",
