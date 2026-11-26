@@ -866,6 +866,23 @@ def _dead_module_names(
     return sorted(candidates - exported - refs)
 
 
+def _statement_placement_visit(
+    node: ast.AST,
+    source_lines: list[bytes],
+    line_numbers: set[int],
+) -> None:
+    child: ast.AST
+    if isinstance(node, ast.stmt):
+        if source_lines[node.lineno - 1][: node.col_offset].strip():
+            line_numbers.add(node.lineno)
+        if isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+        ):
+            return
+    for child in ast.iter_child_nodes(node):
+        _statement_placement_visit(child, source_lines, line_numbers)
+
+
 def _statement_placement_issues(
     body: list[ast.stmt],
     source_lines: list[bytes],
@@ -878,22 +895,47 @@ def _statement_placement_issues(
 
     line_numbers = set()
 
-    def visit(node: ast.AST) -> None:
-        child: ast.AST
-        if isinstance(node, ast.stmt):
-            if source_lines[node.lineno - 1][: node.col_offset].strip():
-                line_numbers.add(node.lineno)
-            if isinstance(
-                node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-            ):
-                return
-        for child in ast.iter_child_nodes(node):
-            visit(child)
-
     for statement in body:
-        visit(statement)
+        _statement_placement_visit(statement, source_lines, line_numbers)
     for line in sorted(line_numbers):
         issues.add(line, "simple statements not at beginning of physical line")
+
+
+def _indentation(text: str) -> int:
+    prefix: str
+
+    prefix = text[: len(text) - len(text.lstrip(" \t\f"))]
+    # Python resets the indentation column at a form feed.
+    return len(prefix.rsplit("\f", 1)[-1].expandtabs(8))
+
+
+def _finish_physical_line_group(
+    end_line: int,
+    previous_end: int,
+    lines: list[str],
+    used: set[int],
+    groups: list[set[int]],
+) -> int:
+    first: int
+    last: int
+
+    if not used:
+        return previous_end
+    first, last = min(used), max(used)
+    # Explicit continuation lines containing only a backslash have no
+    # token of their own. Include them in the physical extent.
+    while first > previous_end + 1 and lines[first - 2].strip() == "\\":
+        first -= 1
+    while last < end_line and lines[last].strip() == "\\":
+        last += 1
+    used.update(
+        line
+        for line in range(first, last + 1)
+        if lines[line - 1].strip() == "\\"
+    )
+    groups.append(set(used))
+    used.clear()
+    return last
 
 
 def _physical_line_issues(
@@ -965,49 +1007,29 @@ def _physical_line_issues(
     deep_start_lines = set()
     at_line_start = True
 
-    def indentation(text: str) -> int:
-        prefix: str
-
-        prefix = text[: len(text) - len(text.lstrip(" \t\f"))]
-        # Python resets the indentation column at a form feed.
-        return len(prefix.rsplit("\f", 1)[-1].expandtabs(8))
-
-    def finish(end_line: int) -> None:
-        first: int
-        last: int
-
-        nonlocal previous_end
-        if not used:
-            return
-        first, last = min(used), max(used)
-        # Explicit continuation lines containing only a backslash have no
-        # token of their own. Include them in the physical extent.
-        while first > previous_end + 1 and lines[first - 2].strip() == "\\":
-            first -= 1
-        while last < end_line and lines[last].strip() == "\\":
-            last += 1
-        used.update(
-            line
-            for line in range(first, last + 1)
-            if lines[line - 1].strip() == "\\"
-        )
-        groups.append(set(used))
-        used.clear()
-        previous_end = last
-
     for token in tokenize.generate_tokens(io.StringIO(source).readline):
         if prefix_end is not None and token.start[0] > prefix_end:
-            finish(prefix_end)
+            previous_end = _finish_physical_line_group(
+                prefix_end, previous_end, lines, used, groups
+            )
             break
         if token.type in (tokenize.NEWLINE, tokenize.ENDMARKER):
-            finish(min(token.start[0], len(lines)))
+            _finish_physical_line_group(
+                min(token.start[0], len(lines)),
+                previous_end,
+                lines,
+                used,
+                groups,
+            )
             previous_end = token.start[0]
             at_line_start = True
             continue
         if token.type == tokenize.INDENT:
             # Diagnose the new indentation step, not inherited errors.
             parent = indents[-1]
-            indent_widths[indentation(token.string) - indentation(parent)] += 1
+            indent_widths[
+                _indentation(token.string) - _indentation(parent)
+            ] += 1
             if token.string != parent + "    ":
                 incorrect_indentation.add(token.start[0])
             indents.append(token.string)
@@ -1027,10 +1049,14 @@ def _physical_line_issues(
         if len(indents) > 5 and token.start in simple_starts:
             deep_start_lines.add(token.start[0])
         if token.start in starts:
-            finish(token.start[0] - 1)
+            previous_end = _finish_physical_line_group(
+                token.start[0] - 1, previous_end, lines, used, groups
+            )
         used.update(range(token.start[0], token.end[0] + 1))
         if token.type == tokenize.OP and token.string == ";":
-            finish(token.end[0])
+            previous_end = _finish_physical_line_group(
+                token.end[0], previous_end, lines, used, groups
+            )
 
     trailing = {
         line
@@ -1044,9 +1070,11 @@ def _physical_line_issues(
         width = min(indent_widths, key=lambda n: (-indent_widths[n], n))
         for group in groups:
             first = min(group)
-            limit = indentation(lines[first - 1]) + 2 * width
+            limit = _indentation(lines[first - 1]) + 2 * width
             deep.update(
-                line for line in group if indentation(lines[line - 1]) >= limit
+                line
+                for line in group
+                if _indentation(lines[line - 1]) >= limit
             )
 
     for description, findings in (
@@ -1057,6 +1085,13 @@ def _physical_line_issues(
     ):
         for line in sorted(findings):
             issues.add(line, description)
+
+
+def _declaration_line(
+    statement: ast.AnnAssign, locations: _SourceLocations
+) -> int:
+    # The colon establishes the annotation, even across a backslash.
+    return locations.following(statement.target, {":"})
 
 
 def _check_scope(
@@ -1198,12 +1233,8 @@ def _check_scope(
         and isinstance(statement.target, ast.Name)
     ]
 
-    def declaration_line(statement: ast.AnnAssign) -> int:
-        # The colon establishes the annotation, even across a backslash.
-        return locations.following(statement.target, {":"})
-
     findings = (
-        (declaration_line(statement), statement.target.id)
+        (_declaration_line(statement, locations), statement.target.id)
         for statement in bare_declarations
         if id(statement) not in declaration_nodes
         and isinstance(statement.target, ast.Name)
@@ -1214,7 +1245,7 @@ def _check_scope(
     for statement in leading_decls:
         assert isinstance(statement.target, ast.Name)
         name = statement.target.id
-        line = declaration_line(statement)
+        line = _declaration_line(statement, locations)
         if name < greatest:
             issues.add(line, "declarations not in alphabetical order")
         greatest = max(greatest, name)
@@ -1239,7 +1270,7 @@ def _check_scope(
         assert isinstance(statement.target, ast.Name)
         name = statement.target.id
         if name in seen:
-            duplicates.append((declaration_line(statement), name))
+            duplicates.append((_declaration_line(statement, locations), name))
         seen.add(name)
     issues.names("duplicate declarations", iter(duplicates))
 
