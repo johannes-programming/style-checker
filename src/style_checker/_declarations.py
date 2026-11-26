@@ -53,10 +53,13 @@ class FunctionViolation:
 
 
 def _join_issues(issues: list[str]) -> str:
-    segments: list[str]
-
-    segments = [issue.replace("!", "") + "!" for issue in issues]
-    return " ".join(segments)
+    ans: str
+    issue: str
+    ans = ""
+    for issue in issues:
+        ans += issue + "! "
+    ans = ans.rstrip()
+    return ans
 
 
 def _is_docstring_statement(node: ast.stmt) -> bool:
