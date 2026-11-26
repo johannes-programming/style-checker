@@ -1,2 +1,3 @@
-3: declarations not at beginning: 'beta'!
-5: dead module names: 'alpha', 'beta'! missing declarations: 'beta'!
+3: DBEG: declarations not at beginning: 'beta'!
+5: DEAD: dead module names: 'alpha', 'beta'!
+5: DMIS: missing declarations: 'beta'!

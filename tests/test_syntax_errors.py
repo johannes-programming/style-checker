@@ -25,21 +25,21 @@ class TestSyntaxErrors(unittest.TestCase):
             with self.assertRaises(SyntaxError) as caught:
                 ast.parse(source, filename=str(path))
                 symtable.symtable(source, str(path), "exec")
-            syntax = "{name}: {msg}!".format(
+            syntax = "SYN: {name}: {msg}!".format(
                 msg=caught.exception.msg,
                 name=type(caught.exception).__name__,
             )
             self.assertEqual(
-                list(scan(str(path), "{line}: {desc}")),
+                list(scan(str(path), "{line}: {rule}: {desc}")),
                 [line.replace("<syntax>", syntax) for line in expected],
             )
 
     def test_module_interruption(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "2: trailing whitespace on physical lines! "
-            "missing declarations: 'value'!",
-            "3: trailing whitespace on physical lines!",
+            "2: DMIS: missing declarations: 'value'!",
+            "2: TW: trailing whitespace on physical lines!",
+            "3: TW: trailing whitespace on physical lines!",
             "4: <syntax>",
         ]
         self.check(
@@ -50,8 +50,8 @@ class TestSyntaxErrors(unittest.TestCase):
     def test_open_function(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "2: unannotated arguments: 'arg'!",
-            "4: missing declarations: 'value'!",
+            "2: ARG: unannotated arguments: 'arg'!",
+            "4: DMIS: missing declarations: 'value'!",
             "5: <syntax>",
         ]
         self.check(
@@ -71,7 +71,7 @@ class TestSyntaxErrors(unittest.TestCase):
             "    unused: int\n"
             "    pass\n"
             "broken =\n",
-            ["5: unnecessary declarations: 'unused'! <syntax>"],
+            ["5: DUN: unnecessary declarations: 'unused'!", "5: <syntax>"],
         )
 
     def test_completed_scope_before_error(self: Self, /) -> None:
@@ -82,22 +82,23 @@ class TestSyntaxErrors(unittest.TestCase):
             "    pass\n"
             "print(1)\n"
             "broken =\n",
-            ["5: unnecessary declarations: 'unused'!", "6: <syntax>"],
+            ["5: DUN: unnecessary declarations: 'unused'!", "6: <syntax>"],
         )
 
     def test_same_physical_line(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "1: simple statements not at beginning of physical line! "
-            "missing declarations: 'x', 'y'! <syntax>",
+            "1: DMIS: missing declarations: 'x', 'y'!",
+            "1: SP: simple statements not at beginning of physical line!",
+            "1: <syntax>",
         ]
         self.check("x = 1; y = 2; broken =\n", expected_lines)
 
     def test_incomplete_suite(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "3: unannotated arguments: 'self'! "
-            "first argument must be positional-only!",
+            "3: ARG: unannotated arguments: 'self'!",
+            "3: POS: first argument must be positional-only!",
             "4: <syntax>",
         ]
         self.check(
@@ -115,19 +116,19 @@ class TestSyntaxErrors(unittest.TestCase):
             "    try:\n"
             "        value = 1\n"
             "        broken =\n",
-            ["4: missing declarations: 'value'!", "5: <syntax>"],
+            ["4: DMIS: missing declarations: 'value'!", "5: <syntax>"],
         )
 
     def test_unclosed_expression(self: Self, /) -> None:
         self.check(
             "__all__: list[str] = []\nvalue = 1\nbroken = (\n",
-            ["2: missing declarations: 'value'!", "3: <syntax>"],
+            ["2: DMIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_indentation_error(self: Self, /) -> None:
         self.check(
             "__all__: list[str] = []\nvalue = 1\n    broken = 2\n",
-            ["2: missing declarations: 'value'!", "3: <syntax>"],
+            ["2: DMIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_symbol_table_error(self: Self, /) -> None:
@@ -136,13 +137,13 @@ class TestSyntaxErrors(unittest.TestCase):
             "def f() -> None:\n"
             "    value = 1\n"
             "    global value\n",
-            ["3: missing declarations: 'value'!", "4: <syntax>"],
+            ["3: DMIS: missing declarations: 'value'!", "4: <syntax>"],
         )
 
     def test_error_at_eof(self: Self, /) -> None:
         self.check(
             '__all__: list[str] = ["f"]\ndef f(arg):\n',
-            ["2: unannotated arguments: 'arg'! <syntax>"],
+            ["2: ARG: unannotated arguments: 'arg'!", "2: <syntax>"],
         )
 
     def test_error_at_start(self: Self, /) -> None:
@@ -168,14 +169,14 @@ class TestSyntaxErrors(unittest.TestCase):
         with self.subTest(fixture=fixture):
             source = fixture.read_text(encoding="utf-8")
             eof = len(source.splitlines())
-            expected = list(scan(str(fixture), "{line}: {desc}"))
+            expected = list(scan(str(fixture), "{line}: {rule}: {desc}"))
             path.write_text(
                 source
                 + ("" if source.endswith("\n") else "\n")
                 + "broken =\n",
                 encoding="utf-8",
             )
-            actual = list(scan(str(path), "{line}: {desc}"))
+            actual = list(scan(str(path), "{line}: {rule}: {desc}"))
             try:
                 ast.parse(source)
             except SyntaxError:
@@ -192,7 +193,7 @@ class TestSyntaxErrors(unittest.TestCase):
             self.assertEqual(actual_lines, expected_lines)
             self.assertTrue(actual[-1].startswith(f"{eof + 1}: "))
             self.assertTrue(
-                actual[-1].endswith("SyntaxError: invalid syntax!")
+                actual[-1].endswith("SYN: SyntaxError: invalid syntax!")
             )
             self.assertNotIn("dead module names", "\n".join(actual))
             self.assertNotIn("missing '__all__'", "\n".join(actual))

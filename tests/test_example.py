@@ -16,7 +16,7 @@ class TestExample(unittest.TestCase):
         expected: str
         stdout: io.StringIO
         args = [
-            "--outmsg={line}: {desc}",
+            "--outmsg={line}: {rule}: {desc}",
             "--",
             str(file.parent / "**" / "*.py"),
         ]

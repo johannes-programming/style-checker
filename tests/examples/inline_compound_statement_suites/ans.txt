@@ -1,6 +1,6 @@
-2: simple statements not at beginning of physical line!
-4: simple statements not at beginning of physical line!
-5: simple statements not at beginning of physical line!
-8: simple statements not at beginning of physical line!
-10: simple statements not at beginning of physical line!
-11: simple statements not at beginning of physical line!
+2: SP: simple statements not at beginning of physical line!
+4: SP: simple statements not at beginning of physical line!
+5: SP: simple statements not at beginning of physical line!
+8: SP: simple statements not at beginning of physical line!
+10: SP: simple statements not at beginning of physical line!
+11: SP: simple statements not at beginning of physical line!

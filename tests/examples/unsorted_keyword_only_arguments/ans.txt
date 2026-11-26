@@ -1,2 +1,2 @@
-4: keyword-only arguments not in alphabetical order!
-5: dead module names: 'unordered_keyword_only'!
+4: KWOR: keyword-only arguments not in alphabetical order!
+5: DEAD: dead module names: 'unordered_keyword_only'!

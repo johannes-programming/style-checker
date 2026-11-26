@@ -68,10 +68,10 @@ The declaration requirement does not apply to:
 
 * Names automatically provided in a module's namespace.
 * Names bound by nested ``class`` and ``def`` statements,
-    i.e. of the classes and functions they define.
+        i.e. of the classes and functions they define.
 * Names bound by ``import`` statements.
 * Temporary exception names introduced by ``except ... as ...``, which remain
-    bound only for the duration of the exception handler.
+        bound only for the duration of the exception handler.
 * Each ``TypeVar`` and every similar construct is exempt from type annotation.
 
 Declaration Placement
@@ -83,7 +83,7 @@ intermixed with the declarations in that initial block.
 Only the following may precede that block:
 
 * A module or function docstring, if present. The docstring must be the first
-    statement in its scope.
+        statement in its scope.
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
@@ -124,19 +124,19 @@ For example:
 
 .. code-block:: python
 
-    __all__: list[str] = ["Example"]
+        __all__: list[str] = ["Example"]
 
-    class Example:
-        def method(self: "Example", /, value: int) -> int:
-            return value
+        class Example:
+                def method(self: "Example", /, value: int) -> int:
+                        return value
 
-        @classmethod
-        def build(cls: type["Example"], /) -> "Example":
-            return cls()
+                @classmethod
+                def build(cls: type["Example"], /) -> "Example":
+                        return cls()
 
-        @staticmethod
-        def static(value: int) -> int:
-            return value
+                @staticmethod
+                def static(value: int) -> int:
+                        return value
 
 Omitting the ``/`` in ``method`` or ``build`` would violate the rule.
 
@@ -179,20 +179,20 @@ separation between declarations and assignments:
 
 .. code-block:: python
 
-    """An example module."""
+        """An example module."""
 
-    from __future__ import annotations
+        from __future__ import annotations
 
-    __all__: list[str] = ["count", "double"]
+        __all__: list[str] = ["count", "double"]
 
-    count: int
+        count: int
 
-    count = 2
+        count = 2
 
-    def double(value: int) -> int:
-        result: int
-        result = value * 2
-        return result
+        def double(value: int) -> int:
+                result: int
+                result = value * 2
+                return result
 
 
 Installation
@@ -203,7 +203,7 @@ Open your terminal and run:
 
 .. code-block:: shell
 
-    pip install style-checker
+        pip install style-checker
 
 Typing
 ------
@@ -224,8 +224,8 @@ This function is the CLI-rendering of ``run``.
 ``style_checker.parse_args(args: Iterable[str] | None = None) -> Namespace``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``style_checker.run(*include: str, exclude: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}: {desc}") -> None``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``style_checker.run(*include: str, exclude: Iterable[str] = (), ignore: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}:{rule}: {desc}") -> None``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``run`` checks Python source files and prints a diagnostic report.
 
@@ -239,22 +239,72 @@ e.g. ``**/*.py``.
 ``exclude`` is an iterable you can supply.
 It excludes from the analysis files otherwise covered by ``include``.
 
+``ignore`` is an iterable of case-sensitive rule marks. Ignored issues are
+omitted from the report. If all issues on a line are ignored, that line is
+not reported. Unknown marks have no effect. On the command line, repeat
+``--ignore=MARK`` for each rule to ignore, for example::
+
+        python -m style_checker --ignore=TW --ignore=DMIS example.py
+
 ``outmsg`` controls the format of **each diagnostic line**.
-It defaults to ``"{file}:{line}: {desc}"``.
+It defaults to ``"{file}:{line}:{rule}: {desc}"``.
 The supported substitution fields are:
 
 - ``{file}``: the filename containing the violation;
-- ``{line}``: the line number identifying the violation; and
-- ``{desc}``: a description of the style rule or rules violated.
+- ``{line}``: the line number identifying the violation;
+- ``{rule}``: the case-sensitive rule mark; and
+- ``{desc}``: the rule description, including any relevant details, followed
+    by an exclamation mark. It does not include the rule mark.
 
-The checker produces **exactly one report line per offending physical line**,
-not one line for every individual defect on that line.
+The checker produces **exactly one report line per distinct combination of
+file, physical line, and rule**. Repeated findings for the same combination
+are consolidated, with distinct affected names listed in alphabetical order.
+The report is ordered by ``os.path.abspath(file)``, then by numeric line
+number, then by rule mark in alphabetical order. File paths retain their
+original spelling in the output; absolute paths are used for ordering and
+identifying duplicate file arguments. These guarantees also apply to custom
+``outmsg`` formats, even when a format omits the distinguishing fields.
 The checker also reports module-level violations (including invalid or missing
-``__all__``), and multiple defects on the same line are combined in the
-``{desc}`` field.  An unreadable or syntactically invalid file likewise yields
-a diagnostic.
+``__all__``) and syntax errors. File-reading failures are propagated as
+exceptions.
 
-If any diagnostics were produced then ``run`` raises an ``ExceptionGroup``.
+If any non-ignored diagnostics were produced then ``run`` raises an
+``ExceptionGroup``.
+
+Rule Marks
+~~~~~~~~~~
+
+Each mark identifies one diagnostic category. Parser errors (including
+indentation and tab errors from Python's parser) share the mark ``SYN``;
+ignoring it does not resume checking beyond the syntax error.
+
+* ``ALDU``: multiple '__all__' assignments.
+* ``ALIM``: '__all__' must precede imports.
+* ``ALLI``: '__all__' must be assigned a list literal.
+* ``ALMS``: missing '__all__'.
+* ``ALOR``: '__all__' items not in alphabetical order.
+* ``ALST``: '__all__' items must be string literals.
+* ``ALTY``: '__all__' must be annotated as 'list[str]'.
+* ``ARG``: unannotated arguments.
+* ``CONT``: physical lines indented two or more levels deeper.
+* ``DBEG``: declarations not at beginning.
+* ``DDUP``: duplicate declarations.
+* ``DEAD``: dead module names.
+* ``DEEP``: simple statements indented more than four levels.
+* ``DEX``: declarations for 'except' names.
+* ``DIMP``: declarations for 'def'/'class'/'import' names.
+* ``DMIS``: missing declarations.
+* ``DORD``: declarations not in alphabetical order.
+* ``DUN``: unnecessary declarations.
+* ``DVAL``: declaration assigns a value.
+* ``IND``: indentation must be four spaces per level.
+* ``KWOR``: keyword-only arguments not in alphabetical order.
+* ``POS``: first argument must be positional-only.
+* ``SP``: simple statements not at beginning of physical line.
+* ``SYN``: Python syntax error.
+* ``TIMP``: 'typing' imports available in 'collections.abc'.
+* ``TW``: trailing whitespace on physical lines.
+* ``WILD``: wildcard imports are forbidden.
 
 Testing
 -------

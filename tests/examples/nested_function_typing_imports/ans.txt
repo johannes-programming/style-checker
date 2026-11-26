@@ -1,2 +1,2 @@
-8: 'typing' imports available in 'collections.abc': 'Callable', 'Sequence'!
-9: dead module names: 'load'!
+8: TIMP: 'typing' imports available in 'collections.abc': 'Callable', 'Sequence'!
+9: DEAD: dead module names: 'load'!

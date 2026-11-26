@@ -1,1 +1,1 @@
-7: dead module names: 'value'!
+7: DEAD: dead module names: 'value'!

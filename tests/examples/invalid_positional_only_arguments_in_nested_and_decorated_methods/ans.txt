@@ -1,13 +1,14 @@
-8: first argument must be positional-only!
-12: first argument must be positional-only!
-15: first argument must be positional-only!
-18: first argument must be positional-only!
-21: first argument must be positional-only!
-25: first argument must be positional-only!
-30: first argument must be positional-only!
-33: first argument must be positional-only!
-37: first argument must be positional-only!
-40: unannotated arguments: 'self'! first argument must be positional-only!
-46: first argument must be positional-only!
-50: first argument must be positional-only!
-57: first argument must be positional-only!
+8: POS: first argument must be positional-only!
+12: POS: first argument must be positional-only!
+15: POS: first argument must be positional-only!
+18: POS: first argument must be positional-only!
+21: POS: first argument must be positional-only!
+25: POS: first argument must be positional-only!
+30: POS: first argument must be positional-only!
+33: POS: first argument must be positional-only!
+37: POS: first argument must be positional-only!
+40: ARG: unannotated arguments: 'self'!
+40: POS: first argument must be positional-only!
+46: POS: first argument must be positional-only!
+50: POS: first argument must be positional-only!
+57: POS: first argument must be positional-only!

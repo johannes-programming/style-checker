@@ -1,4 +1,4 @@
-7: missing declarations: 'file'!
-17: missing declarations: 'line'!
-28: missing declarations: 'stream'!
-33: dead module names: 'bar', 'baz', 'foo'!
+7: DMIS: missing declarations: 'file'!
+17: DMIS: missing declarations: 'line'!
+28: DMIS: missing declarations: 'stream'!
+33: DEAD: dead module names: 'bar', 'baz', 'foo'!

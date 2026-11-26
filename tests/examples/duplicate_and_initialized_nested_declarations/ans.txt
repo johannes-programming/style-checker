@@ -1,3 +1,4 @@
-9: declarations not at beginning: 'beta'! duplicate declarations: 'beta'!
-11: declaration assigns a value: 'beta'!
-13: dead module names: 'nested_annotations'!
+9: DBEG: declarations not at beginning: 'beta'!
+9: DDUP: duplicate declarations: 'beta'!
+11: DVAL: declaration assigns a value: 'beta'!
+13: DEAD: dead module names: 'nested_annotations'!

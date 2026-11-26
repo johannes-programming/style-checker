@@ -21,7 +21,7 @@ local-variable declarations.
 Nested functions/classes are checked independently and their bodies are not
 treated as part of the enclosing function.
 
-Each offending physical line produces exactly one report line.
+Each distinct file, physical line, and rule produces one report line.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ from style_checker import _declarations
 
 ERRMSG_DEFAULT: str
 
-ERRMSG_DEFAULT = "{file}:{line}: {desc}"
+ERRMSG_DEFAULT = "{file}:{line}:{rule}: {desc}"
 
 
 def get_files(
@@ -60,7 +60,7 @@ def get_files(
     for pattern in exclude:
         for file in glob.glob(pattern, recursive=True):
             ans.pop(os.path.abspath(file), "")
-    return list(ans.values())
+    return [ans[path] for path in sorted(ans)]
 
 
 def main(args: abc.Iterable[str] | None = None) -> int:
@@ -99,6 +99,13 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
         metavar="exclude",
     )
     parser.add_argument(
+        "--ignore",
+        action="append",
+        default=[],
+        help="ignore a diagnostic rule by mark (repeatable)",
+        metavar="mark",
+    )
+    parser.add_argument(
         "--outfile",
         default="-",
         help="write the report to this file, stdout being designated by the default of '-'",
@@ -133,16 +140,19 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
 def run(
     *include: str,
     exclude: abc.Iterable[str] = (),
+    ignore: abc.Iterable[str] = (),
     outfile: str = "-",
     outmsg: str = ERRMSG_DEFAULT,
 ) -> None:
     exceptions: list[Exception]
     file: str
     files: list[str]
+    ignored: frozenset[str]
     line: str
     opener: contextlib.AbstractContextManager[TextIO]
     stream: TextIO
     files = get_files(include=include, exclude=exclude)
+    ignored = frozenset(ignore)
 
     if outfile == "-":
         opener = contextlib.nullcontext(sys.stdout)
@@ -152,7 +162,9 @@ def run(
     exceptions = []
     with opener as stream:
         for file in files:
-            for line in _declarations.scan(file, errmsg=outmsg):
+            for line in _declarations.scan(
+                file, errmsg=outmsg, ignore=ignored
+            ):
                 print(line, file=stream)
                 exceptions.append(Exception(line))
     if exceptions:

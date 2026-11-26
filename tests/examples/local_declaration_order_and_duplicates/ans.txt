@@ -1,5 +1,7 @@
-6: declarations not in alphabetical order!
-14: missing declarations: 'wrong'! declaration assigns a value: 'wrong'!
-16: missing declarations: 'missing'!
-23: declarations not in alphabetical order! duplicate declarations: 'alpha'!
-26: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!
+6: DORD: declarations not in alphabetical order!
+14: DMIS: missing declarations: 'wrong'!
+14: DVAL: declaration assigns a value: 'wrong'!
+16: DMIS: missing declarations: 'missing'!
+23: DDUP: duplicate declarations: 'alpha'!
+23: DORD: declarations not in alphabetical order!
+26: DEAD: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!

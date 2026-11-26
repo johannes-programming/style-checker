@@ -1,5 +1,6 @@
-4: indentation must be four spaces per level!
-5: indentation must be four spaces per level!
-6: indentation must be four spaces per level!
-7: indentation must be four spaces per level!
-8: indentation must be four spaces per level! simple statements indented more than four levels!
+4: IND: indentation must be four spaces per level!
+5: IND: indentation must be four spaces per level!
+6: IND: indentation must be four spaces per level!
+7: IND: indentation must be four spaces per level!
+8: DEEP: simple statements indented more than four levels!
+8: IND: indentation must be four spaces per level!

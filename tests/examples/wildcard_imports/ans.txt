@@ -1,1 +1,1 @@
-5: wildcard imports are forbidden!
+5: WILD: wildcard imports are forbidden!

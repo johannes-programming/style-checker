@@ -1,5 +1,5 @@
-3: physical lines indented two or more levels deeper!
-10: simple statements not at beginning of physical line!
-11: physical lines indented two or more levels deeper!
-14: physical lines indented two or more levels deeper!
-17: physical lines indented two or more levels deeper!
+3: CONT: physical lines indented two or more levels deeper!
+10: SP: simple statements not at beginning of physical line!
+11: CONT: physical lines indented two or more levels deeper!
+14: CONT: physical lines indented two or more levels deeper!
+17: CONT: physical lines indented two or more levels deeper!

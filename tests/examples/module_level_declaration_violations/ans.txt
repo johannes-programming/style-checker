@@ -1,8 +1,10 @@
-10: declarations not in alphabetical order!
-11: declarations not in alphabetical order!
-12: declarations not in alphabetical order! duplicate declarations: 'duplicate'!
-17: missing declarations: 'missing'!
-18: missing declarations: 'initialized'! declaration assigns a value: 'initialized'!
-19: declarations not at beginning: 'late'!
-20: missing declarations: 'late'!
-24: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!
+10: DORD: declarations not in alphabetical order!
+11: DORD: declarations not in alphabetical order!
+12: DDUP: duplicate declarations: 'duplicate'!
+12: DORD: declarations not in alphabetical order!
+17: DMIS: missing declarations: 'missing'!
+18: DMIS: missing declarations: 'initialized'!
+18: DVAL: declaration assigns a value: 'initialized'!
+19: DBEG: declarations not at beginning: 'late'!
+20: DMIS: missing declarations: 'late'!
+24: DEAD: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!

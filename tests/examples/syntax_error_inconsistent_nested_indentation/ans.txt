@@ -1,1 +1,1 @@
-5: TabError: inconsistent use of tabs and spaces in indentation!
+5: SYN: TabError: inconsistent use of tabs and spaces in indentation!
