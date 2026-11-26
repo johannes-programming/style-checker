@@ -14,8 +14,8 @@ At module level and inside every ``def`` or ``async def``:
 * declarations must not assign a value;
 * declaration names must be in alphabetical order;
 * every function parameter must have a type annotation;
-* the first parameter of an undecorated direct class method or a ``def``
-    immediately decorated by ``@classmethod`` must be positional-only.
+* undecorated methods and functions directly decorated by ``@classmethod``
+    must have a positional-only first parameter.
 
 Imports may precede the declaration block in either scope, and module-level
 ``__all__`` is subject to its own separate rules.
@@ -775,7 +775,7 @@ def _check_scope(
     source_lines: list[bytes],
     physical_line_issues: list[str],
     dead_module_names: list[str] | None = None,
-    direct_class_member: bool = False,
+    in_class: bool = False,
 ) -> FunctionViolation | None:
     annotations: list[ast.AnnAssign]
     assigned_declarations: set[str]
@@ -783,6 +783,7 @@ def _check_scope(
     declaration_names: list[str]
     declaration_nodes: set[int]
     declared: set[str]
+    decorator: ast.expr
     direct_annotation_nodes: set[int]
     duplicates: list[str]
     exception_declarations: list[str]
@@ -799,6 +800,7 @@ def _check_scope(
     nested_declaration_names: list[str]
     non_variable_declarations: list[str]
     ordering_body: list[ast.stmt]
+    requires_positional_only: bool
     start: int
     statement: ast.AnnAssign
     unannotated_parameters: list[str]
@@ -878,15 +880,16 @@ def _check_scope(
         arg.arg for arg in node.args.kwonlyargs
     ] != sorted(arg.arg for arg in node.args.kwonlyargs):
         issues.append("keyword-only arguments not in alphabetical order")
-
-    if isinstance(node, ast.FunctionDef) and not node.args.posonlyargs:
-        if direct_class_member and not node.decorator_list:
-            issues.append("first argument must be positional-only")
-        elif (
-            node.decorator_list
-            and isinstance(node.decorator_list[-1], ast.Name)
-            and node.decorator_list[-1].id == "classmethod"
-        ):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.decorator_list:
+            decorator = node.decorator_list[-1]
+            requires_positional_only = (
+                isinstance(decorator, ast.Name)
+                and decorator.id == "classmethod"
+            )
+        else:
+            requires_positional_only = in_class
+        if requires_positional_only and not node.args.posonlyargs:
             issues.append("first argument must be positional-only")
 
     # A bare annotation later in the body is itself evidence that the
@@ -1049,7 +1052,7 @@ class _FunctionChecker(ast.NodeVisitor):
         self.violations: list[FunctionViolation] = []
         self.external_assignments: dict[int, set[str]] = {}
         self.physical_line_issues: dict[int, list[str]] = {}
-        self.direct_class_members: set[int] = set()
+        self.in_class: bool = False
 
     def visit_Module(self: Self, /, node: ast.Module) -> None:
         violation: FunctionViolation | None
@@ -1073,6 +1076,7 @@ class _FunctionChecker(ast.NodeVisitor):
         /,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
     ) -> None:
+        in_class: bool
         statement: ast.stmt
         violation: FunctionViolation | None
 
@@ -1082,15 +1086,18 @@ class _FunctionChecker(ast.NodeVisitor):
             self.external_assignments.get(id(node), set()),
             self.source_lines,
             self.physical_line_issues.get(id(node), []),
-            direct_class_member=id(node) in self.direct_class_members,
+            in_class=self.in_class,
         )
         if violation is not None:
             self.violations.append(violation)
 
         # Check nested functions too, without otherwise confusing their scope
         # with this function's scope.
+        in_class = self.in_class
+        self.in_class = False
         for statement in node.body:
             self.visit(statement)
+        self.in_class = in_class
 
     def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
         self._visit_function(node)
@@ -1102,6 +1109,7 @@ class _FunctionChecker(ast.NodeVisitor):
 
     def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
         functionViolation: FunctionViolation
+        in_class: bool
         issues: list[str]
 
         issues = _collect_body_facts(node.body, set()).import_issues()
@@ -1114,12 +1122,10 @@ class _FunctionChecker(ast.NodeVisitor):
                 self.filename, node.lineno, "; ".join(issues)
             )
             self.violations.append(functionViolation)
-        self.direct_class_members.update(
-            id(statement)
-            for statement in node.body
-            if isinstance(statement, ast.FunctionDef)
-        )
+        in_class = self.in_class
+        self.in_class = True
         self.generic_visit(node)
+        self.in_class = in_class
 
 
 def check_file(path: str) -> list[FunctionViolation]:

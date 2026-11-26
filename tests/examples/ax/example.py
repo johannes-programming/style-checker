@@ -1,78 +1,49 @@
-__all__: list[str] = ["C", "Combined", "ordinary", "outside"]
+__all__: list[str] = ["C", "f", "outer"]
+
+def identity(value: object) -> object:
+    return value
+
+
+def f(value: int) -> int:
+    return value
+
 
 class C:
-    def good(self: "C", /, value: int) -> None:
-        pass
-
-    def bad(self: "C", value: int) -> None:
-        pass
-
-    def missing() -> None:
-        pass
-
-    def variadic(*args: int) -> None:
-        pass
-
-    def keyword_only(*, self: "C") -> None:
-        pass
-
-    @classmethod
-    def good_class(cls: type["C"], /) -> None:
-        pass
-
-    @classmethod
-    def bad_class(cls: type["C"]) -> None:
-        pass
-
-    @classmethod
-    def missing_class() -> None:
-        pass
-
-    @staticmethod
-    def static(value: int) -> None:
-        pass
-
-    @property
-    def decorated(self: "C") -> int:
-        return 0
-
-    @staticmethod
-    @classmethod
-    def inner_classmethod(cls: type["C"]) -> None:
-        pass
-
-    @classmethod
-    @staticmethod
-    def outer_classmethod(value: int) -> None:
-        pass
+    def method(self: "C", /, value: int) -> int:
+        def nested(value: int) -> int:
+            return value
+        return nested(value)
 
     if True:
-        def indirect(self: "C") -> None:
+        def conditional(self: "C", /) -> None:
             pass
 
-        @classmethod
-        def indirect_class(cls: type["C"]) -> None:
-            pass
+    @classmethod
+    def build(cls: type["C"], /) -> "C":
+        return cls()
 
-    def enclosing(self: "C", /) -> None:
-        def nested(value: int) -> None:
-            pass
-        nested(0)
+    @staticmethod
+    def static(value: int) -> int:
+        return value
 
-    class Nested:
-        def bad(self: "C.Nested") -> None:
-            pass
+    @classmethod
+    @identity
+    def not_direct(value: int) -> int:
+        return value
 
-    async def asynchronous(self: "C") -> None:
+    @identity
+    @classmethod
+    def direct(cls: type["C"], /) -> None:
         pass
 
-@classmethod
-def outside(cls: type[C]) -> None:
-    pass
-
-def ordinary(value: int) -> None:
-    pass
-
-class Combined(C):
-    def bad(self) -> None:
+    async def asynchronous(self: "C", /) -> None:
         pass
+
+
+def outer() -> None:
+    class Local:
+        def method(self: "Local", /) -> None:
+            pass
+
+    def nested(value: int) -> int:
+        return value
