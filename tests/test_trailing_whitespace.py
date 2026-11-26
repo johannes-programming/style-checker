@@ -20,6 +20,7 @@ class TestTrailingWhitespace(unittest.TestCase):
             return list(scan(str(path), "{line}: {desc}"))
 
     def test_all_physical_line_types(self: Self, /) -> None:
+        expected_lines: list[str]
         source: bytes
         source = (
             b'__all__: list[str] = ["f"]  \r\n'
@@ -32,13 +33,11 @@ class TestTrailingWhitespace(unittest.TestCase):
             b'    """)\r\n'
             b"# final comment "
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                f"{line}: trailing whitespace on physical lines!"
-                for line in (1, 2, 3, 5, 6, 9)
-            ],
-        )
+        expected_lines = [
+            f"{line}: trailing whitespace on physical lines!"
+            for line in (1, 2, 3, 5, 6, 9)
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_line_breaks_and_eof(self: Self, /) -> None:
         newline: bytes
@@ -62,6 +61,7 @@ class TestTrailingWhitespace(unittest.TestCase):
         )
 
     def test_class_and_decorator(self: Self, /) -> None:
+        expected_lines: list[str]
         source: bytes
         source = (
             b'__all__: list[str] = ["C"]\n'
@@ -69,37 +69,36 @@ class TestTrailingWhitespace(unittest.TestCase):
             b"class C: \n"
             b"    pass\t\n"
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                f"{line}: trailing whitespace on physical lines!"
-                for line in (2, 3, 4)
-            ],
-        )
+        expected_lines = [
+            f"{line}: trailing whitespace on physical lines!"
+            for line in (2, 3, 4)
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_trailing_whitespace_and_deep_indentation(
         self: Self,
         /,
     ) -> None:
+        expected_lines: list[str]
         source: bytes
         source = b"__all__: list[str] = []\nprint(\n        1  \n)  \n"
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "3: trailing whitespace on physical lines!",
-                "4: trailing whitespace on physical lines!",
-            ],
-        )
+        expected_lines = [
+            "3: trailing whitespace on physical lines!",
+            "4: trailing whitespace on physical lines!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
+        expected_lines = [
+            "3: trailing whitespace on physical lines! "
+            "physical lines indented two or more levels deeper!",
+            "4: trailing whitespace on physical lines!",
+        ]
         self.assertEqual(
             self.diagnostics(source + b"if True:\n    pass\n"),
-            [
-                "3: trailing whitespace on physical lines! "
-                "physical lines indented two or more levels deeper!",
-                "4: trailing whitespace on physical lines!",
-            ],
+            expected_lines,
         )
 
     def test_suite_indentation_reported_once(self: Self, /) -> None:
+        source: bytes
         source = (
             b"if True:\n"
             b'          print("hello")\n'
@@ -112,6 +111,8 @@ class TestTrailingWhitespace(unittest.TestCase):
         )
 
     def test_nested_and_sibling_suite_indentation(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = (
             b"__all__: list[str] = []\n"
             b"if True:\n"
@@ -126,15 +127,15 @@ class TestTrailingWhitespace(unittest.TestCase):
             b"          pass\n"
             b"          pass\n"
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                f"{line}: indentation must be four spaces per level!"
-                for line in (3, 7, 11)
-            ],
-        )
+        expected_lines = [
+            f"{line}: indentation must be four spaces per level!"
+            for line in (3, 7, 11)
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_two_space_continuation_width(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = (
             b"__all__: list[str] = []\n"
             b"if True:\n"
@@ -144,29 +145,29 @@ class TestTrailingWhitespace(unittest.TestCase):
             b"    2,\n"
             b")\n"
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "3: indentation must be four spaces per level!",
-                "6: physical lines indented two or more levels deeper!",
-            ],
-        )
+        expected_lines = [
+            "3: indentation must be four spaces per level!",
+            "6: physical lines indented two or more levels deeper!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_multiple_rules_and_scopes_on_one_line(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = (
             b'__all__: list[str] = ["C"]\nclass C:\n    def f(self): pass  \n'
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "3: trailing whitespace on physical lines! "
-                "simple statements not at beginning of physical line! "
-                "unannotated arguments: 'self'! "
-                "first argument must be positional-only!",
-            ],
-        )
+        expected_lines = [
+            "3: trailing whitespace on physical lines! "
+            "simple statements not at beginning of physical line! "
+            "unannotated arguments: 'self'! "
+            "first argument must be positional-only!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_multiline_signature(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = (
             b'__all__: list[str] = ["C"]\n'
             b"class C:\n"
@@ -180,16 +181,16 @@ class TestTrailingWhitespace(unittest.TestCase):
             b"    ) -> None:\n"
             b"        pass\n"
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "6: unannotated arguments: 'value'!",
-                "7: first argument must be positional-only!",
-                "9: keyword-only arguments not in alphabetical order!",
-            ],
-        )
+        expected_lines = [
+            "6: unannotated arguments: 'value'!",
+            "7: first argument must be positional-only!",
+            "9: keyword-only arguments not in alphabetical order!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_scope_end_and_eof(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = (
             b'__all__: list[str] = ["f"]\n'
             b"def f() -> None:\n"
@@ -201,15 +202,17 @@ class TestTrailingWhitespace(unittest.TestCase):
             b'    print("done")\n'
             b"# final comment\n"
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "7: unnecessary declarations: 'unused'!",
-                "9: dead module names: 'g'!",
-            ],
-        )
+        expected_lines = [
+            "7: unnecessary declarations: 'unused'!",
+            "9: dead module names: 'g'!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_eof_violations_use_last_physical_line(self: Self, /) -> None:
+        expected_lines: list[str]
+        line: int
+        source: bytes
+        suffix: bytes
         source = b"def f() -> None:\n    unused: int\n    pass"
         for suffix, line in (
             (b"", 3),
@@ -219,12 +222,13 @@ class TestTrailingWhitespace(unittest.TestCase):
             (b"\n# final comment\n\n", 5),
         ):
             with self.subTest(suffix=suffix):
+                expected_lines = [
+                    f"{line}: missing '__all__'! dead module names: 'f'! "
+                    "unnecessary declarations: 'unused'!",
+                ]
                 self.assertEqual(
                     self.diagnostics(source + suffix),
-                    [
-                        f"{line}: missing '__all__'! dead module names: 'f'! "
-                        "unnecessary declarations: 'unused'!",
-                    ],
+                    expected_lines,
                 )
         self.assertEqual(
             self.diagnostics(b"__all__: list[str] = []\nunused: int\n\n"),
@@ -232,6 +236,8 @@ class TestTrailingWhitespace(unittest.TestCase):
         )
 
     def test_multiline_binding_and_global_assignment(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = (
             b'__all__: list[str] = ["f"]\n'
             b"def f() -> None:\n"
@@ -240,30 +246,30 @@ class TestTrailingWhitespace(unittest.TestCase):
             b"        x\n"
             b"    ) = 1\n"
         )
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "6: missing declarations: 'x'!",
-            ],
-        )
+        expected_lines = [
+            "6: missing declarations: 'x'!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_multiline_all(self: Self, /) -> None:
+        expected_lines: list[str]
+        source: bytes
         source = b'__all__: list[str] = [\n    "z",\n    "a",\n    42,\n]\n'
-        self.assertEqual(
-            self.diagnostics(source),
-            [
-                "3: '__all__' items not in alphabetical order!",
-                "4: '__all__' items must be string literals!",
-            ],
-        )
+        expected_lines = [
+            "3: '__all__' items not in alphabetical order!",
+            "4: '__all__' items must be string literals!",
+        ]
+        self.assertEqual(self.diagnostics(source), expected_lines)
 
     def test_missing_all_after_import(self: Self, /) -> None:
+        expected_lines: list[str]
+        expected_lines = [
+            "1: '__all__' must precede imports!",
+            "2: missing '__all__'!",
+        ]
         self.assertEqual(
             self.diagnostics(b"import os\nprint(os.name)\n"),
-            [
-                "1: '__all__' must precede imports!",
-                "2: missing '__all__'!",
-            ],
+            expected_lines,
         )
 
 

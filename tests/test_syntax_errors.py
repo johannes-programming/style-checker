@@ -7,13 +7,14 @@ import symtable
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 from style_checker._declarations import scan
 
 
 class TestSyntaxErrors(unittest.TestCase):
     def check(self: Self, /, source: str, expected: list[str]) -> None:
+        caught: Any
         directory: str
         path: Path
         syntax: str
@@ -24,25 +25,35 @@ class TestSyntaxErrors(unittest.TestCase):
             with self.assertRaises(SyntaxError) as caught:
                 ast.parse(source, filename=str(path))
                 symtable.symtable(source, str(path), "exec")
-            error: SyntaxError = caught.exception
-            syntax = f"{type(error).__name__}: {error.msg}!"
+            syntax = "{name}: {msg}!".format(
+                msg=caught.exception.msg,
+                name=type(caught.exception).__name__,
+            )
             self.assertEqual(
                 list(scan(str(path), "{line}: {desc}")),
                 [line.replace("<syntax>", syntax) for line in expected],
             )
 
     def test_module_interruption(self: Self, /) -> None:
+        expected_lines: list[str]
+        expected_lines = [
+            "2: trailing whitespace on physical lines! "
+            "missing declarations: 'value'!",
+            "3: trailing whitespace on physical lines!",
+            "4: <syntax>",
+        ]
         self.check(
             "unused: int\nvalue = 1  \n# comment \nbroken =\nafter = 2  \n",
-            [
-                "2: trailing whitespace on physical lines! "
-                "missing declarations: 'value'!",
-                "3: trailing whitespace on physical lines!",
-                "4: <syntax>",
-            ],
+            expected_lines,
         )
 
     def test_open_function(self: Self, /) -> None:
+        expected_lines: list[str]
+        expected_lines = [
+            "2: unannotated arguments: 'arg'!",
+            "4: missing declarations: 'value'!",
+            "5: <syntax>",
+        ]
         self.check(
             '__all__: list[str] = ["f"]\n'
             "def f(arg):\n"
@@ -50,11 +61,7 @@ class TestSyntaxErrors(unittest.TestCase):
             "    value = 1\n"
             "    broken =\n"
             "    unused = 2\n",
-            [
-                "2: unannotated arguments: 'arg'!",
-                "4: missing declarations: 'value'!",
-                "5: <syntax>",
-            ],
+            expected_lines,
         )
 
     def test_closed_function(self: Self, /) -> None:
@@ -79,25 +86,26 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_same_physical_line(self: Self, /) -> None:
-        self.check(
-            "x = 1; y = 2; broken =\n",
-            [
-                "1: simple statements not at beginning of physical line! "
-                "missing declarations: 'x', 'y'! <syntax>",
-            ],
-        )
+        expected_lines: list[str]
+        expected_lines = [
+            "1: simple statements not at beginning of physical line! "
+            "missing declarations: 'x', 'y'! <syntax>",
+        ]
+        self.check("x = 1; y = 2; broken =\n", expected_lines)
 
     def test_incomplete_suite(self: Self, /) -> None:
+        expected_lines: list[str]
+        expected_lines = [
+            "3: unannotated arguments: 'self'! "
+            "first argument must be positional-only!",
+            "4: <syntax>",
+        ]
         self.check(
             '__all__: list[str] = ["C"]\n'
             "class C:\n"
             "    def f(self):\n"
             "        broken =\n",
-            [
-                "3: unannotated arguments: 'self'! "
-                "first argument must be positional-only!",
-                "4: <syntax>",
-            ],
+            expected_lines,
         )
 
     def test_unfinished_nested_try(self: Self, /) -> None:
@@ -143,51 +151,51 @@ class TestSyntaxErrors(unittest.TestCase):
     def test_all_existing_examples(self: Self, /) -> None:
         """Appending a bad statement must preserve pre-EOF findings."""
         directory: str
-        path: Path
         fixture: Path
-        source: str
-        eof: int
-        expected: list[str]
-        actual: list[str]
+        path: Path
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "example.py"
             for fixture in (Path(__file__).parent / "examples").rglob("*.py"):
-                with self.subTest(fixture=fixture):
-                    source = fixture.read_text(encoding="utf-8")
-                    eof = len(source.splitlines())
-                    expected = list(scan(str(fixture), "{line}: {desc}"))
-                    path.write_text(
-                        source
-                        + ("" if source.endswith("\n") else "\n")
-                        + "broken =\n",
-                        encoding="utf-8",
-                    )
-                    actual = list(scan(str(path), "{line}: {desc}"))
-                    try:
-                        ast.parse(source)
-                    except SyntaxError:
-                        self.assertEqual(actual, expected)
-                        continue
-                    # The original last line can contain EOF-only findings
-                    # or scope-end findings now located at the error line.
-                    self.assertEqual(
-                        [
-                            line
-                            for line in actual
-                            if int(line.split(":", 1)[0]) < eof
-                        ],
-                        [
-                            line
-                            for line in expected
-                            if int(line.split(":", 1)[0]) < eof
-                        ],
-                    )
-                    self.assertTrue(actual[-1].startswith(f"{eof + 1}: "))
-                    self.assertTrue(
-                        actual[-1].endswith("SyntaxError: invalid syntax!")
-                    )
-                    self.assertNotIn("dead module names", "\n".join(actual))
-                    self.assertNotIn("missing '__all__'", "\n".join(actual))
+                self._check_example(fixture, path)
+
+    def _check_example(self: Self, /, fixture: Path, path: Path) -> None:
+        actual: list[str]
+        actual_lines: list[str]
+        eof: int
+        expected: list[str]
+        expected_lines: list[str]
+        source: str
+        with self.subTest(fixture=fixture):
+            source = fixture.read_text(encoding="utf-8")
+            eof = len(source.splitlines())
+            expected = list(scan(str(fixture), "{line}: {desc}"))
+            path.write_text(
+                source
+                + ("" if source.endswith("\n") else "\n")
+                + "broken =\n",
+                encoding="utf-8",
+            )
+            actual = list(scan(str(path), "{line}: {desc}"))
+            try:
+                ast.parse(source)
+            except SyntaxError:
+                self.assertEqual(actual, expected)
+                return
+            # The original last line can contain EOF-only findings
+            # or scope-end findings now located at the error line.
+            actual_lines = [
+                line for line in actual if int(line.split(":", 1)[0]) < eof
+            ]
+            expected_lines = [
+                line for line in expected if int(line.split(":", 1)[0]) < eof
+            ]
+            self.assertEqual(actual_lines, expected_lines)
+            self.assertTrue(actual[-1].startswith(f"{eof + 1}: "))
+            self.assertTrue(
+                actual[-1].endswith("SyntaxError: invalid syntax!")
+            )
+            self.assertNotIn("dead module names", "\n".join(actual))
+            self.assertNotIn("missing '__all__'", "\n".join(actual))
 
 
 if __name__ == "__main__":

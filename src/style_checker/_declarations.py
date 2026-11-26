@@ -65,6 +65,7 @@ class _LineIssues:
         self.by_line: dict[int, list[str]] = {}
 
     def add(self: Self, /, line: int, issue: str) -> None:
+        messages: list[str]
         messages = self.by_line.setdefault(line, [])
         if issue + "!" not in messages:
             messages.append(issue + "!")
@@ -72,7 +73,11 @@ class _LineIssues:
     def names(
         self: Self, /, issue: str, findings: Iterator[tuple[int, str]]
     ) -> None:
-        grouped: dict[int, set[str]] = {}
+        grouped: dict[int, set[str]]
+        line: int
+        name: str
+        names: set[str]
+        grouped = {}
         for line, name in findings:
             grouped.setdefault(line, set()).add(name)
         for line, names in grouped.items():
@@ -83,20 +88,21 @@ class _SourceLocations:
     """Locate evidence in physical source order rather than AST walk order."""
 
     def __init__(self: Self, /, source: str) -> None:
+        ignored: set[int]
         self.lines = source.encode("utf-8").split(b"\n")
         self.last_line = max(1, len(self.lines) - source.endswith("\n"))
+        ignored = {
+            tokenize.NL,
+            tokenize.NEWLINE,
+            tokenize.INDENT,
+            tokenize.DEDENT,
+            tokenize.COMMENT,
+            tokenize.ENDMARKER,
+        }
         self.tokens = [
             token
             for token in tokenize.generate_tokens(io.StringIO(source).readline)
-            if token.type
-            not in (
-                tokenize.NL,
-                tokenize.NEWLINE,
-                tokenize.INDENT,
-                tokenize.DEDENT,
-                tokenize.COMMENT,
-                tokenize.ENDMARKER,
-            )
+            if token.type not in ignored
         ]
         self.positions = [token.start for token in self.tokens]
         self.prefix_end: int | None = None
@@ -107,6 +113,9 @@ class _SourceLocations:
         /,
         node: ast.expr | ast.arg | ast.stmt,
     ) -> Iterator[tokenize.TokenInfo]:
+        column: int
+        line: int
+        start: int
         line = node.end_lineno or node.lineno
         column = len(
             self.lines[line - 1][: node.end_col_offset].decode("utf-8")
@@ -120,12 +129,14 @@ class _SourceLocations:
         node: ast.expr | ast.arg | ast.stmt,
         symbols: set[str],
     ) -> int:
+        token: tokenize.TokenInfo
         for token in self.after(node):
             if token.string in symbols:
                 return token.start[0]
         return node.end_lineno or node.lineno
 
     def scope_end(self: Self, /, node: ast.Module | ast.stmt) -> int:
+        token: tokenize.TokenInfo | None
         if isinstance(node, ast.Module):
             return self.last_line
         # A trailing semicolon is part of the last body line, not a dedent.
@@ -149,6 +160,8 @@ class _SourceLocations:
         return token.start[0] if token is not None else self.last_line
 
     def exception_name(self: Self, /, node: ast.ExceptHandler) -> int:
+        token: tokenize.TokenInfo
+        tokens: Iterator[tokenize.TokenInfo]
         assert node.type is not None
         tokens = self.after(node.type)
         for token in tokens:
@@ -161,6 +174,8 @@ class _SourceLocations:
         /,
         node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
     ) -> int:
+        i: int
+        start: int
         start = bisect_left(self.positions, (node.lineno, 0))
         for i in range(start, len(self.tokens) - 1):
             if self.tokens[i].string in {"def", "class"}:
@@ -177,12 +192,22 @@ class _SourceLocations:
     ) -> int:
         # A slash could still follow an ordinary positional parameter, even
         # on a later line. Its absence is certain at a star or closing paren.
+        args: ast.arguments
+        boundary: tuple[int, int]
+        column: int
+        depth: int
+        i: int
+        last: ast.arg | ast.expr | None
+        line: int
+        opened: bool
+        start: int
+        token: tokenize.TokenInfo
         opened = False
         depth = 0
         # Ignore multiplication and unpacking within positional defaults or
         # annotations, even when the operator is at signature depth one.
         args = node.args
-        last: ast.arg | ast.expr | None = None
+        last = None
         if args.defaults:
             last = args.defaults[-1]
         elif args.args:
@@ -190,19 +215,18 @@ class _SourceLocations:
         boundary = (0, 0)
         if last is not None:
             line = last.end_lineno or last.lineno
-            boundary = (
-                line,
-                len(
-                    self.lines[line - 1][: last.end_col_offset].decode("utf-8")
-                ),
+            column = len(
+                self.lines[line - 1][: last.end_col_offset].decode("utf-8")
             )
+            boundary = (line, column)
         start = bisect_left(self.positions, (node.lineno, 0))
         for i in range(start, len(self.tokens)):
             token = self.tokens[i]
+            if not opened and token.string == "(":
+                opened = True
+                depth = 1
+                continue
             if not opened:
-                if token.string == "(":
-                    opened = True
-                    depth = 1
                 continue
             if (
                 depth == 1
@@ -258,6 +282,18 @@ def _check_module_all(
     issues: _LineIssues,
 ) -> None:
     """Validate the special module-level ``__all__`` declaration."""
+    _: int
+    greatest: str | None
+    index: int
+    indices: Iterator[int]
+    item: ast.expr
+    line: int
+    matches: list[tuple[int, ast.stmt]]
+    previous: ast.stmt
+    repeated: ast.stmt
+    start: int
+    stmt: ast.stmt
+    value: ast.expr | None
     matches = [
         (index, stmt)
         for index, stmt in enumerate(body)
@@ -265,20 +301,25 @@ def _check_module_all(
     ]
     index = matches[0][0] if matches else len(body)
     for previous in body[:index]:
-        if isinstance(previous, (ast.Import, ast.ImportFrom)) and not (
+        if not isinstance(previous, (ast.Import, ast.ImportFrom)):
+            continue
+        if (
             isinstance(previous, ast.ImportFrom)
             and previous.level == 0
             and previous.module == "__future__"
         ):
-            line = previous.lineno
-            if isinstance(previous, ast.ImportFrom):
-                start = bisect_left(locations.positions, (line, 0))
-                for i in range(start, len(locations.tokens) - 1):
-                    if locations.tokens[i].string == "from":
-                        line = locations.tokens[i + 1].start[0]
-                        break
-            issues.add(line, "'__all__' must precede imports")
-            break
+            continue
+        line = previous.lineno
+        if isinstance(previous, ast.ImportFrom):
+            start = bisect_left(locations.positions, (line, 0))
+            indices = (
+                locations.tokens[i + 1].start[0]
+                for i in range(start, len(locations.tokens) - 1)
+                if locations.tokens[i].string == "from"
+            )
+            line = next(indices, line)
+        issues.add(line, "'__all__' must precede imports")
+        break
     if not matches:
         issues.add(locations.last_line, "missing '__all__'")
         return
@@ -312,7 +353,7 @@ def _check_module_all(
         )
         issues.add(line, "'__all__' must be assigned a list literal")
         return
-    greatest: str | None = None
+    greatest = None
     for item in value.elts:
         line = item.end_lineno or item.lineno
         if not isinstance(item, ast.Constant) or not isinstance(
@@ -387,6 +428,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.forbidden_typing_imports: set[tuple[int, str]] = set()
 
     def import_issues(self: Self, /, issues: _LineIssues) -> None:
+        line: int
         for line in sorted(self.wildcard_imports):
             issues.add(line, "wildcard imports are forbidden")
         issues.names(
@@ -404,6 +446,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         target: ast.expr,
         line: int,
     ) -> None:
+        previous: int
         previous = self.binding_floor
         self.binding_floor = line
         self.visit(target)
@@ -489,6 +532,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
 
     def visit_Assign(self: Self, /, node: ast.Assign) -> None:
         # Python evaluates the RHS before binding assignment targets.
+        line: int
         target: ast.expr
 
         self.visit(node.value)
@@ -512,6 +556,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
 
     def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
         # Evaluate annotation/value before treating the target as bound.
+        line: int
         self.visit(node.annotation)
         if node.value is not None:
             self.visit(node.value)
@@ -525,35 +570,36 @@ class _FunctionBodyFacts(ast.NodeVisitor):
 
     def visit_AugAssign(self: Self, /, node: ast.AugAssign) -> None:
         # ``x += y`` reads x before it writes x.
+        line: int
+        operators: set[str]
         if isinstance(node.target, ast.Name):
             self._record(node.target.id, "read", node.target.lineno)
             self.visit(node.value)
             line = node.target.lineno
             if self.locations:
-                line = self.locations.following(
-                    node.target,
-                    {
-                        "+=",
-                        "-=",
-                        "*=",
-                        "@=",
-                        "/=",
-                        "//=",
-                        "%=",
-                        "**=",
-                        "<<=",
-                        ">>=",
-                        "&=",
-                        "^=",
-                        "|=",
-                    },
-                )
+                operators = {
+                    "+=",
+                    "-=",
+                    "*=",
+                    "@=",
+                    "/=",
+                    "//=",
+                    "%=",
+                    "**=",
+                    "<<=",
+                    ">>=",
+                    "&=",
+                    "^=",
+                    "|=",
+                }
+                line = self.locations.following(node.target, operators)
             self._record(node.target.id, "bind", line)
         else:
             self.visit(node.target)
             self.visit(node.value)
 
     def visit_NamedExpr(self: Self, /, node: ast.NamedExpr) -> None:
+        line: int
         self.visit(node.value)
         line = (
             self.locations.following(node.target, {":="})
@@ -590,6 +636,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.visit_With(node)
 
     def visit_ExceptHandler(self: Self, /, node: ast.ExceptHandler) -> None:
+        line: int
         statement: ast.stmt
 
         if node.type is not None:
@@ -825,6 +872,7 @@ def _statement_placement_issues(
     issues: _LineIssues,
 ) -> None:
     """Find statements preceded by non-whitespace on their physical line."""
+    line: int
     line_numbers: set[int]
     statement: ast.stmt
 
@@ -855,7 +903,32 @@ def _physical_line_issues(
     prefix_end: int | None = None,
 ) -> None:
     """Group physical lines by statement, header or decorator."""
+    at_line_start: bool
+    deep: set[int]
+    deep_start_lines: set[int]
+    description: str
+    findings: set[int]
+    first: int
+    group: set[int]
+    groups: list[set[int]]
+    incorrect_indentation: set[int]
+    indent_widths: Counter[int]
+    indents: list[str]
+    limit: int
+    line: int
+    lines: list[str]
+    node: ast.AST
+    node_types: tuple[type[ast.stmt], ...]
+    nodes: list[ast.AST]
+    parent: str
+    previous_end: int
+    simple_starts: set[tuple[int, int]]
+    starts: set[tuple[int, int]]
+    text: str
+    token: tokenize.TokenInfo
+    trailing: set[int]
     used: set[int]
+    width: int
     node_types = (
         ast.AsyncFor,
         ast.AsyncFunctionDef,
@@ -887,7 +960,7 @@ def _physical_line_issues(
     used = set()
     previous_end = 0
     indents = [""]
-    indent_widths: Counter[int] = Counter()
+    indent_widths = Counter()
     incorrect_indentation = set()
     deep_start_lines = set()
     at_line_start = True
@@ -964,7 +1037,7 @@ def _physical_line_issues(
         for line, text in enumerate(lines, 1)
         if text != text.rstrip() and (prefix_end is None or line <= prefix_end)
     }
-    deep: set[int] = set()
+    deep = set()
 
     # Infer the continuation width from suites; prefer smaller tied widths.
     if indent_widths:
@@ -972,9 +1045,9 @@ def _physical_line_issues(
         for group in groups:
             first = min(group)
             limit = indentation(lines[first - 1]) + 2 * width
-            for line in group:
-                if indentation(lines[line - 1]) >= limit:
-                    deep.add(line)
+            deep.update(
+                line for line in group if indentation(lines[line - 1]) >= limit
+            )
 
     for description, findings in (
         ("trailing whitespace on physical lines", trailing),
@@ -994,6 +1067,36 @@ def _check_scope(
     dead_module_names: list[str] | None = None,
     in_class: bool = False,
 ) -> None:
+    annotations: list[ast.AnnAssign]
+    arg: ast.arg
+    args: ast.arguments
+    bare_declarations: list[ast.AnnAssign]
+    binding_lines: dict[str, int]
+    body: list[ast.stmt]
+    declaration_lines: dict[str, int]
+    declaration_names: list[str]
+    declaration_nodes: set[int]
+    declared: set[str]
+    decorator: ast.expr
+    duplicates: list[tuple[int, str]]
+    exempt: set[str]
+    facts: _FunctionBodyFacts
+    findings: Iterator[tuple[int, str]]
+    greatest: str
+    index: int
+    is_module: bool
+    leading_decls: list[ast.AnnAssign]
+    line: int
+    locals_that_need_declarations: set[str]
+    name: str
+    ordering_body: list[ast.stmt]
+    requires_positional_only: bool
+    scope_end: int
+    seen: set[str]
+    start: int
+    statement: ast.AnnAssign
+    unnecessary: set[str]
+    unnecessary_lines: list[tuple[int, str]]
     is_module = isinstance(node, ast.Module)
     body = (
         [stmt for stmt in node.body if not _is_module_all_statement(stmt)]
@@ -1011,7 +1114,7 @@ def _check_scope(
     ):
         start += 1
 
-    leading_decls: list[ast.AnnAssign] = []
+    leading_decls = []
     index = start
     while index < len(ordering_body) and (
         _is_bare_name_declaration(ordering_body[index])
@@ -1059,13 +1162,11 @@ def _check_scope(
         )
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         args = node.args
-        issues.names(
-            "unannotated arguments",
-            (
-                (locations.parameter_end(arg), arg.arg)
-                for arg in _unannotated_parameters(node)
-            ),
+        findings = (
+            (locations.parameter_end(arg), arg.arg)
+            for arg in _unannotated_parameters(node)
         )
+        issues.names("unannotated arguments", findings)
         greatest = ""
         for arg in args.kwonlyargs:
             if arg.arg < greatest:
@@ -1101,17 +1202,15 @@ def _check_scope(
         # The colon establishes the annotation, even across a backslash.
         return locations.following(statement.target, {":"})
 
-    issues.names(
-        "declarations not at beginning",
-        (
-            (declaration_line(statement), statement.target.id)
-            for statement in bare_declarations
-            if id(statement) not in declaration_nodes
-            and isinstance(statement.target, ast.Name)
-        ),
+    findings = (
+        (declaration_line(statement), statement.target.id)
+        for statement in bare_declarations
+        if id(statement) not in declaration_nodes
+        and isinstance(statement.target, ast.Name)
     )
+    issues.names("declarations not at beginning", findings)
     greatest = ""
-    declaration_lines: dict[str, int] = {}
+    declaration_lines = {}
     for statement in leading_decls:
         assert isinstance(statement.target, ast.Name)
         name = statement.target.id
@@ -1121,26 +1220,19 @@ def _check_scope(
         greatest = max(greatest, name)
         _first_line(declaration_lines, name, line)
 
-    issues.names(
-        "declarations for 'def'/'class'/'import' names",
-        (
-            (
-                max(declaration_lines[name], facts.non_variable_lines[name]),
-                name,
-            )
-            for name in declared & facts.non_variable_bindings
-        ),
+    findings = (
+        (max(declaration_lines[name], facts.non_variable_lines[name]), name)
+        for name in declared & facts.non_variable_bindings
     )
-    issues.names(
-        "declarations for 'except' names",
-        (
-            (max(declaration_lines[name], facts.exception_lines[name]), name)
-            for name in declared & facts.exception_bindings
-        ),
+    issues.names("declarations for 'def'/'class'/'import' names", findings)
+    findings = (
+        (max(declaration_lines[name], facts.exception_lines[name]), name)
+        for name in declared & facts.exception_bindings
     )
+    issues.names("declarations for 'except' names", findings)
 
-    seen: set[str] = set()
-    duplicates: list[tuple[int, str]] = []
+    seen = set()
+    duplicates = []
     for statement in sorted(
         bare_declarations, key=lambda stmt: (stmt.lineno, stmt.col_offset)
     ):
@@ -1154,13 +1246,11 @@ def _check_scope(
     binding_lines = facts.binding_lines.copy()
     for name, line in external_assignments.items():
         _first_line(binding_lines, name, line)
-    issues.names(
-        "missing declarations",
-        (
-            (binding_lines[name], name)
-            for name in locals_that_need_declarations - declared
-        ),
+    findings = (
+        (binding_lines[name], name)
+        for name in locals_that_need_declarations - declared
     )
+    issues.names("missing declarations", findings)
     unnecessary = (
         declared
         - locals_that_need_declarations
@@ -1168,7 +1258,7 @@ def _check_scope(
         - facts.exception_bindings
     )
     scope_end = locations.scope_end(node)
-    unnecessary_lines: list[tuple[int, str]] = []
+    unnecessary_lines = []
     for name in unnecessary:
         if name in exempt:
             line = declaration_lines[name]
@@ -1181,19 +1271,14 @@ def _check_scope(
 
     # Explicitly reject annotation-with-assignment anywhere in the function
     # body when its target is a simple local name.
-    issues.names(
-        "declaration assigns a value",
-        (
-            (
-                locations.following(statement.annotation, {"="}),
-                statement.target.id,
-            )
-            for statement in annotations
-            if isinstance(statement.target, ast.Name)
-            and statement.value is not None
-            and statement.target.id not in exempt
-        ),
+    findings = (
+        (locations.following(statement.annotation, {"="}), statement.target.id)
+        for statement in annotations
+        if isinstance(statement.target, ast.Name)
+        and statement.value is not None
+        and statement.target.id not in exempt
     )
+    issues.names("declaration assigns a value", findings)
 
 
 def _external_assignments(
@@ -1217,9 +1302,9 @@ def _external_assignments_visit(
     *,
     assignments: dict[int, dict[str, int]],
     enclosing: list[tuple[ast.FunctionDef | ast.AsyncFunctionDef, set[str]]],
+    locations: _SourceLocations,
     module: ast.Module,
     node: ast.AST,
-    locations: _SourceLocations,
 ) -> None:
     child: ast.AST
     facts: _FunctionBodyFacts
@@ -1303,6 +1388,8 @@ class _FunctionChecker(ast.NodeVisitor):
         /,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
     ) -> None:
+        in_class: bool
+        statement: ast.stmt
         _check_scope(
             node,
             self.external_assignments.get(id(node), {}),
@@ -1327,6 +1414,7 @@ class _FunctionChecker(ast.NodeVisitor):
         self._visit_function(node)
 
     def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
+        in_class: bool
         _collect_body_facts(node.body, set(), self.locations).import_issues(
             self.issues
         )
@@ -1343,6 +1431,16 @@ def _complete_prefix(
     source: str, path: str, stop: int
 ) -> tuple[str, ast.Module] | None:
     """Close unfinished suites without adding evidence on real lines."""
+    candidate: str
+    first: tokenize.TokenInfo | None
+    indents: list[str]
+    last: tokenize.TokenInfo | None
+    message: str
+    result: tuple[str, ast.Module] | None
+    statement: str
+    suffix: str
+    suffixes: list[str]
+    token: tokenize.TokenInfo
     try:
         return source, ast.parse(source, filename=path)
     except SyntaxError as exc:
@@ -1382,33 +1480,74 @@ def _complete_prefix(
             return candidate, ast.parse(candidate, filename=path)
         except SyntaxError as exc:
             if (
-                exc.msg == "expected 'except' or 'finally' block"
-                and (exc.lineno or 0) > stop
+                exc.msg != "expected 'except' or 'finally' block"
+                or (exc.lineno or 0) <= stop
             ):
-                # Completing an inner suite can expose an unfinished outer try.
-                result = _complete_prefix(
-                    candidate, path, candidate.count("\n")
-                )
-                if result is not None:
-                    return result
+                continue
+            # Completing an inner suite can expose an unfinished outer try.
+            result = _complete_prefix(candidate, path, candidate.count("\n"))
+            if result is not None:
+                return result
+    return None
+
+
+def _next_real_token(
+    lines: list[str], stop: int, error: SyntaxError, line: int, column: int
+) -> tokenize.TokenInfo | None:
+    token: tokenize.TokenInfo
+    try:
+        for token in tokenize.generate_tokens(
+            io.StringIO("".join(lines[:stop])).readline
+        ):
+            if token.start < (line, column):
+                continue
+            if token.start > (stop, max(0, (error.offset or 1) - 1)):
+                break
+            if token.type not in (
+                tokenize.NL,
+                tokenize.NEWLINE,
+                tokenize.COMMENT,
+                tokenize.INDENT,
+                tokenize.DEDENT,
+                tokenize.ENDMARKER,
+            ):
+                return token
+    except (SyntaxError, tokenize.TokenError):
+        pass
     return None
 
 
 def _check_prefix(path: str, source: str, error: SyntaxError) -> _LineIssues:
     """Check completed statements before the parser's reported error."""
+    before: str
+    boundaries: list[tuple[int, int]]
+    checker: _FunctionChecker
+    column: int
+    issues: _LineIssues
+    line: int
+    lines: list[str]
+    message: str
+    messages: list[str]
+    prefix: str
+    recovered: str
+    result: tuple[str, ast.Module] | None
+    stop: int
+    text: str
+    token: tokenize.TokenInfo
+    tree: ast.Module
     stop = error.lineno or 1
     lines = io.StringIO(source).readlines()
     # Include the error line only through a completed statement boundary.
     before = "".join(lines[: stop - 1])
     if stop <= len(lines):
         before += lines[stop - 1][: max(0, (error.offset or 1) - 1)]
-    boundaries: list[tuple[int, int]] = []
+    boundaries = []
     try:
         for token in tokenize.generate_tokens(io.StringIO(before).readline):
-            if token.type == tokenize.NEWLINE:
-                line, column = token.end
-                if line < stop or token.string:
-                    boundaries.append((line, column))
+            if token.type == tokenize.NEWLINE and (
+                token.end[0] < stop or token.string
+            ):
+                boundaries.append(token.end)
             elif token.type == tokenize.OP and token.string == ";":
                 boundaries.append(token.end)
     except (SyntaxError, tokenize.TokenError):
@@ -1427,44 +1566,26 @@ def _check_prefix(path: str, source: str, error: SyntaxError) -> _LineIssues:
         # beyond the last complete statement.
         prefix += "\n" * max(0, stop - prefix.count("\n"))
         result = _complete_prefix(prefix, path, stop)
-        if result is not None:
-            recovered, tree = result
-            checker = _FunctionChecker(path, recovered)
-            checker.locations.prefix_end = line
-            # Only the first real token after the recovered boundary is
-            # needed to determine whether an earlier scope has ended.
-            try:
-                for token in tokenize.generate_tokens(
-                    io.StringIO("".join(lines[:stop])).readline
-                ):
-                    if token.start < (line, column):
-                        continue
-                    if token.start > (stop, max(0, (error.offset or 1) - 1)):
-                        break
-                    if token.type not in (
-                        tokenize.NL,
-                        tokenize.NEWLINE,
-                        tokenize.COMMENT,
-                        tokenize.INDENT,
-                        tokenize.DEDENT,
-                        tokenize.ENDMARKER,
-                    ):
-                        checker.locations.next_token = token
-                        break
-            except (SyntaxError, tokenize.TokenError):
-                pass
-            # EOF-dependent findings are not established by truncation.
-            checker.locations.last_line = max(
-                stop + 1, checker.locations.last_line
-            )
-            checker.visit(tree)
-            issues = checker.issues
-            issues.by_line = {
-                n: messages
-                for n, messages in issues.by_line.items()
-                if n <= stop
-            }
-            break
+        if result is None:
+            continue
+        recovered, tree = result
+        checker = _FunctionChecker(path, recovered)
+        checker.locations.prefix_end = line
+        # Only the first real token after the recovered boundary is
+        # needed to determine whether an earlier scope has ended.
+        checker.locations.next_token = _next_real_token(
+            lines, stop, error, line, column
+        )
+        # EOF-dependent findings are not established by truncation.
+        checker.locations.last_line = max(
+            stop + 1, checker.locations.last_line
+        )
+        checker.visit(tree)
+        issues = checker.issues
+        issues.by_line = {
+            n: messages for n, messages in issues.by_line.items() if n <= stop
+        }
+        break
     else:
         issues = _LineIssues()
     # Whitespace on physical lines is independent of AST recovery.
@@ -1479,6 +1600,7 @@ def _check_prefix(path: str, source: str, error: SyntaxError) -> _LineIssues:
 
 def check_file(path: str) -> list[FunctionViolation]:
     checker: _FunctionChecker
+    issues: _LineIssues
     source: str
     tree: ast.Module
 
