@@ -855,6 +855,7 @@ def _physical_line_issues(
     prefix_end: int | None = None,
 ) -> None:
     """Group physical lines by statement, header or decorator."""
+    used: set[int]
     node_types = (
         ast.AsyncFor,
         ast.AsyncFunctionDef,
