@@ -1,0 +1,1 @@
+40: ARG: unannotated arguments: 'self'!

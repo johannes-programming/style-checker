@@ -1,0 +1,1 @@
+1: ALTY: '__all__' must be annotated as 'list[str]'!
