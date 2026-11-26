@@ -1,0 +1,2 @@
+3: DBEG: declarations not at beginning: 'alpha'!
+4: DMIS: missing declarations: 'alpha'!

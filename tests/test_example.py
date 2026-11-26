@@ -15,7 +15,17 @@ class TestExample(unittest.TestCase):
         args: list[str]
         expected: str
         stdout: io.StringIO
-        args = [
+        try:
+            ignore_txt = (file.parent / "ignore.txt").read_text()
+        except FileNotFoundError:
+            ignore_txt = None
+        args = list()
+        if ignore_txt is not None:
+            if ignore_txt.endswith("\n"):
+                ignore_txt = ignore_txt[:-1]
+            for ignore in ignore_txt.split("\n"):
+                args.append(f"--ignore={ignore}")
+        args += [
             "--outmsg={line}: {rule}: {desc}",
             "--",
             str(file.parent / "**" / "*.py"),
