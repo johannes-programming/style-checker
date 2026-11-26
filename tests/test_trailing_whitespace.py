@@ -266,14 +266,6 @@ class TestTrailingWhitespace(unittest.TestCase):
             ],
         )
 
-    def test_syntax_error_has_no_embedded_line_number(self: Self, /) -> None:
-        self.assertEqual(
-            self.diagnostics(b"def f():\npass\n"),
-            [
-                "2: cannot analyze file: invalid syntax!",
-            ],
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

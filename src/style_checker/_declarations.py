@@ -1331,8 +1331,6 @@ def scan(
     file: str,
     errmsg: str,
 ) -> Iterator[str]:
-    desc: str
-    error_line: int
     line: str
     violation: FunctionViolation
     violations: list[FunctionViolation]
@@ -1340,25 +1338,17 @@ def scan(
     violations = []
     try:
         violations.extend(check_file(file))
-    except (OSError, UnicodeError, SyntaxError) as exc:
-        # SyntaxError.msg can itself embed another physical line number.
-        message = (
-            "invalid syntax" if isinstance(exc, SyntaxError) else str(exc)
+    except SyntaxError as exc:
+        violation = FunctionViolation(
+            file=file,
+            line=1 if exc.lineno is None else exc.lineno,
+            desc=f"{type(exc).__name__}: {exc!r}!",
         )
-        desc = _join_issues([f"cannot analyze file: {message}!"])
-        error_line = getattr(exc, "lineno", None) or 1
-        violations.append(
-            FunctionViolation(file=file, line=error_line, desc=desc)
-        )
+        violations.append(violation)
     for violation in violations:
-        try:
-            line = errmsg.format(
-                file=violation.file,
-                line=violation.line,
-                desc=violation.desc,
-            )
-        except (KeyError, IndexError, ValueError) as exc:
-            raise ValueError(
-                _join_issues([f"invalid --errmsg: {exc}!"])
-            ) from exc
+        line = errmsg.format(
+            file=violation.file,
+            line=violation.line,
+            desc=violation.desc,
+        )
         yield line

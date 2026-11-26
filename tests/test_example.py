@@ -14,17 +14,17 @@ class TestExample(unittest.TestCase):
     def go(self: Self, file: Path, /) -> None:
         args: list[str]
         expected: str
-        stderr: io.StringIO
+        stdout: io.StringIO
         args = [
-            "--errmsg={line}: {desc}",
+            "--outmsg={line}: {desc}",
             "--",
             str(file.parent / "**" / "*.py"),
         ]
-        stderr = io.StringIO()
-        with contextlib.redirect_stderr(stderr):
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
             style_checker.main(args)
         expected = file.read_text(encoding="utf-8")
-        self.assertEqual(stderr.getvalue(), expected)
+        self.assertEqual(stdout.getvalue(), expected)
 
     def test_example(self: Self, /) -> None:
         file: Path
