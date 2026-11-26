@@ -68,10 +68,10 @@ The declaration requirement does not apply to:
 
 * Names automatically provided in a module's namespace.
 * Names bound by nested ``class`` and ``def`` statements,
-    i.e. of the classes and functions they define.
+        i.e. of the classes and functions they define.
 * Names bound by ``import`` statements.
 * Temporary exception names introduced by ``except ... as ...``, which remain
-    bound only for the duration of the exception handler.
+        bound only for the duration of the exception handler.
 * Each ``TypeVar`` and every similar construct is exempt from type annotation.
 
 Declaration Placement
@@ -83,7 +83,7 @@ intermixed with the declarations in that initial block.
 Only the following may precede that block:
 
 * A module or function docstring, if present. The docstring must be the first
-    statement in its scope.
+        statement in its scope.
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
@@ -112,6 +112,26 @@ This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
 The single keyword-only parameters should be alphabetically ordered.
+
+The first parameter must be positional-only in each of the following cases:
+
+* An undecorated ``def`` statement directly subordinate to a ``class``
+    statement, without any intervening statement.
+* A ``def`` statement whose innermost decorator is ``@classmethod``.
+
+For example:
+
+.. code-block:: python
+
+        class C:
+                def method(self: "C", /, value: int) -> int:
+                        return value
+
+                @classmethod
+                def create(cls: type["C"], /) -> "C":
+                        return cls()
+
+Omitting the ``/`` in either signature is an error.
 
 Explicit Namespace Assignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -152,20 +172,20 @@ separation between declarations and assignments:
 
 .. code-block:: python
 
-    """An example module."""
+        """An example module."""
 
-    from __future__ import annotations
+        from __future__ import annotations
 
-    __all__: list[str] = ["count", "double"]
+        __all__: list[str] = ["count", "double"]
 
-    count: int
+        count: int
 
-    count = 2
+        count = 2
 
-    def double(value: int) -> int:
-        result: int
-        result = value * 2
-        return result
+        def double(value: int) -> int:
+                result: int
+                result = value * 2
+                return result
 
 
 Installation
@@ -176,7 +196,7 @@ Open your terminal and run:
 
 .. code-block:: shell
 
-    pip install style-checker
+        pip install style-checker
 
 Typing
 ------

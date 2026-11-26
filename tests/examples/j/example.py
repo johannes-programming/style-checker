@@ -22,7 +22,7 @@ def keyword_variadic(**values) -> None:
 
 
 class Example:
-    def method(self, value: int) -> int:
+    def method(self, /, value: int) -> int:
         return value
 
 
