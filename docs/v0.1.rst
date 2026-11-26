@@ -113,6 +113,33 @@ as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
 The single keyword-only parameters should be alphabetically ordered.
 
+An undecorated ``def`` or ``async def`` statement must have a positional-only
+first parameter if its nearest enclosing ``class``, ``def`` or ``async def``
+statement is a ``class`` statement. Intervening control-flow statements do not
+change this rule. A ``def`` or ``async def`` statement whose innermost decorator
+is ``@classmethod`` must also have a positional-only first parameter, regardless
+of its enclosing statements. In both cases, a first parameter is required.
+
+For example:
+
+.. code-block:: python
+
+    __all__: list[str] = ["Example"]
+
+    class Example:
+        def method(self: "Example", /, value: int) -> int:
+            return value
+
+        @classmethod
+        def build(cls: type["Example"], /) -> "Example":
+            return cls()
+
+        @staticmethod
+        def static(value: int) -> int:
+            return value
+
+Omitting the ``/`` in ``method`` or ``build`` would violate the rule.
+
 Explicit Namespace Assignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

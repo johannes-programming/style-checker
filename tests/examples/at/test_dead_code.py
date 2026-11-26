@@ -12,7 +12,7 @@ from style_checker._declarations import scan
 
 
 class TestDeadCode(unittest.TestCase):
-    def diagnostics(self: Self, source: str) -> list[str]:
+    def diagnostics(self: Self, /, source: str) -> list[str]:
         directory: str
         path: Path
         with tempfile.TemporaryDirectory() as directory:
@@ -20,7 +20,7 @@ class TestDeadCode(unittest.TestCase):
             path.write_text(textwrap.dedent(source), encoding="utf-8")
             return list(scan(str(path), "{line}: {desc}"))
 
-    def test_dead_imports_variables_functions_classes(self: Self) -> None:
+    def test_dead_imports_variables_functions_classes(self: Self, /) -> None:
         messages: list[str]
         messages = self.diagnostics(
             """\
@@ -42,7 +42,7 @@ class TestDeadCode(unittest.TestCase):
             ["1: dead module names: Path, Unused, count, math, spare"],
         )
 
-    def test_nested_global_read_is_use(self: Self) -> None:
+    def test_nested_global_read_is_use(self: Self, /) -> None:
         self.assertEqual(
             self.diagnostics(
                 """\
@@ -56,7 +56,7 @@ class TestDeadCode(unittest.TestCase):
             [],
         )
 
-    def test_shadowed_local_is_not_module_use(self: Self) -> None:
+    def test_shadowed_local_is_not_module_use(self: Self, /) -> None:
         self.assertEqual(
             self.diagnostics(
                 """\
@@ -72,7 +72,7 @@ class TestDeadCode(unittest.TestCase):
             ["1: dead module names: value"],
         )
 
-    def test_future_annotations_count_as_uses(self: Self) -> None:
+    def test_future_annotations_count_as_uses(self: Self, /) -> None:
         self.assertEqual(
             self.diagnostics(
                 """\
@@ -86,7 +86,7 @@ class TestDeadCode(unittest.TestCase):
             [],
         )
 
-    def test_referenced_base_class_not_dead(self: Self) -> None:
+    def test_referenced_base_class_not_dead(self: Self, /) -> None:
         self.assertEqual(
             self.diagnostics(
                 """\
@@ -100,7 +100,7 @@ class TestDeadCode(unittest.TestCase):
             [],
         )
 
-    def test_nested_class_import_not_module_binding(self: Self) -> None:
+    def test_nested_class_import_not_module_binding(self: Self, /) -> None:
         self.assertEqual(
             self.diagnostics(
                 """\
@@ -112,7 +112,7 @@ class TestDeadCode(unittest.TestCase):
             [],
         )
 
-    def test_exported_but_unread_is_not_dead(self: Self) -> None:
+    def test_exported_but_unread_is_not_dead(self: Self, /) -> None:
         self.assertEqual(
             self.diagnostics(
                 """\

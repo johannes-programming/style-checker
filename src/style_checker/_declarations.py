@@ -13,7 +13,9 @@ At module level and inside every ``def`` or ``async def``:
     within the block in function scopes);
 * declarations must not assign a value;
 * declaration names must be in alphabetical order;
-* every function parameter must have a type annotation.
+* every function parameter must have a type annotation;
+* undecorated methods and functions directly decorated by ``@classmethod``
+    must have a positional-only first parameter.
 
 Imports may precede the declaration block in either scope, and module-level
 ``__all__`` is subject to its own separate rules.
@@ -147,22 +149,24 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
 class _FunctionAnnotations(ast.NodeVisitor):
     """Collect scope annotations without descending into nested scopes."""
 
-    def __init__(self: Self) -> None:
+    def __init__(self: Self, /) -> None:
         self.annotations: list[ast.AnnAssign] = []
 
-    def visit_AnnAssign(self: Self, node: ast.AnnAssign) -> None:
+    def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
         self.annotations.append(node)
 
-    def visit_FunctionDef(self: Self, node: ast.FunctionDef) -> None:
+    def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
         return
 
-    def visit_AsyncFunctionDef(self: Self, node: ast.AsyncFunctionDef) -> None:
+    def visit_AsyncFunctionDef(
+        self: Self, /, node: ast.AsyncFunctionDef
+    ) -> None:
         return
 
-    def visit_ClassDef(self: Self, node: ast.ClassDef) -> None:
+    def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
         return
 
-    def visit_Lambda(self: Self, node: ast.Lambda) -> None:
+    def visit_Lambda(self: Self, /, node: ast.Lambda) -> None:
         return
 
 
@@ -179,7 +183,7 @@ def _function_annotations(body: list[ast.stmt]) -> list[ast.AnnAssign]:
 class _FunctionBodyFacts(ast.NodeVisitor):
     """Collect scope binding/read facts without descending into nested scopes."""
 
-    def __init__(self: Self) -> None:
+    def __init__(self: Self, /) -> None:
         self.bound: set[str] = set()
         self.read: set[str] = set()
         self.first_kind: dict[str, str] = {}
@@ -193,7 +197,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.wildcard_import: bool = False
         self.forbidden_typing_imports: set[str] = set()
 
-    def import_issues(self: Self) -> list[str]:
+    def import_issues(self: Self, /) -> list[str]:
         issues: list[str]
 
         issues = []
@@ -206,7 +210,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             )
         return issues
 
-    def _is_typevar_call(self: Self, value: ast.expr) -> bool:
+    def _is_typevar_call(self: Self, /, value: ast.expr) -> bool:
         func: ast.expr
 
         if not isinstance(value, ast.Call):
@@ -222,7 +226,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             and func.value.id in self.typevar_modules
         )
 
-    def _record(self: Self, name: str, kind: str) -> None:
+    def _record(self: Self, /, name: str, kind: str) -> None:
         if name not in self.first_kind:
             self.first_kind[name] = kind
         if kind == "bind":
@@ -230,13 +234,13 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         elif kind == "read":
             self.read.add(name)
 
-    def visit_Name(self: Self, node: ast.Name) -> None:
+    def visit_Name(self: Self, /, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Load):
             self._record(node.id, "read")
         elif isinstance(node.ctx, (ast.Store, ast.Del)):
             self._record(node.id, "bind")
 
-    def visit_Import(self: Self, node: ast.Import) -> None:
+    def visit_Import(self: Self, /, node: ast.Import) -> None:
         alias: ast.alias
 
         for alias in node.names:
@@ -246,7 +250,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             if alias.name in {"typing", "typing_extensions"}:
                 self.typevar_modules.add(alias.asname or alias.name)
 
-    def visit_ImportFrom(self: Self, node: ast.ImportFrom) -> None:
+    def visit_ImportFrom(self: Self, /, node: ast.ImportFrom) -> None:
         alias: ast.alias
 
         if node.level == 0 and node.module == "__future__":
@@ -274,7 +278,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             }:
                 self.typevar_factories.add(alias.asname or alias.name)
 
-    def visit_Assign(self: Self, node: ast.Assign) -> None:
+    def visit_Assign(self: Self, /, node: ast.Assign) -> None:
         # Python evaluates the RHS before binding assignment targets.
         target: ast.expr
 
@@ -288,7 +292,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for target in node.targets:
             self.visit(target)
 
-    def visit_AnnAssign(self: Self, node: ast.AnnAssign) -> None:
+    def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
         # Evaluate annotation/value before treating the target as bound.
         self.visit(node.annotation)
         if node.value is not None:
@@ -296,7 +300,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             self.visit(node.target)
         # A bare annotation is a declaration, not a runtime assignment.
 
-    def visit_AugAssign(self: Self, node: ast.AugAssign) -> None:
+    def visit_AugAssign(self: Self, /, node: ast.AugAssign) -> None:
         # ``x += y`` reads x before it writes x.
         if isinstance(node.target, ast.Name):
             self._record(node.target.id, "read")
@@ -306,11 +310,11 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             self.visit(node.target)
             self.visit(node.value)
 
-    def visit_NamedExpr(self: Self, node: ast.NamedExpr) -> None:
+    def visit_NamedExpr(self: Self, /, node: ast.NamedExpr) -> None:
         self.visit(node.value)
         self.visit(node.target)
 
-    def visit_For(self: Self, node: ast.For | ast.AsyncFor) -> None:
+    def visit_For(self: Self, /, node: ast.For | ast.AsyncFor) -> None:
         statement: ast.stmt
 
         self.visit(node.iter)
@@ -320,10 +324,10 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for statement in node.orelse:
             self.visit(statement)
 
-    def visit_AsyncFor(self: Self, node: ast.AsyncFor) -> None:
+    def visit_AsyncFor(self: Self, /, node: ast.AsyncFor) -> None:
         self.visit_For(node)
 
-    def visit_With(self: Self, node: ast.With | ast.AsyncWith) -> None:
+    def visit_With(self: Self, /, node: ast.With | ast.AsyncWith) -> None:
         item: ast.withitem
         statement: ast.stmt
 
@@ -334,10 +338,10 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for statement in node.body:
             self.visit(statement)
 
-    def visit_AsyncWith(self: Self, node: ast.AsyncWith) -> None:
+    def visit_AsyncWith(self: Self, /, node: ast.AsyncWith) -> None:
         self.visit_With(node)
 
-    def visit_ExceptHandler(self: Self, node: ast.ExceptHandler) -> None:
+    def visit_ExceptHandler(self: Self, /, node: ast.ExceptHandler) -> None:
         statement: ast.stmt
 
         if node.type is not None:
@@ -349,27 +353,29 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for statement in node.body:
             self.visit(statement)
 
-    def visit_Global(self: Self, node: ast.Global) -> None:
+    def visit_Global(self: Self, /, node: ast.Global) -> None:
         self.globals.update(node.names)
 
-    def visit_Nonlocal(self: Self, node: ast.Nonlocal) -> None:
+    def visit_Nonlocal(self: Self, /, node: ast.Nonlocal) -> None:
         self.nonlocals.update(node.names)
 
-    def visit_FunctionDef(self: Self, node: ast.FunctionDef) -> None:
+    def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
         # The nested function's name is not treated as a "variable" for this
         # rule, and its body belongs to a different function scope.
         self.non_variable_bindings.add(node.name)
 
-    def visit_AsyncFunctionDef(self: Self, node: ast.AsyncFunctionDef) -> None:
+    def visit_AsyncFunctionDef(
+        self: Self, /, node: ast.AsyncFunctionDef
+    ) -> None:
         self.non_variable_bindings.add(node.name)
 
-    def visit_ClassDef(self: Self, node: ast.ClassDef) -> None:
+    def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
         self.non_variable_bindings.add(node.name)
 
-    def visit_Lambda(self: Self, node: ast.Lambda) -> None:
+    def visit_Lambda(self: Self, /, node: ast.Lambda) -> None:
         return
 
-    def visit_comprehension(self: Self, node: ast.comprehension) -> None:
+    def visit_comprehension(self: Self, /, node: ast.comprehension) -> None:
         # Comprehension iteration variables live in the comprehension's own
         # implicit scope in Python 3.
         condition: ast.expr
@@ -378,21 +384,21 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for condition in node.ifs:
             self.visit(condition)
 
-    def visit_ListComp(self: Self, node: ast.ListComp) -> None:
+    def visit_ListComp(self: Self, /, node: ast.ListComp) -> None:
         generator: ast.comprehension
 
         self.visit(node.elt)
         for generator in node.generators:
             self.visit(generator)
 
-    def visit_SetComp(self: Self, node: ast.SetComp) -> None:
+    def visit_SetComp(self: Self, /, node: ast.SetComp) -> None:
         generator: ast.comprehension
 
         self.visit(node.elt)
         for generator in node.generators:
             self.visit(generator)
 
-    def visit_DictComp(self: Self, node: ast.DictComp) -> None:
+    def visit_DictComp(self: Self, /, node: ast.DictComp) -> None:
         generator: ast.comprehension
 
         self.visit(node.key)
@@ -400,7 +406,7 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for generator in node.generators:
             self.visit(generator)
 
-    def visit_GeneratorExp(self: Self, node: ast.GeneratorExp) -> None:
+    def visit_GeneratorExp(self: Self, /, node: ast.GeneratorExp) -> None:
         generator: ast.comprehension
 
         self.visit(node.elt)
@@ -769,6 +775,7 @@ def _check_scope(
     source_lines: list[bytes],
     physical_line_issues: list[str],
     dead_module_names: list[str] | None = None,
+    in_class: bool = False,
 ) -> FunctionViolation | None:
     annotations: list[ast.AnnAssign]
     assigned_declarations: set[str]
@@ -776,6 +783,7 @@ def _check_scope(
     declaration_names: list[str]
     declaration_nodes: set[int]
     declared: set[str]
+    decorator: ast.expr
     direct_annotation_nodes: set[int]
     duplicates: list[str]
     exception_declarations: list[str]
@@ -792,6 +800,7 @@ def _check_scope(
     nested_declaration_names: list[str]
     non_variable_declarations: list[str]
     ordering_body: list[ast.stmt]
+    requires_positional_only: bool
     start: int
     statement: ast.AnnAssign
     unannotated_parameters: list[str]
@@ -871,6 +880,17 @@ def _check_scope(
         arg.arg for arg in node.args.kwonlyargs
     ] != sorted(arg.arg for arg in node.args.kwonlyargs):
         issues.append("keyword-only arguments not in alphabetical order")
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.decorator_list:
+            decorator = node.decorator_list[-1]
+            requires_positional_only = (
+                isinstance(decorator, ast.Name)
+                and decorator.id == "classmethod"
+            )
+        else:
+            requires_positional_only = in_class
+        if requires_positional_only and not node.args.posonlyargs:
+            issues.append("first argument must be positional-only")
 
     # A bare annotation later in the body is itself evidence that the
     # declaration block is not at the beginning.
@@ -1025,15 +1045,16 @@ def _external_assignments_visit(
 
 
 class _FunctionChecker(ast.NodeVisitor):
-    def __init__(self: Self, filename: str, source: str) -> None:
+    def __init__(self: Self, /, filename: str, source: str) -> None:
         self.filename = filename
         self.source = source
         self.source_lines = source.encode("utf-8").split(b"\n")
         self.violations: list[FunctionViolation] = []
         self.external_assignments: dict[int, set[str]] = {}
         self.physical_line_issues: dict[int, list[str]] = {}
+        self.in_class: bool = False
 
-    def visit_Module(self: Self, node: ast.Module) -> None:
+    def visit_Module(self: Self, /, node: ast.Module) -> None:
         violation: FunctionViolation | None
 
         self.external_assignments = _external_assignments(node)
@@ -1052,8 +1073,10 @@ class _FunctionChecker(ast.NodeVisitor):
 
     def _visit_function(
         self: Self,
+        /,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
     ) -> None:
+        in_class: bool
         statement: ast.stmt
         violation: FunctionViolation | None
 
@@ -1063,23 +1086,30 @@ class _FunctionChecker(ast.NodeVisitor):
             self.external_assignments.get(id(node), set()),
             self.source_lines,
             self.physical_line_issues.get(id(node), []),
+            in_class=self.in_class,
         )
         if violation is not None:
             self.violations.append(violation)
 
         # Check nested functions too, without otherwise confusing their scope
         # with this function's scope.
+        in_class = self.in_class
+        self.in_class = False
         for statement in node.body:
             self.visit(statement)
+        self.in_class = in_class
 
-    def visit_FunctionDef(self: Self, node: ast.FunctionDef) -> None:
+    def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
         self._visit_function(node)
 
-    def visit_AsyncFunctionDef(self: Self, node: ast.AsyncFunctionDef) -> None:
+    def visit_AsyncFunctionDef(
+        self: Self, /, node: ast.AsyncFunctionDef
+    ) -> None:
         self._visit_function(node)
 
-    def visit_ClassDef(self: Self, node: ast.ClassDef) -> None:
+    def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
         functionViolation: FunctionViolation
+        in_class: bool
         issues: list[str]
 
         issues = _collect_body_facts(node.body, set()).import_issues()
@@ -1092,7 +1122,10 @@ class _FunctionChecker(ast.NodeVisitor):
                 self.filename, node.lineno, "; ".join(issues)
             )
             self.violations.append(functionViolation)
+        in_class = self.in_class
+        self.in_class = True
         self.generic_visit(node)
+        self.in_class = in_class
 
 
 def check_file(path: str) -> list[FunctionViolation]:

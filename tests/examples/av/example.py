@@ -17,7 +17,7 @@ class C:
                 if True:
                     pass
 
-    def method(self: "C") -> None:
+    def method(self: "C", /) -> None:
         if True:
             if True:
                 if True:

@@ -11,7 +11,7 @@ from style_checker._declarations import scan
 
 
 class TestTrailingWhitespace(unittest.TestCase):
-    def diagnostics(self: Self, source: bytes) -> list[str]:
+    def diagnostics(self: Self, /, source: bytes) -> list[str]:
         directory: str
         path: Path
         with tempfile.TemporaryDirectory() as directory:
@@ -19,7 +19,7 @@ class TestTrailingWhitespace(unittest.TestCase):
             path.write_bytes(source)
             return list(scan(str(path), "{line}: {desc}"))
 
-    def test_all_physical_line_types(self: Self) -> None:
+    def test_all_physical_line_types(self: Self, /) -> None:
         source: bytes
         source = (
             b'__all__: list[str] = ["f"]  \r\n'
@@ -38,7 +38,7 @@ class TestTrailingWhitespace(unittest.TestCase):
 4: trailing whitespace on physical lines: 5, 6""".split("\n"),
         )
 
-    def test_line_breaks_and_eof(self: Self) -> None:
+    def test_line_breaks_and_eof(self: Self, /) -> None:
         newline: bytes
         for newline in (b"\n", b"\r\n", b"\r"):
             with self.subTest(newline=newline):
@@ -51,7 +51,7 @@ class TestTrailingWhitespace(unittest.TestCase):
             ["1: trailing whitespace on physical lines: 1"],
         )
 
-    def test_whitespace_inside_line_is_allowed(self: Self) -> None:
+    def test_whitespace_inside_line_is_allowed(self: Self, /) -> None:
         source: bytes
         source = b'__all__: list[str] = []\n\nprint("text  ")\n# comment\n'
         self.assertEqual(
@@ -59,7 +59,7 @@ class TestTrailingWhitespace(unittest.TestCase):
             [],
         )
 
-    def test_class_and_decorator(self: Self) -> None:
+    def test_class_and_decorator(self: Self, /) -> None:
         source: bytes
         source = (
             b'__all__: list[str] = ["C"]\n'
@@ -74,6 +74,7 @@ class TestTrailingWhitespace(unittest.TestCase):
 
     def test_trailing_whitespace_and_deep_indentation(
         self: Self,
+        /,
     ) -> None:
         line: str
         source: bytes

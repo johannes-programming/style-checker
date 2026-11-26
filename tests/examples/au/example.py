@@ -9,7 +9,7 @@ if True:
                 )
 
 class C:
-    def method(self: "C") -> None:
+    def method(self: "C", /) -> None:
         if True:
             if True:
                 pass

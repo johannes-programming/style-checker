@@ -1,0 +1,13 @@
+8: first argument must be positional-only
+12: first argument must be positional-only
+15: first argument must be positional-only
+18: first argument must be positional-only
+21: first argument must be positional-only
+25: first argument must be positional-only
+30: first argument must be positional-only
+33: first argument must be positional-only
+37: first argument must be positional-only
+40: unannotated arguments: self; first argument must be positional-only
+46: first argument must be positional-only
+50: first argument must be positional-only
+57: first argument must be positional-only
