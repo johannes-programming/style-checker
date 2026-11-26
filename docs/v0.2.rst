@@ -216,18 +216,21 @@ Features
 Inherited features are only explained again
 if there is further noteworthy information.
 
-``style_checker.main(args: Iterable[str] | None = None, /) -> int``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``style_checker.main(args: Iterable[str] | None = None) -> int``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This function is the CLI-rendering of ``run``.
 
-``style_checker.run(*include: str, errfile: str = "-", errmsg: str = "{file}:{line}: {desc}", exclude: Iterable[str] = ()) -> int``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``style_checker.parse_args(args: Iterable[str] | None = None) -> Namespace``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``style_checker.run(*include: str, exclude: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}: {desc}") -> None``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``run`` checks Python source files and prints a diagnostic report.
 
-``errfile`` is where this report is the file this report is printed to
-(the default value ``"-"`` indicates ``sys.stderr``).
+``outfile`` is where this report is the file this report is printed to
+(the default value ``"-"`` indicates ``sys.stdout``).
 
 ``include`` are the positional  arguments.
 You may pass zero or more filenames or glob patterns,
@@ -236,7 +239,7 @@ e.g. ``**/*.py``.
 ``exclude`` is an iterable you can supply.
 It excludes from the analysis files otherwise covered by ``include``.
 
-``errmsg`` controls the format of **each diagnostic line**.
+``outmsg`` controls the format of **each diagnostic line**.
 It defaults to ``"{file}:{line}: {desc}"``.
 The supported substitution fields are:
 
@@ -244,15 +247,14 @@ The supported substitution fields are:
 - ``{line}``: the line number identifying the violation; and
 - ``{desc}``: a description of the style rule or rules violated.
 
-The specification requires **exactly one report line per offending ``def``
-statement**, not one line for every individual defect in that function.
+The checker produces **exactly one report line per offending physical line**,
+not one line for every individual defect on that line.
 The checker also reports module-level violations (including invalid or missing
-``__all__``), and multiple defects within a scope can be combined in the
+``__all__``), and multiple defects on the same line are combined in the
 ``{desc}`` field.  An unreadable or syntactically invalid file likewise yields
 a diagnostic.
 
-``run`` returns ``0`` if no diagnostics were produced and ``1``
-if at least one was produced.
+If any diagnostics were produced then ``run`` raises an ``ExceptionGroup``.
 
 Testing
 -------

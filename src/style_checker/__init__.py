@@ -28,6 +28,7 @@ from __future__ import annotations
 
 __all__: list[str] = [
     "main",
+    "parse_args",
     "run",
 ]
 import argparse
@@ -91,21 +92,21 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
         fromfile_prefix_chars="@",
     )
     parser.add_argument(
-        "--errfile",
-        default="-",
-        help="write the report to this file instead of stderr",
-    )
-    parser.add_argument(
-        "--errmsg",
-        default=ERRMSG_DEFAULT,
-        help="diagnostic format",
-    )
-    parser.add_argument(
         "--exclude",
         action="append",
         default=[],
         help="exclude files",
         metavar="exclude",
+    )
+    parser.add_argument(
+        "--outfile",
+        default="-",
+        help="write the report to this file, stdout being designated by the default of '-'",
+    )
+    parser.add_argument(
+        "--outmsg",
+        default=ERRMSG_DEFAULT,
+        help="format each message",
     )
     version = "%(prog)s, version " + metadata.version("style-checker")
     parser.add_argument(
@@ -131,11 +132,11 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
 
 def run(
     *include: str,
-    errfile: str = "-",
-    errmsg: str = ERRMSG_DEFAULT,
     exclude: abc.Iterable[str] = (),
+    outfile: str = "-",
+    outmsg: str = ERRMSG_DEFAULT,
 ) -> int:
-    ans: int
+    exceptions: list[Exception]
     file: str
     files: list[str]
     line: str
@@ -143,19 +144,22 @@ def run(
     stream: TextIO
     files = get_files(include=include, exclude=exclude)
 
-    if errfile == "-":
-        opener = contextlib.nullcontext(sys.stderr)
+    if outfile == "-":
+        opener = contextlib.nullcontext(sys.stdout)
     else:
-        opener = open(errfile, "w", encoding="utf-8", newline="\n")
+        opener = open(outfile, "w", encoding="utf-8", newline="\n")
 
-    ans = 0
+    exceptions = []
     with opener as stream:
         for file in files:
-            for line in _declarations.scan(file, errmsg=errmsg):
+            for line in _declarations.scan(file, errmsg=outmsg):
                 print(line, file=stream)
-                ans = 1
-
-    return ans
+                exceptions.append(Exception(line))
+    if exceptions:
+        raise ExceptionGroup(
+            "Style violated!",
+            exceptions,
+        )
 
 
 if __name__ == "__main__":
