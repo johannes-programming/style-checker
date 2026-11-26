@@ -61,8 +61,8 @@ jacobus-other: make-style-checker
 
 jacobus-py: make-style-checker
 	conda run -n make-style-checker pip install 'jacobus<3,>=2.5' >/dev/null;
-	conda run -n make_style_checker python -m jacobus @make/jacobus-py-indent.txt;
-	conda run -n make_style_checker python -m jacobus @make/jacobus-py-examples.txt;
+	conda run -n make-style-checker python -m jacobus @make/jacobus-py-indent.txt;
+	conda run -n make-style-checker python -m jacobus @make/jacobus-py-examples.txt;
 
 jacobus-toml: make-style-checker
 	conda run -n make-style-checker pip install 'jacobus<3,>=2.5' >/dev/null;
