@@ -1,1 +1,1 @@
-6: indentation must be four spaces per level: 9, 12, 13, 18, 19, 20; physical lines indented two or more levels deeper: 4, 7, 10, 14, 21
+6: indentation must be four spaces per level: 9, 12, 13, 18, 19, 20! physical lines indented two or more levels deeper: 4, 7, 10, 14, 21!

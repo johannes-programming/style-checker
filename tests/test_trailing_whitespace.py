@@ -34,8 +34,8 @@ class TestTrailingWhitespace(unittest.TestCase):
         )
         self.assertEqual(
             self.diagnostics(source),
-            """1: trailing whitespace on physical lines: 1, 2, 3, 9
-4: trailing whitespace on physical lines: 5, 6""".split("\n"),
+            """1: trailing whitespace on physical lines: 1, 2, 3, 9!
+4: trailing whitespace on physical lines: 5, 6!""".split("\n"),
         )
 
     def test_line_breaks_and_eof(self: Self, /) -> None:
@@ -48,7 +48,7 @@ class TestTrailingWhitespace(unittest.TestCase):
         self.assertEqual(self.diagnostics(b"__all__: list[str] = []"), [])
         self.assertEqual(
             self.diagnostics(b"__all__: list[str] = []\t"),
-            ["1: trailing whitespace on physical lines: 1"],
+            ["1: trailing whitespace on physical lines: 1!"],
         )
 
     def test_whitespace_inside_line_is_allowed(self: Self, /) -> None:
@@ -69,7 +69,7 @@ class TestTrailingWhitespace(unittest.TestCase):
         )
         self.assertEqual(
             self.diagnostics(source),
-            ["3: trailing whitespace on physical lines: 2, 3, 4"],
+            ["3: trailing whitespace on physical lines: 2, 3, 4!"],
         )
 
     def test_trailing_whitespace_and_deep_indentation(
@@ -80,8 +80,8 @@ class TestTrailingWhitespace(unittest.TestCase):
         source: bytes
         source = b"__all__: list[str] = []\nprint(\n        1\n)  \n"
         line = (
-            "1: trailing whitespace on physical lines: 4; "
-            "physical lines indented two or more levels deeper: 3"
+            "1: trailing whitespace on physical lines: 4! "
+            "physical lines indented two or more levels deeper: 3!"
         )
         self.assertEqual(
             self.diagnostics(source),

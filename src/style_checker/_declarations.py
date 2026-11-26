@@ -52,6 +52,13 @@ class FunctionViolation:
     desc: str
 
 
+def _join_issues(issues: list[str]) -> str:
+    segments: list[str]
+
+    segments = [issue.replace("!", "") + "!" for issue in issues]
+    return " ".join(segments)
+
+
 def _is_docstring_statement(node: ast.stmt) -> bool:
     return (
         isinstance(node, ast.Expr)
@@ -977,7 +984,7 @@ def _check_scope(
     return FunctionViolation(
         file=filename,
         line=1 if isinstance(node, ast.Module) else node.lineno,
-        desc="; ".join(issues),
+        desc=_join_issues(issues),
     )
 
 
@@ -1119,7 +1126,7 @@ class _FunctionChecker(ast.NodeVisitor):
         issues.extend(self.physical_line_issues.get(id(node), []))
         if issues:
             functionViolation = FunctionViolation(
-                self.filename, node.lineno, "; ".join(issues)
+                self.filename, node.lineno, _join_issues(issues)
             )
             self.violations.append(functionViolation)
         in_class = self.in_class
@@ -1154,7 +1161,7 @@ def scan(
     try:
         violations.extend(check_file(file))
     except (OSError, UnicodeError, SyntaxError) as exc:
-        desc = f"cannot analyze file: {exc}"
+        desc = _join_issues([f"cannot analyze file: {exc}"])
         error_line = getattr(exc, "lineno", None) or 1
         violations.append(
             FunctionViolation(file=file, line=error_line, desc=desc)
@@ -1167,5 +1174,7 @@ def scan(
                 desc=violation.desc,
             )
         except (KeyError, IndexError, ValueError) as exc:
-            raise ValueError(f"invalid --errmsg: {exc}") from exc
+            raise ValueError(
+                _join_issues([f"invalid --errmsg: {exc}"])
+            ) from exc
         yield line

@@ -1,2 +1,2 @@
-1: dead module names: bad_order
-4: declarations not at beginning: zebra; missing declarations: zebra
+1: dead module names: bad_order!
+4: declarations not at beginning: zebra! missing declarations: zebra!
