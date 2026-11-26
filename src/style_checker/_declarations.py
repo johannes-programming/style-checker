@@ -99,6 +99,8 @@ class _SourceLocations:
             )
         ]
         self.positions = [token.start for token in self.tokens]
+        self.prefix_end: int | None = None
+        self.next_token: tokenize.TokenInfo | None = None
 
     def after(
         self: Self,
@@ -130,6 +132,20 @@ class _SourceLocations:
         token = next(
             (token for token in self.after(node) if token.string != ";"), None
         )
+        if self.prefix_end is not None and (
+            token is None or token.start[0] > self.prefix_end
+        ):
+            # A real dedent can precede the error even when the next
+            # statement is malformed. An artificial EOF cannot close a scope.
+            token = self.next_token
+            if (
+                token is not None
+                and node.end_lineno is not None
+                and node.end_lineno <= self.prefix_end
+                and token.start[1] <= node.col_offset
+            ):
+                return token.start[0]
+            return self.last_line
         return token.start[0] if token is not None else self.last_line
 
     def exception_name(self: Self, /, node: ast.ExceptHandler) -> int:
@@ -836,6 +852,7 @@ def _physical_line_issues(
     module: ast.Module,
     source: str,
     issues: _LineIssues,
+    prefix_end: int | None = None,
 ) -> None:
     """Group physical lines by statement, header or decorator."""
     node_types = (
@@ -905,6 +922,9 @@ def _physical_line_issues(
         previous_end = last
 
     for token in tokenize.generate_tokens(io.StringIO(source).readline):
+        if prefix_end is not None and token.start[0] > prefix_end:
+            finish(prefix_end)
+            break
         if token.type in (tokenize.NEWLINE, tokenize.ENDMARKER):
             finish(min(token.start[0], len(lines)))
             previous_end = token.start[0]
@@ -939,7 +959,9 @@ def _physical_line_issues(
             finish(token.end[0])
 
     trailing = {
-        line for line, text in enumerate(lines, 1) if text != text.rstrip()
+        line
+        for line, text in enumerate(lines, 1)
+        if text != text.rstrip() and (prefix_end is None or line <= prefix_end)
     }
     deep: set[int] = set()
 
@@ -1261,13 +1283,17 @@ class _FunctionChecker(ast.NodeVisitor):
 
     def visit_Module(self: Self, /, node: ast.Module) -> None:
         self.external_assignments = _external_assignments(node, self.locations)
-        _physical_line_issues(node, self.source, self.issues)
+        _physical_line_issues(
+            node, self.source, self.issues, self.locations.prefix_end
+        )
         _check_scope(
             node,
             self.external_assignments.get(id(node), {}),
             self.locations,
             self.issues,
-            _dead_module_names(node, self.source, self.filename),
+            None
+            if self.locations.prefix_end is not None
+            else _dead_module_names(node, self.source, self.filename),
         )
         self.generic_visit(node)
 
@@ -1312,18 +1338,161 @@ class _FunctionChecker(ast.NodeVisitor):
         self.in_class = in_class
 
 
+def _complete_prefix(
+    source: str, path: str, stop: int
+) -> tuple[str, ast.Module] | None:
+    """Close unfinished suites without adding evidence on real lines."""
+    try:
+        return source, ast.parse(source, filename=path)
+    except SyntaxError as exc:
+        message = exc.msg
+    if not (
+        message.startswith("expected an indented block")
+        or message == "expected 'except' or 'finally' block"
+    ):
+        return None
+
+    # A complete header can precede the error even if its body is missing.
+    # Keep track of indentation before the tokenizer's artificial EOF dedents.
+    indents = [""]
+    first = None
+    last = None
+    for token in tokenize.generate_tokens(io.StringIO(source).readline):
+        if token.start[0] > stop:
+            break
+        if token.type == tokenize.INDENT:
+            indents.append(token.string)
+        elif token.type == tokenize.DEDENT:
+            indents.pop()
+        elif token.type == tokenize.NEWLINE:
+            last, first = first, None
+        elif token.type not in (tokenize.NL, tokenize.COMMENT):
+            if first is None:
+                first = token
+    source += "\n" * max(1, stop + 1 - source.count("\n"))
+    if message.startswith("expected an indented block") and last is not None:
+        statement = "case _: pass" if last.string == "match" else "pass"
+        suffixes = [indents[-1] + "    " + statement + "\n"]
+    else:
+        suffixes = [indent + "finally: pass\n" for indent in indents[-2::-1]]
+    for suffix in suffixes:
+        candidate = source + suffix
+        try:
+            return candidate, ast.parse(candidate, filename=path)
+        except SyntaxError as exc:
+            if (
+                exc.msg == "expected 'except' or 'finally' block"
+                and (exc.lineno or 0) > stop
+            ):
+                # Completing an inner suite can expose an unfinished outer try.
+                result = _complete_prefix(
+                    candidate, path, candidate.count("\n")
+                )
+                if result is not None:
+                    return result
+    return None
+
+
+def _check_prefix(path: str, source: str, error: SyntaxError) -> _LineIssues:
+    """Check completed statements before the parser's reported error."""
+    stop = error.lineno or 1
+    lines = io.StringIO(source).readlines()
+    # Include the error line only through a completed statement boundary.
+    before = "".join(lines[: stop - 1])
+    if stop <= len(lines):
+        before += lines[stop - 1][: max(0, (error.offset or 1) - 1)]
+    boundaries: list[tuple[int, int]] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(before).readline):
+            if token.type == tokenize.NEWLINE:
+                line, column = token.end
+                if line < stop or token.string:
+                    boundaries.append((line, column))
+            elif token.type == tokenize.OP and token.string == ";":
+                boundaries.append(token.end)
+    except (SyntaxError, tokenize.TokenError):
+        pass
+    # The parser can locate an unexpected EOF at the end of a valid header
+    # or try body. In that case the entire last physical line precedes it.
+    if stop <= len(lines) and (error.offset or 1) > len(
+        lines[stop - 1].rstrip("\n")
+    ):
+        boundaries.append((stop, len(lines[stop - 1])))
+    for line, column in reversed(boundaries):
+        prefix = "".join(lines[: line - 1]) + lines[line - 1][:column]
+        if not prefix.endswith("\n"):
+            prefix += "\n"
+        # Put all synthetic tokens beyond the interruption, not just
+        # beyond the last complete statement.
+        prefix += "\n" * max(0, stop - prefix.count("\n"))
+        result = _complete_prefix(prefix, path, stop)
+        if result is not None:
+            recovered, tree = result
+            checker = _FunctionChecker(path, recovered)
+            checker.locations.prefix_end = line
+            # Only the first real token after the recovered boundary is
+            # needed to determine whether an earlier scope has ended.
+            try:
+                for token in tokenize.generate_tokens(
+                    io.StringIO("".join(lines[:stop])).readline
+                ):
+                    if token.start < (line, column):
+                        continue
+                    if token.start > (stop, max(0, (error.offset or 1) - 1)):
+                        break
+                    if token.type not in (
+                        tokenize.NL,
+                        tokenize.NEWLINE,
+                        tokenize.COMMENT,
+                        tokenize.INDENT,
+                        tokenize.DEDENT,
+                        tokenize.ENDMARKER,
+                    ):
+                        checker.locations.next_token = token
+                        break
+            except (SyntaxError, tokenize.TokenError):
+                pass
+            # EOF-dependent findings are not established by truncation.
+            checker.locations.last_line = max(
+                stop + 1, checker.locations.last_line
+            )
+            checker.visit(tree)
+            issues = checker.issues
+            issues.by_line = {
+                n: messages
+                for n, messages in issues.by_line.items()
+                if n <= stop
+            }
+            break
+    else:
+        issues = _LineIssues()
+    # Whitespace on physical lines is independent of AST recovery.
+    for line, text in enumerate(lines[: stop - 1], 1):
+        if text.rstrip("\n") != text.rstrip():
+            messages = issues.by_line.setdefault(line, [])
+            message = "trailing whitespace on physical lines!"
+            if message not in messages:
+                messages.insert(0, message)
+    return issues
+
+
 def check_file(path: str) -> list[FunctionViolation]:
     checker: _FunctionChecker
     source: str
     tree: ast.Module
 
     source = Path(path).read_text(encoding="utf-8")
-    tree = ast.parse(source, filename=path)
-    checker = _FunctionChecker(path, source)
-    checker.visit(tree)
+    try:
+        tree = ast.parse(source, filename=path)
+        checker = _FunctionChecker(path, source)
+        checker.visit(tree)
+        issues = checker.issues
+    except SyntaxError as exc:
+        issues = _check_prefix(path, source, exc)
+        issues.add(exc.lineno or 1, f"{type(exc).__name__}: {exc.msg}")
     return [
-        FunctionViolation(path, line, _join_issues(issues))
-        for line, issues in sorted(checker.issues.by_line.items())
+        FunctionViolation(path, line, _join_issues(messages))
+        for line, messages in sorted(issues.by_line.items())
     ]
 
 
@@ -1335,16 +1504,7 @@ def scan(
     violation: FunctionViolation
     violations: list[FunctionViolation]
 
-    violations = []
-    try:
-        violations.extend(check_file(file))
-    except SyntaxError as exc:
-        violation = FunctionViolation(
-            file=file,
-            line=1 if exc.lineno is None else exc.lineno,
-            desc=f"{type(exc).__name__}: {exc!r}!",
-        )
-        violations.append(violation)
+    violations = check_file(file)
     for violation in violations:
         line = errmsg.format(
             file=violation.file,

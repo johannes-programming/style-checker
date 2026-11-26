@@ -135,7 +135,7 @@ def run(
     exclude: abc.Iterable[str] = (),
     outfile: str = "-",
     outmsg: str = ERRMSG_DEFAULT,
-) -> int:
+) -> None:
     exceptions: list[Exception]
     file: str
     files: list[str]

@@ -1,0 +1,2 @@
+2: missing declarations: 'value'!
+4: SyntaxError: invalid syntax!
