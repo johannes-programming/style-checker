@@ -1,1 +1,2 @@
-1: dead module names: 'alpha'! declarations not at beginning: 'alpha'! missing declarations: 'alpha'!
+3: declarations not at beginning: 'alpha'!
+4: dead module names: 'alpha'! missing declarations: 'alpha'!

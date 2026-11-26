@@ -1,4 +1,11 @@
-1: physical lines indented two or more levels deeper: 3!
-8: physical lines indented two or more levels deeper: 6, 9, 12, 15, 18, 24, 29!
-32: physical lines indented two or more levels deeper: 33!
-38: physical lines indented two or more levels deeper: 36, 40!
+3: physical lines indented two or more levels deeper!
+6: physical lines indented two or more levels deeper!
+9: physical lines indented two or more levels deeper!
+12: physical lines indented two or more levels deeper!
+15: physical lines indented two or more levels deeper!
+18: physical lines indented two or more levels deeper!
+24: physical lines indented two or more levels deeper!
+29: physical lines indented two or more levels deeper!
+33: physical lines indented two or more levels deeper!
+36: physical lines indented two or more levels deeper!
+40: physical lines indented two or more levels deeper!

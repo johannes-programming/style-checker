@@ -21,7 +21,7 @@ local-variable declarations.
 Nested functions/classes are checked independently and their bodies are not
 treated as part of the enclosing function.
 
-Each offending function produces exactly one report line.
+Each offending physical line produces exactly one report line.
 """
 
 from __future__ import annotations

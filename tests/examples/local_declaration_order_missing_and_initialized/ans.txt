@@ -1,3 +1,4 @@
-1: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!
-4: declarations not in alphabetical order!
-12: missing declarations: 'missing', 'wrong'! declaration assigns a value: 'wrong'!
+6: declarations not in alphabetical order!
+14: missing declarations: 'wrong'! declaration assigns a value: 'wrong'!
+16: missing declarations: 'missing'!
+25: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!

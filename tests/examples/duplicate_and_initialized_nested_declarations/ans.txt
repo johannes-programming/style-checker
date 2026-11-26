@@ -1,2 +1,3 @@
-1: dead module names: 'nested_annotations'!
-4: declarations not at beginning: 'beta'! duplicate declarations: 'beta'! declaration assigns a value: 'beta'!
+9: declarations not at beginning: 'beta'! duplicate declarations: 'beta'!
+11: declaration assigns a value: 'beta'!
+13: dead module names: 'nested_annotations'!

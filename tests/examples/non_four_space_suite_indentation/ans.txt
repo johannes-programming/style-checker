@@ -1,4 +1,6 @@
-1: indentation must be four spaces per level: 4!
-6: indentation must be four spaces per level: 7!
-9: indentation must be four spaces per level: 10!
-12: indentation must be four spaces per level: 13, 14, 15!
+4: indentation must be four spaces per level!
+7: indentation must be four spaces per level!
+10: indentation must be four spaces per level!
+13: indentation must be four spaces per level!
+14: indentation must be four spaces per level!
+15: indentation must be four spaces per level!

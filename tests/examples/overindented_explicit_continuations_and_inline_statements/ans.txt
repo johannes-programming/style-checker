@@ -1,2 +1,5 @@
-1: physical lines indented two or more levels deeper: 3!
-9: simple statements not at beginning of physical line: 10! physical lines indented two or more levels deeper: 11, 14, 17!
+3: physical lines indented two or more levels deeper!
+10: simple statements not at beginning of physical line!
+11: physical lines indented two or more levels deeper!
+14: physical lines indented two or more levels deeper!
+17: physical lines indented two or more levels deeper!

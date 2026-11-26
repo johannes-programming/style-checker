@@ -25,7 +25,7 @@ local-variable declarations.
 Nested functions/classes are checked independently and their bodies are not
 treated as part of the enclosing function.
 
-Each offending module or function produces exactly one report line.
+Each offending physical line produces exactly one report line.
 """
 
 from __future__ import annotations
@@ -38,11 +38,12 @@ import ast
 import io
 import symtable
 import tokenize
+from bisect import bisect_left
 from collections import abc as collections_abc
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Self
+from typing import Self
 
 
 @dataclass(frozen=True)
@@ -53,13 +54,154 @@ class FunctionViolation:
 
 
 def _join_issues(issues: list[str]) -> str:
-    ans: str
-    issue: str
-    ans = ""
-    for issue in issues:
-        ans += issue + "! "
-    ans = ans.rstrip()
-    return ans
+    return " ".join(issues)
+
+
+class _LineIssues:
+    """Collect physical-line issues, including named findings of one kind."""
+
+    def __init__(self: Self, /) -> None:
+        self.by_line: dict[int, list[str]] = {}
+
+    def add(self: Self, /, line: int, issue: str) -> None:
+        messages = self.by_line.setdefault(line, [])
+        if issue + "!" not in messages:
+            messages.append(issue + "!")
+
+    def names(
+        self: Self, /, issue: str, findings: Iterator[tuple[int, str]]
+    ) -> None:
+        grouped: dict[int, set[str]] = {}
+        for line, name in findings:
+            grouped.setdefault(line, set()).add(name)
+        for line, names in grouped.items():
+            self.add(line, issue + ": " + ", ".join(map(repr, sorted(names))))
+
+
+class _SourceLocations:
+    """Locate evidence in physical source order rather than AST walk order."""
+
+    def __init__(self: Self, /, source: str) -> None:
+        self.lines = source.encode("utf-8").split(b"\n")
+        self.last_line = max(1, len(self.lines) - source.endswith("\n"))
+        self.tokens = [
+            token
+            for token in tokenize.generate_tokens(io.StringIO(source).readline)
+            if token.type
+            not in (
+                tokenize.NL,
+                tokenize.NEWLINE,
+                tokenize.INDENT,
+                tokenize.DEDENT,
+                tokenize.COMMENT,
+                tokenize.ENDMARKER,
+            )
+        ]
+        self.positions = [token.start for token in self.tokens]
+
+    def after(
+        self: Self,
+        /,
+        node: ast.expr | ast.arg | ast.stmt,
+    ) -> Iterator[tokenize.TokenInfo]:
+        line = node.end_lineno or node.lineno
+        column = len(
+            self.lines[line - 1][: node.end_col_offset].decode("utf-8")
+        )
+        start = bisect_left(self.positions, (line, column))
+        return (self.tokens[i] for i in range(start, len(self.tokens)))
+
+    def following(
+        self: Self,
+        /,
+        node: ast.expr | ast.arg | ast.stmt,
+        symbols: set[str],
+    ) -> int:
+        for token in self.after(node):
+            if token.string in symbols:
+                return token.start[0]
+        return node.end_lineno or node.lineno
+
+    def scope_end(self: Self, /, node: ast.Module | ast.stmt) -> int:
+        if isinstance(node, ast.Module):
+            return self.last_line
+        # A trailing semicolon is part of the last body line, not a dedent.
+        token = next(
+            (token for token in self.after(node) if token.string != ";"), None
+        )
+        return token.start[0] if token is not None else self.last_line
+
+    def exception_name(self: Self, /, node: ast.ExceptHandler) -> int:
+        assert node.type is not None
+        tokens = self.after(node.type)
+        for token in tokens:
+            if token.string == "as":
+                return next(tokens).start[0]
+        return node.lineno
+
+    def definition_name(
+        self: Self,
+        /,
+        node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    ) -> int:
+        start = bisect_left(self.positions, (node.lineno, 0))
+        for i in range(start, len(self.tokens) - 1):
+            if self.tokens[i].string in {"def", "class"}:
+                return self.tokens[i + 1].start[0]
+        return node.lineno
+
+    def parameter_end(self: Self, /, arg: ast.arg) -> int:
+        return self.following(arg, {",", ")", "="})
+
+    def positional_only_end(
+        self: Self,
+        /,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+    ) -> int:
+        # A slash could still follow an ordinary positional parameter, even
+        # on a later line. Its absence is certain at a star or closing paren.
+        opened = False
+        depth = 0
+        # Ignore multiplication and unpacking within positional defaults or
+        # annotations, even when the operator is at signature depth one.
+        args = node.args
+        last: ast.arg | ast.expr | None = None
+        if args.defaults:
+            last = args.defaults[-1]
+        elif args.args:
+            last = args.args[-1]
+        boundary = (0, 0)
+        if last is not None:
+            line = last.end_lineno or last.lineno
+            boundary = (
+                line,
+                len(
+                    self.lines[line - 1][: last.end_col_offset].decode("utf-8")
+                ),
+            )
+        start = bisect_left(self.positions, (node.lineno, 0))
+        for i in range(start, len(self.tokens)):
+            token = self.tokens[i]
+            if not opened:
+                if token.string == "(":
+                    opened = True
+                    depth = 1
+                continue
+            if (
+                depth == 1
+                and token.start >= boundary
+                and token.string in {"*", "**", ")"}
+            ):
+                return token.start[0]
+            if token.string in {"(", "[", "{"}:
+                depth += 1
+            elif token.string in {")", "]", "}"}:
+                depth -= 1
+        return node.lineno
+
+
+def _first_line(lines: dict[str, int], name: str, line: int) -> None:
+    lines[name] = min(lines.get(name, line), line)
 
 
 def _is_docstring_statement(node: ast.stmt) -> bool:
@@ -93,37 +235,39 @@ def _is_module_all_statement(node: ast.stmt) -> bool:
     return False
 
 
-def _check_module_all(body: list[ast.stmt]) -> list[str]:
+def _check_module_all(
+    body: list[ast.stmt],
+    locations: _SourceLocations,
+    issues: _LineIssues,
+) -> None:
     """Validate the special module-level ``__all__`` declaration."""
-    index: int
-    issues: list[str]
-    item: Any
-    matches: list[tuple[int, ast.stmt]]
-    previous: ast.stmt
-    stmt: ast.stmt
-    value: ast.expr | None
-    valuelist: list[Any]
-
     matches = [
         (index, stmt)
         for index, stmt in enumerate(body)
         if _is_module_all_statement(stmt)
     ]
-    if not matches:
-        return ["missing '__all__'"]
-
-    issues = []
-    if len(matches) != 1:
-        issues.append("multiple '__all__' assignments")
-    index, stmt = matches[0]
+    index = matches[0][0] if matches else len(body)
     for previous in body[:index]:
-        if isinstance(previous, (ast.Import, ast.ImportFrom)):
-            if not (
-                isinstance(previous, ast.ImportFrom)
-                and previous.module == "__future__"
-            ):
-                issues.append("'__all__' must precede imports")
-                break
+        if isinstance(previous, (ast.Import, ast.ImportFrom)) and not (
+            isinstance(previous, ast.ImportFrom)
+            and previous.level == 0
+            and previous.module == "__future__"
+        ):
+            line = previous.lineno
+            if isinstance(previous, ast.ImportFrom):
+                start = bisect_left(locations.positions, (line, 0))
+                for i in range(start, len(locations.tokens) - 1):
+                    if locations.tokens[i].string == "from":
+                        line = locations.tokens[i + 1].start[0]
+                        break
+            issues.add(line, "'__all__' must precede imports")
+            break
+    if not matches:
+        issues.add(locations.last_line, "missing '__all__'")
+        return
+    _, stmt = matches[0]
+    for _, repeated in matches[1:]:
+        issues.add(repeated.lineno, "multiple '__all__' assignments")
 
     if not (
         isinstance(stmt, ast.AnnAssign)
@@ -133,27 +277,35 @@ def _check_module_all(body: list[ast.stmt]) -> list[str]:
         and isinstance(stmt.annotation.slice, ast.Name)
         and stmt.annotation.slice.id == "str"
     ):
-        issues.append("'__all__' must be annotated as 'list[str]'")
-    if isinstance(stmt, (ast.AnnAssign, ast.Assign)):
-        value = stmt.value
-    else:
-        value = None
+        if isinstance(stmt, ast.AnnAssign):
+            line = stmt.annotation.end_lineno or stmt.annotation.lineno
+        elif isinstance(stmt, ast.Assign):
+            line = locations.following(stmt.targets[0], {"="})
+        else:
+            line = stmt.lineno
+        issues.add(line, "'__all__' must be annotated as 'list[str]'")
+    value = (
+        stmt.value if isinstance(stmt, (ast.AnnAssign, ast.Assign)) else None
+    )
     if not isinstance(value, ast.List):
-        issues.append("'__all__' must be assigned a list literal")
-        return issues
+        line = (
+            (value.end_lineno or value.lineno)
+            if value is not None
+            else (stmt.end_lineno or stmt.lineno)
+        )
+        issues.add(line, "'__all__' must be assigned a list literal")
+        return
+    greatest: str | None = None
     for item in value.elts:
+        line = item.end_lineno or item.lineno
         if not isinstance(item, ast.Constant) or not isinstance(
             item.value, str
         ):
-            issues.append("'__all__' items must be string literals")
-            return issues
-    valuelist = [
-        item_.value  # type: ignore[attr-defined]
-        for item_ in value.elts
-    ]
-    if valuelist != sorted(valuelist):
-        issues.append("'__all__' items not in alphabetical order")
-    return issues
+            issues.add(line, "'__all__' items must be string literals")
+        elif greatest is not None and item.value < greatest:
+            issues.add(line, "'__all__' items not in alphabetical order")
+        else:
+            greatest = item.value
 
 
 class _FunctionAnnotations(ast.NodeVisitor):
@@ -193,7 +345,17 @@ def _function_annotations(body: list[ast.stmt]) -> list[ast.AnnAssign]:
 class _FunctionBodyFacts(ast.NodeVisitor):
     """Collect scope binding/read facts without descending into nested scopes."""
 
-    def __init__(self: Self, /) -> None:
+    def __init__(
+        self: Self,
+        /,
+        locations: _SourceLocations | None = None,
+    ) -> None:
+        self.locations = locations
+        self.binding_floor = 0
+        self.binding_lines: dict[str, int] = {}
+        self.non_variable_lines: dict[str, int] = {}
+        self.exception_lines: dict[str, int] = {}
+        self.typevar_lines: dict[str, int] = {}
         self.bound: set[str] = set()
         self.read: set[str] = set()
         self.first_kind: dict[str, str] = {}
@@ -204,21 +366,31 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.typevar_bindings: set[str] = set()
         self.typevar_factories: set[str] = set()
         self.typevar_modules: set[str] = {"typing", "typing_extensions"}
-        self.wildcard_import: bool = False
-        self.forbidden_typing_imports: set[str] = set()
+        self.wildcard_imports: set[int] = set()
+        self.forbidden_typing_imports: set[tuple[int, str]] = set()
 
-    def import_issues(self: Self, /) -> list[str]:
-        issues: list[str]
+    def import_issues(self: Self, /, issues: _LineIssues) -> None:
+        for line in sorted(self.wildcard_imports):
+            issues.add(line, "wildcard imports are forbidden")
+        issues.names(
+            "'typing' imports available in 'collections.abc'",
+            iter(sorted(self.forbidden_typing_imports)),
+        )
 
-        issues = []
-        if self.wildcard_import:
-            issues.append("wildcard imports are forbidden")
-        if self.forbidden_typing_imports:
-            issues.append(
-                "'typing' imports available in 'collections.abc': "
-                + ", ".join(map(repr, sorted(self.forbidden_typing_imports)))
-            )
-        return issues
+    def _non_variable(self: Self, /, name: str, line: int) -> None:
+        self.non_variable_bindings.add(name)
+        _first_line(self.non_variable_lines, name, line)
+
+    def _assignment_target(
+        self: Self,
+        /,
+        target: ast.expr,
+        line: int,
+    ) -> None:
+        previous = self.binding_floor
+        self.binding_floor = line
+        self.visit(target)
+        self.binding_floor = previous
 
     def _is_typevar_call(self: Self, /, value: ast.expr) -> bool:
         func: ast.expr
@@ -236,26 +408,30 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             and func.value.id in self.typevar_modules
         )
 
-    def _record(self: Self, /, name: str, kind: str) -> None:
+    def _record(self: Self, /, name: str, kind: str, line: int) -> None:
         if name not in self.first_kind:
             self.first_kind[name] = kind
         if kind == "bind":
             self.bound.add(name)
+            _first_line(
+                self.binding_lines, name, max(line, self.binding_floor)
+            )
         elif kind == "read":
             self.read.add(name)
 
     def visit_Name(self: Self, /, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Load):
-            self._record(node.id, "read")
+            self._record(node.id, "read", node.lineno)
         elif isinstance(node.ctx, (ast.Store, ast.Del)):
-            self._record(node.id, "bind")
+            self._record(node.id, "bind", node.lineno)
 
     def visit_Import(self: Self, /, node: ast.Import) -> None:
         alias: ast.alias
 
         for alias in node.names:
-            self.non_variable_bindings.add(
-                alias.asname or alias.name.split(".", 1)[0]
+            self._non_variable(
+                alias.asname or alias.name.split(".", 1)[0],
+                alias.end_lineno or alias.lineno,
             )
             if alias.name in {"typing", "typing_extensions"}:
                 self.typevar_modules.add(alias.asname or alias.name)
@@ -267,16 +443,22 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             return  # Compiler directives do not bind runtime names.
         for alias in node.names:
             if alias.name == "*":
-                self.wildcard_import = True
+                self.wildcard_imports.add(alias.lineno)
             elif (
                 node.level == 0
                 and node.module == "typing"
                 and alias.name in collections_abc.__all__
             ):
-                self.non_variable_bindings.add(alias.asname or alias.name)
-                self.forbidden_typing_imports.add(alias.name)
+                self._non_variable(
+                    alias.asname or alias.name,
+                    alias.end_lineno or alias.lineno,
+                )
+                self.forbidden_typing_imports.add((alias.lineno, alias.name))
             else:
-                self.non_variable_bindings.add(alias.asname or alias.name)
+                self._non_variable(
+                    alias.asname or alias.name,
+                    alias.end_lineno or alias.lineno,
+                )
             if node.module in {
                 "typing",
                 "typing_extensions",
@@ -300,29 +482,68 @@ class _FunctionBodyFacts(ast.NodeVisitor):
                 if isinstance(target, ast.Name)
             )
         for target in node.targets:
-            self.visit(target)
+            line = (
+                self.locations.following(target, {"="})
+                if self.locations
+                else target.lineno
+            )
+            if isinstance(target, ast.Name) and self._is_typevar_call(
+                node.value
+            ):
+                _first_line(self.typevar_lines, target.id, node.value.lineno)
+            self._assignment_target(target, line)
 
     def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
         # Evaluate annotation/value before treating the target as bound.
         self.visit(node.annotation)
         if node.value is not None:
             self.visit(node.value)
-            self.visit(node.target)
+            line = (
+                self.locations.following(node.annotation, {"="})
+                if self.locations
+                else node.lineno
+            )
+            self._assignment_target(node.target, line)
         # A bare annotation is a declaration, not a runtime assignment.
 
     def visit_AugAssign(self: Self, /, node: ast.AugAssign) -> None:
         # ``x += y`` reads x before it writes x.
         if isinstance(node.target, ast.Name):
-            self._record(node.target.id, "read")
+            self._record(node.target.id, "read", node.target.lineno)
             self.visit(node.value)
-            self._record(node.target.id, "bind")
+            line = node.target.lineno
+            if self.locations:
+                line = self.locations.following(
+                    node.target,
+                    {
+                        "+=",
+                        "-=",
+                        "*=",
+                        "@=",
+                        "/=",
+                        "//=",
+                        "%=",
+                        "**=",
+                        "<<=",
+                        ">>=",
+                        "&=",
+                        "^=",
+                        "|=",
+                    },
+                )
+            self._record(node.target.id, "bind", line)
         else:
             self.visit(node.target)
             self.visit(node.value)
 
     def visit_NamedExpr(self: Self, /, node: ast.NamedExpr) -> None:
         self.visit(node.value)
-        self.visit(node.target)
+        line = (
+            self.locations.following(node.target, {":="})
+            if self.locations
+            else node.target.lineno
+        )
+        self._assignment_target(node.target, line)
 
     def visit_For(self: Self, /, node: ast.For | ast.AsyncFor) -> None:
         statement: ast.stmt
@@ -360,6 +581,12 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             # ``except ... as name`` is a temporary exception binding, not a
             # function-local variable governed by the declaration rule.
             self.exception_bindings.add(node.name)
+            line = (
+                self.locations.exception_name(node)
+                if self.locations
+                else node.lineno
+            )
+            _first_line(self.exception_lines, node.name, line)
         for statement in node.body:
             self.visit(statement)
 
@@ -372,15 +599,30 @@ class _FunctionBodyFacts(ast.NodeVisitor):
     def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
         # The nested function's name is not treated as a "variable" for this
         # rule, and its body belongs to a different function scope.
-        self.non_variable_bindings.add(node.name)
+        self._non_variable(
+            node.name,
+            self.locations.definition_name(node)
+            if self.locations
+            else node.lineno,
+        )
 
     def visit_AsyncFunctionDef(
         self: Self, /, node: ast.AsyncFunctionDef
     ) -> None:
-        self.non_variable_bindings.add(node.name)
+        self._non_variable(
+            node.name,
+            self.locations.definition_name(node)
+            if self.locations
+            else node.lineno,
+        )
 
     def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
-        self.non_variable_bindings.add(node.name)
+        self._non_variable(
+            node.name,
+            self.locations.definition_name(node)
+            if self.locations
+            else node.lineno,
+        )
 
     def visit_Lambda(self: Self, /, node: ast.Lambda) -> None:
         return
@@ -439,9 +681,9 @@ def _parameter_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     return result
 
 
-def _unannotated_parameter_names(
+def _unannotated_parameters(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
-) -> set[str]:
+) -> list[ast.arg]:
     args: ast.arguments
     parameters: list[ast.arg]
 
@@ -451,17 +693,18 @@ def _unannotated_parameter_names(
         parameters.append(args.vararg)
     if args.kwarg is not None:
         parameters.append(args.kwarg)
-    return {arg.arg for arg in parameters if arg.annotation is None}
+    return [arg for arg in parameters if arg.annotation is None]
 
 
 def _collect_body_facts(
     body: list[ast.stmt],
     declaration_nodes: set[int],
+    locations: _SourceLocations | None = None,
 ) -> _FunctionBodyFacts:
     facts: _FunctionBodyFacts
     statement: ast.stmt
 
-    facts = _FunctionBodyFacts()
+    facts = _FunctionBodyFacts(locations)
 
     for statement in body:
         # Leading declarations are declarations only, not first "uses".
@@ -560,8 +803,10 @@ def _dead_module_names(
 
 
 def _statement_placement_issues(
-    body: list[ast.stmt], source_lines: list[bytes]
-) -> list[str]:
+    body: list[ast.stmt],
+    source_lines: list[bytes],
+    issues: _LineIssues,
+) -> None:
     """Find statements preceded by non-whitespace on their physical line."""
     line_numbers: set[int]
     statement: ast.stmt
@@ -582,51 +827,16 @@ def _statement_placement_issues(
 
     for statement in body:
         visit(statement)
-    if not line_numbers:
-        return []
-    return [
-        "simple statements not at beginning of physical line: "
-        + ", ".join(str(line) for line in sorted(line_numbers))
-    ]
+    for line in sorted(line_numbers):
+        issues.add(line, "simple statements not at beginning of physical line")
 
 
 def _physical_line_issues(
-    module: ast.Module, source: str
-) -> dict[int, list[str]]:
-    """Group physical lines by statement, header or decorator and scope."""
-    at_line_start: bool
-    deep: dict[int, set[int]]
-    deep_start_lines: set[int]
-    deep_starts: dict[int, set[int]]
-    description: str
-    findings: dict[int, set[int]]
-    first: int
-    first_by_line: dict[int, int]
-    group: set[int]
-    groups: list[set[int]]
-    incorrect_indentation: set[int]
-    indent_level: int
-    issues: dict[int, list[str]]
-    last: int
-    last_by_line: dict[int, int]
-    limit: int
-    line: int
-    line_numbers: set[int]
-    lines: list[str]
-    node: ast.AST
-    node_types: tuple[type[Any], ...]
-    nodes: list[ast.AST]
-    owner: int
-    owners: list[int]
-    previous_end: int
-    simple_starts: set[tuple[int, int]]
-    starts: set[tuple[int, int]]
-    text: str
-    token: tokenize.TokenInfo
-    trailing: dict[int, set[int]]
-    used: set[int]
-    wrong_indent: dict[int, set[int]]
-
+    module: ast.Module,
+    source: str,
+    issues: _LineIssues,
+) -> None:
+    """Group physical lines by statement, header or decorator."""
     node_types = (
         ast.AsyncFor,
         ast.AsyncFunctionDef,
@@ -656,8 +866,6 @@ def _physical_line_issues(
                 simple_starts.add((node.lineno, len(text)))
     groups = []
     used = set()
-    first_by_line = {}
-    last_by_line = {}
     previous_end = 0
     indent_level = 0
     incorrect_indentation = set()
@@ -667,7 +875,6 @@ def _physical_line_issues(
     def finish(end_line: int) -> None:
         first: int
         last: int
-        line: int
 
         nonlocal previous_end
         if not used:
@@ -685,9 +892,6 @@ def _physical_line_issues(
             if lines[line - 1].strip() == "\\"
         )
         groups.append(set(used))
-        for line in used:
-            first_by_line[line] = min(first_by_line.get(line, first), first)
-            last_by_line[line] = max(last_by_line.get(line, last), last)
         used.clear()
         previous_end = last
 
@@ -720,32 +924,10 @@ def _physical_line_issues(
         if token.type == tokenize.OP and token.string == ";":
             finish(token.end[0])
 
-    # Attribute headers and decorators to their own class/function, just as
-    # body diagnostics are attributed to the innermost scope.
-    owners = [id(module)] * (len(lines) + 1)
-    for node in nodes:
-        if isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-        ):
-            first = min(
-                [node.lineno, *(d.lineno for d in node.decorator_list)]
-            )
-            first = first_by_line.get(first, first)
-            last = node.end_lineno or node.lineno
-            last = last_by_line.get(last, last)
-            owners[first : last + 1] = [id(node)] * (last - first + 1)
-
-    trailing = {}
-    deep = {}
-    deep_starts = {}
-    wrong_indent = {}
-    for line in deep_start_lines:
-        deep_starts.setdefault(owners[line], set()).add(line)
-    for line in incorrect_indentation:
-        wrong_indent.setdefault(owners[line], set()).add(line)
-    for line, text in enumerate(lines, 1):
-        if text != text.rstrip():
-            trailing.setdefault(owners[line], set()).add(line)
+    trailing = {
+        line for line, text in enumerate(lines, 1) if text != text.rstrip()
+    }
+    deep: set[int] = set()
 
     def indentation(line: int) -> int:
         prefix: str
@@ -761,62 +943,26 @@ def _physical_line_issues(
         limit = indentation(first) + 8
         for line in group:
             if indentation(line) >= limit:
-                deep.setdefault(owners[first], set()).add(line)
+                deep.add(line)
 
-    issues = {}
     for description, findings in (
-        ("trailing whitespace on physical lines: ", trailing),
-        ("indentation must be four spaces per level: ", wrong_indent),
-        ("physical lines indented two or more levels deeper: ", deep),
-        ("simple statements indented more than four levels: ", deep_starts),
+        ("trailing whitespace on physical lines", trailing),
+        ("indentation must be four spaces per level", incorrect_indentation),
+        ("physical lines indented two or more levels deeper", deep),
+        ("simple statements indented more than four levels", deep_start_lines),
     ):
-        for owner, line_numbers in findings.items():
-            issues.setdefault(owner, []).append(
-                description
-                + ", ".join(str(line) for line in sorted(line_numbers))
-            )
-    return issues
+        for line in sorted(findings):
+            issues.add(line, description)
 
 
 def _check_scope(
-    filename: str,
     node: ast.Module | ast.FunctionDef | ast.AsyncFunctionDef,
-    external_assignments: set[str],
-    source_lines: list[bytes],
-    physical_line_issues: list[str],
+    external_assignments: dict[str, int],
+    locations: _SourceLocations,
+    issues: _LineIssues,
     dead_module_names: list[str] | None = None,
     in_class: bool = False,
-) -> FunctionViolation | None:
-    annotations: list[ast.AnnAssign]
-    assigned_declarations: set[str]
-    body: list[ast.stmt]
-    declaration_names: list[str]
-    declaration_nodes: set[int]
-    declared: set[str]
-    decorator: ast.expr
-    direct_annotation_nodes: set[int]
-    duplicates: list[str]
-    exception_declarations: list[str]
-    exempt: set[str]
-    facts: _FunctionBodyFacts
-    index: int
-    is_module: bool
-    issues: list[str]
-    late_declarations: list[str]
-    leading_decls: list[ast.AnnAssign]
-    locals_that_need_declarations: set[str]
-    missing: list[str]
-    names_for_duplicate_check: list[str]
-    nested_declaration_names: list[str]
-    non_variable_declarations: list[str]
-    ordering_body: list[ast.stmt]
-    requires_positional_only: bool
-    start: int
-    statement: ast.AnnAssign
-    unannotated_parameters: list[str]
-    unnecessary: list[str]
-    unsorted_duplicates: set[str]
-
+) -> None:
     is_module = isinstance(node, ast.Module)
     body = (
         [stmt for stmt in node.body if not _is_module_all_statement(stmt)]
@@ -834,7 +980,7 @@ def _check_scope(
     ):
         start += 1
 
-    leading_decls = []
+    leading_decls: list[ast.AnnAssign] = []
     index = start
     while index < len(ordering_body) and (
         _is_bare_name_declaration(ordering_body[index])
@@ -848,13 +994,8 @@ def _check_scope(
     declaration_names = [decl.target.id for decl in leading_decls]  # type: ignore[union-attr]
     declared = set(declaration_names)
     annotations = _function_annotations(body)
-    direct_annotation_nodes = {
-        id(statement)
-        for statement in body
-        if isinstance(statement, ast.AnnAssign)
-    }
 
-    facts = _collect_body_facts(body, declaration_nodes)
+    facts = _collect_body_facts(body, declaration_nodes, locations)
     if isinstance(node, ast.Module):
         exempt = {
             "__annotations__",
@@ -868,32 +1009,40 @@ def _check_scope(
             "__path__",
             "__spec__",
         }
-        unannotated_parameters = []
     else:
         exempt = _parameter_names(node) | facts.globals | facts.nonlocals
-        unannotated_parameters = sorted(_unannotated_parameter_names(node))
     locals_that_need_declarations = (
-        (facts.bound | external_assignments) - exempt - facts.typevar_bindings
+        (facts.bound | external_assignments.keys())
+        - exempt
+        - facts.typevar_bindings
     )
 
-    issues = _check_module_all(node.body) if is_module else []
-    issues.extend(facts.import_issues())
-    issues.extend(_statement_placement_issues(node.body, source_lines))
-    issues.extend(physical_line_issues)
+    if isinstance(node, ast.Module):
+        _check_module_all(node.body, locations, issues)
+    facts.import_issues(issues)
+    _statement_placement_issues(node.body, locations.lines, issues)
     if dead_module_names:
-        issues.append(
-            "dead module names: " + ", ".join(map(repr, dead_module_names))
+        issues.names(
+            "dead module names",
+            ((locations.last_line, name) for name in dead_module_names),
         )
-    if unannotated_parameters:
-        issues.append(
-            "unannotated arguments: "
-            + ", ".join(map(repr, unannotated_parameters))
-        )
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and [
-        arg.arg for arg in node.args.kwonlyargs
-    ] != sorted(arg.arg for arg in node.args.kwonlyargs):
-        issues.append("keyword-only arguments not in alphabetical order")
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        args = node.args
+        issues.names(
+            "unannotated arguments",
+            (
+                (locations.parameter_end(arg), arg.arg)
+                for arg in _unannotated_parameters(node)
+            ),
+        )
+        greatest = ""
+        for arg in args.kwonlyargs:
+            if arg.arg < greatest:
+                issues.add(
+                    arg.lineno,
+                    "keyword-only arguments not in alphabetical order",
+                )
+            greatest = max(greatest, arg.arg)
         if node.decorator_list:
             decorator = node.decorator_list[-1]
             requires_positional_only = (
@@ -903,120 +1052,143 @@ def _check_scope(
         else:
             requires_positional_only = in_class
         if requires_positional_only and not node.args.posonlyargs:
-            issues.append("first argument must be positional-only")
+            issues.add(
+                locations.positional_only_end(node),
+                "first argument must be positional-only",
+            )
 
     # A bare annotation later in the body is itself evidence that the
     # declaration block is not at the beginning.
-    late_declarations = []
-    for statement in annotations:
-        if id(statement) in declaration_nodes:
-            continue
-        if _is_bare_name_declaration(statement):
-            assert isinstance(statement.target, ast.Name)
-            late_declarations.append(statement.target.id)
-    if late_declarations:
-        issues.append(
-            "declarations not at beginning: "
-            + ", ".join(map(repr, sorted(set(late_declarations))))
-        )
+    bare_declarations = [
+        statement
+        for statement in annotations
+        if _is_bare_name_declaration(statement)
+        and isinstance(statement.target, ast.Name)
+    ]
 
-    if declaration_names != sorted(declaration_names):
-        issues.append("declarations not in alphabetical order")
+    def declaration_line(statement: ast.AnnAssign) -> int:
+        # The colon establishes the annotation, even across a backslash.
+        return locations.following(statement.target, {":"})
 
-    non_variable_declarations = sorted(declared & facts.non_variable_bindings)
-    if non_variable_declarations:
-        issues.append(
-            "declarations for 'def'/'class'/'import' names: "
-            + ", ".join(map(repr, non_variable_declarations))
-        )
-
-    exception_declarations = sorted(declared & facts.exception_bindings)
-    if exception_declarations:
-        issues.append(
-            "declarations for 'except' names: "
-            + ", ".join(map(repr, exception_declarations))
-        )
-
-    nested_declaration_names = []
-    for statement in annotations:
-        if (
-            id(statement) not in direct_annotation_nodes
-            and _is_bare_name_declaration(statement)
+    issues.names(
+        "declarations not at beginning",
+        (
+            (declaration_line(statement), statement.target.id)
+            for statement in bare_declarations
+            if id(statement) not in declaration_nodes
             and isinstance(statement.target, ast.Name)
-        ):
-            nested_declaration_names.append(statement.target.id)
-    names_for_duplicate_check = declaration_names + nested_declaration_names
-    unsorted_duplicates = {
-        name
-        for name in names_for_duplicate_check
-        if names_for_duplicate_check.count(name) > 1
-    }
-    duplicates = sorted(unsorted_duplicates)
-    if duplicates:
-        issues.append(
-            "duplicate declarations: " + ", ".join(map(repr, duplicates))
-        )
+        ),
+    )
+    greatest = ""
+    declaration_lines: dict[str, int] = {}
+    for statement in leading_decls:
+        assert isinstance(statement.target, ast.Name)
+        name = statement.target.id
+        line = declaration_line(statement)
+        if name < greatest:
+            issues.add(line, "declarations not in alphabetical order")
+        greatest = max(greatest, name)
+        _first_line(declaration_lines, name, line)
 
-    missing = sorted(locals_that_need_declarations - declared)
-    if missing:
-        issues.append("missing declarations: " + ", ".join(map(repr, missing)))
+    issues.names(
+        "declarations for 'def'/'class'/'import' names",
+        (
+            (
+                max(declaration_lines[name], facts.non_variable_lines[name]),
+                name,
+            )
+            for name in declared & facts.non_variable_bindings
+        ),
+    )
+    issues.names(
+        "declarations for 'except' names",
+        (
+            (max(declaration_lines[name], facts.exception_lines[name]), name)
+            for name in declared & facts.exception_bindings
+        ),
+    )
 
-    unnecessary = sorted(
+    seen: set[str] = set()
+    duplicates: list[tuple[int, str]] = []
+    for statement in sorted(
+        bare_declarations, key=lambda stmt: (stmt.lineno, stmt.col_offset)
+    ):
+        assert isinstance(statement.target, ast.Name)
+        name = statement.target.id
+        if name in seen:
+            duplicates.append((declaration_line(statement), name))
+        seen.add(name)
+    issues.names("duplicate declarations", iter(duplicates))
+
+    binding_lines = facts.binding_lines.copy()
+    for name, line in external_assignments.items():
+        _first_line(binding_lines, name, line)
+    issues.names(
+        "missing declarations",
+        (
+            (binding_lines[name], name)
+            for name in locals_that_need_declarations - declared
+        ),
+    )
+    unnecessary = (
         declared
         - locals_that_need_declarations
         - facts.non_variable_bindings
         - facts.exception_bindings
     )
-    if unnecessary:
-        issues.append(
-            "unnecessary declarations: " + ", ".join(map(repr, unnecessary))
-        )
+    scope_end = locations.scope_end(node)
+    unnecessary_lines: list[tuple[int, str]] = []
+    for name in unnecessary:
+        if name in exempt:
+            line = declaration_lines[name]
+        elif name in facts.typevar_lines:
+            line = max(declaration_lines[name], facts.typevar_lines[name])
+        else:
+            line = scope_end
+        unnecessary_lines.append((line, name))
+    issues.names("unnecessary declarations", iter(unnecessary_lines))
 
     # Explicitly reject annotation-with-assignment anywhere in the function
     # body when its target is a simple local name.
-    assigned_declarations = set()
-    for statement in annotations:
-        if (
-            isinstance(statement.target, ast.Name)
+    issues.names(
+        "declaration assigns a value",
+        (
+            (
+                locations.following(statement.annotation, {"="}),
+                statement.target.id,
+            )
+            for statement in annotations
+            if isinstance(statement.target, ast.Name)
             and statement.value is not None
             and statement.target.id not in exempt
-        ):
-            assigned_declarations.add(statement.target.id)
-    if assigned_declarations:
-        issues.append(
-            "declaration assigns a value: "
-            + ", ".join(map(repr, sorted(assigned_declarations)))
-        )
-
-    if not issues:
-        return None
-
-    return FunctionViolation(
-        file=filename,
-        line=1 if isinstance(node, ast.Module) else node.lineno,
-        desc=_join_issues(issues),
+        ),
     )
 
 
-def _external_assignments(module: ast.Module) -> dict[int, set[str]]:
+def _external_assignments(
+    module: ast.Module,
+    locations: _SourceLocations,
+) -> dict[int, dict[str, int]]:
     """Find global/nonlocal assignments belonging to an enclosing scope."""
-    assignments: dict[int, set[str]]
+    assignments: dict[int, dict[str, int]]
     assignments = {}
     _external_assignments_visit(
         node=module,
         enclosing=[],
         assignments=assignments,
         module=module,
+        locations=locations,
     )
     return assignments
 
 
 def _external_assignments_visit(
     *,
-    assignments: dict[int, set[str]],
+    assignments: dict[int, dict[str, int]],
     enclosing: list[tuple[ast.FunctionDef | ast.AsyncFunctionDef, set[str]]],
     module: ast.Module,
     node: ast.AST,
+    locations: _SourceLocations,
 ) -> None:
     child: ast.AST
     facts: _FunctionBodyFacts
@@ -1031,16 +1203,24 @@ def _external_assignments_visit(
                 enclosing=enclosing,
                 assignments=assignments,
                 module=module,
+                locations=locations,
             )
         return
-    facts = _collect_body_facts(node.body, set())
-    assignments.setdefault(id(module), set()).update(
-        (facts.bound & facts.globals) - {"__all__"}
-    )
+    facts = _collect_body_facts(node.body, set(), locations)
+    for name in (facts.bound & facts.globals) - {"__all__"}:
+        _first_line(
+            assignments.setdefault(id(module), {}),
+            name,
+            facts.binding_lines[name],
+        )
     for name in facts.bound & facts.nonlocals:
         for outer, local_names in reversed(enclosing):
             if name in local_names:
-                assignments.setdefault(id(outer), set()).add(name)
+                _first_line(
+                    assignments.setdefault(id(outer), {}),
+                    name,
+                    facts.binding_lines[name],
+                )
                 break
     local_names = facts.bound
     local_names |= _parameter_names(node)
@@ -1058,6 +1238,7 @@ def _external_assignments_visit(
             enclosing=enclosing,
             assignments=assignments,
             module=module,
+            locations=locations,
         )
 
 
@@ -1065,27 +1246,21 @@ class _FunctionChecker(ast.NodeVisitor):
     def __init__(self: Self, /, filename: str, source: str) -> None:
         self.filename = filename
         self.source = source
-        self.source_lines = source.encode("utf-8").split(b"\n")
-        self.violations: list[FunctionViolation] = []
-        self.external_assignments: dict[int, set[str]] = {}
-        self.physical_line_issues: dict[int, list[str]] = {}
+        self.locations = _SourceLocations(source)
+        self.issues = _LineIssues()
+        self.external_assignments: dict[int, dict[str, int]] = {}
         self.in_class: bool = False
 
     def visit_Module(self: Self, /, node: ast.Module) -> None:
-        violation: FunctionViolation | None
-
-        self.external_assignments = _external_assignments(node)
-        self.physical_line_issues = _physical_line_issues(node, self.source)
-        violation = _check_scope(
-            self.filename,
+        self.external_assignments = _external_assignments(node, self.locations)
+        _physical_line_issues(node, self.source, self.issues)
+        _check_scope(
             node,
-            self.external_assignments.get(id(node), set()),
-            self.source_lines,
-            self.physical_line_issues.get(id(node), []),
+            self.external_assignments.get(id(node), {}),
+            self.locations,
+            self.issues,
             _dead_module_names(node, self.source, self.filename),
         )
-        if violation is not None:
-            self.violations.append(violation)
         self.generic_visit(node)
 
     def _visit_function(
@@ -1093,21 +1268,13 @@ class _FunctionChecker(ast.NodeVisitor):
         /,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
     ) -> None:
-        in_class: bool
-        statement: ast.stmt
-        violation: FunctionViolation | None
-
-        violation = _check_scope(
-            self.filename,
+        _check_scope(
             node,
-            self.external_assignments.get(id(node), set()),
-            self.source_lines,
-            self.physical_line_issues.get(id(node), []),
+            self.external_assignments.get(id(node), {}),
+            self.locations,
+            self.issues,
             in_class=self.in_class,
         )
-        if violation is not None:
-            self.violations.append(violation)
-
         # Check nested functions too, without otherwise confusing their scope
         # with this function's scope.
         in_class = self.in_class
@@ -1125,20 +1292,12 @@ class _FunctionChecker(ast.NodeVisitor):
         self._visit_function(node)
 
     def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
-        functionViolation: FunctionViolation
-        in_class: bool
-        issues: list[str]
-
-        issues = _collect_body_facts(node.body, set()).import_issues()
-        issues.extend(
-            _statement_placement_issues(node.body, self.source_lines)
+        _collect_body_facts(node.body, set(), self.locations).import_issues(
+            self.issues
         )
-        issues.extend(self.physical_line_issues.get(id(node), []))
-        if issues:
-            functionViolation = FunctionViolation(
-                self.filename, node.lineno, _join_issues(issues)
-            )
-            self.violations.append(functionViolation)
+        _statement_placement_issues(
+            node.body, self.locations.lines, self.issues
+        )
         in_class = self.in_class
         self.in_class = True
         self.generic_visit(node)
@@ -1154,7 +1313,10 @@ def check_file(path: str) -> list[FunctionViolation]:
     tree = ast.parse(source, filename=path)
     checker = _FunctionChecker(path, source)
     checker.visit(tree)
-    return checker.violations
+    return [
+        FunctionViolation(path, line, _join_issues(issues))
+        for line, issues in sorted(checker.issues.by_line.items())
+    ]
 
 
 def scan(
@@ -1171,7 +1333,11 @@ def scan(
     try:
         violations.extend(check_file(file))
     except (OSError, UnicodeError, SyntaxError) as exc:
-        desc = _join_issues([f"cannot analyze file: {exc}"])
+        # SyntaxError.msg can itself embed another physical line number.
+        message = (
+            "invalid syntax" if isinstance(exc, SyntaxError) else str(exc)
+        )
+        desc = _join_issues([f"cannot analyze file: {message}!"])
         error_line = getattr(exc, "lineno", None) or 1
         violations.append(
             FunctionViolation(file=file, line=error_line, desc=desc)
@@ -1185,6 +1351,6 @@ def scan(
             )
         except (KeyError, IndexError, ValueError) as exc:
             raise ValueError(
-                _join_issues([f"invalid --errmsg: {exc}"])
+                _join_issues([f"invalid --errmsg: {exc}!"])
             ) from exc
         yield line

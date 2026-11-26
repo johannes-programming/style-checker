@@ -1,2 +1,1 @@
-1: dead module names: 'unused_declaration'!
-4: unnecessary declarations: 'leftover'!
+5: dead module names: 'unused_declaration'! unnecessary declarations: 'leftover'!

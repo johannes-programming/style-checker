@@ -1,1 +1,8 @@
-1: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'! declarations not at beginning: 'late'! declarations not in alphabetical order! duplicate declarations: 'duplicate'! missing declarations: 'initialized', 'late', 'missing'! declaration assigns a value: 'initialized'!
+10: declarations not in alphabetical order!
+11: declarations not in alphabetical order!
+12: declarations not in alphabetical order! duplicate declarations: 'duplicate'!
+17: missing declarations: 'missing'!
+18: missing declarations: 'initialized'! declaration assigns a value: 'initialized'!
+19: declarations not at beginning: 'late'!
+20: missing declarations: 'late'!
+24: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!

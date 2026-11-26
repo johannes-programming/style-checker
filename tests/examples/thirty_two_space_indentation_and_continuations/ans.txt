@@ -1,2 +1,7 @@
-1: physical lines indented two or more levels deeper: 3!
-5: indentation must be four spaces per level: 9! physical lines indented two or more levels deeper: 6, 7, 10, 11, 12!
+3: physical lines indented two or more levels deeper!
+6: physical lines indented two or more levels deeper!
+7: physical lines indented two or more levels deeper!
+9: indentation must be four spaces per level!
+10: physical lines indented two or more levels deeper!
+11: physical lines indented two or more levels deeper!
+12: physical lines indented two or more levels deeper!

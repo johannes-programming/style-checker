@@ -1,1 +1,5 @@
-1: indentation must be four spaces per level: 4, 5, 6, 7, 8! simple statements indented more than four levels: 8!
+4: indentation must be four spaces per level!
+5: indentation must be four spaces per level!
+6: indentation must be four spaces per level!
+7: indentation must be four spaces per level!
+8: indentation must be four spaces per level! simple statements indented more than four levels!
