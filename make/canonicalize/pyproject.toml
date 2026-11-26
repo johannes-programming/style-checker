@@ -33,9 +33,7 @@ dependencies = [
 
 [tool.ruff]
 line-length = 79
-
-[tool.ruff.lint]
-select = [
+lint.select = [
     "ANN001",
     "ANN002",
     "ANN003",
