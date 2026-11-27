@@ -455,6 +455,14 @@ number, then by rule mark in alphabetical order. File paths retain their
 original spelling in the output; absolute paths are used for ordering and
 identifying duplicate file arguments. These guarantees also apply to custom
 ``outmsg`` formats, even when a format omits the distinguishing fields.
+The physical-line rules include ``LINE-NL`` (a nonempty file must end
+with a linebreak) and ``LINE-BL`` (no whitespace-only physical lines at
+end of file). ``LINE-NL`` is reported on the last physical line, and
+``LINE-BL`` is reported once per trailing whitespace-only line, including
+empty lines. LF, CRLF and CR linebreaks are accepted. An empty file is
+exempt from both rules. Whitespace-only lines elsewhere are unaffected by
+``LINE-BL``; the existing ``LINE-TW`` rule still applies independently.
+
 The checker also reports module-level violations (including invalid or missing
 ``__all__``) and syntax errors. For a syntax error, ``{rule}`` is
 ``"SYN-" + type(err).__name__`` (for example, ``SYN-SyntaxError``,

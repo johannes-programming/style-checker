@@ -195,6 +195,12 @@ class TestSyntaxErrors(unittest.TestCase):
             ["2: <syntax>"],
         )
 
+    def test_eof_rules_after_syntax_error(self: Self, /) -> None:
+        # Actual and synthetic EOF lines must not bypass the syntax cutoff.
+        self.check("broken =", ["1: <syntax>"])
+        self.check("broken =\n\n \t", ["1: <syntax>"])
+        self.check("__all__: list[str] = []\nbroken =\n\n", ["2: <syntax>"])
+
     def test_error_at_start(self: Self, /) -> None:
         # Static examples cannot derive the syntax message from compile()
         # or check both forms of suppression and the violation object.

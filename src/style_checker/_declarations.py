@@ -60,6 +60,8 @@ class FunctionViolation:
 
 
 class _Rule(Enum):
+    LINE_NL = "nonempty files must end with a linebreak"
+    LINE_BL = "whitespace-only lines at end of file"
     LINE_TW = "trailing whitespace on physical lines"
     LINE_IND = "indentation must be four spaces per level"
     LINE_CONT = "physical lines indented two or more levels deeper"
@@ -1352,6 +1354,17 @@ def _physical_line_issues(
     ):
         for line in sorted(findings):
             issues.add(line, rule)
+
+    # Recovered prefixes are not complete files: their EOF is synthetic.
+    if prefix_end is None and source:
+        if source.endswith("\n"):
+            lines.pop()  # The split sentinel is not a physical line.
+        else:
+            issues.add(len(lines), _Rule.LINE_NL)
+        for line in range(len(lines), 0, -1):
+            if lines[line - 1].strip():
+                break
+            issues.add(line, _Rule.LINE_BL)
 
 
 def _declaration_line(

@@ -44,6 +44,7 @@ class TestIgnore(unittest.TestCase):
             "except Exception as exc:\n    print(exc)\n",
             "__all__: list[str] = []  \n",
             "# comment  \nbroken =\n",
+            "__all__: list[str] = []\n \t",
         )
         with tempfile.TemporaryDirectory() as directory:
             fixtures = list((Path(__file__).parent / "examples").rglob("*.py"))
