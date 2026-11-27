@@ -1,0 +1,2 @@
+5: REQD-MIS: missing declarations: 'value'!
+5: REQD-VAL: declaration assigns a value: 'value'!

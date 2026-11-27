@@ -1,0 +1,1 @@
+2: FUNC-ARG: unannotated arguments: 'apple', 'kwargs', 'middle', 'option', 'rest', 'zebra'!

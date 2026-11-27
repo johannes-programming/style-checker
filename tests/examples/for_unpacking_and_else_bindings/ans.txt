@@ -1,0 +1,2 @@
+3: REQD-MIS: missing declarations: 'left', 'right'!
+6: REQD-MIS: missing declarations: 'exhausted'!

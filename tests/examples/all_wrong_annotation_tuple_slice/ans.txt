@@ -1,0 +1,1 @@
+1: ALL-TYPE: '__all__' must be annotated as 'list[str]'!

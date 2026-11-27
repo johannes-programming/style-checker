@@ -1,0 +1,2 @@
+4: REQD-MIS: missing declarations: 'accepted'!
+7: REQD-MIS: missing declarations: 'rejected'!

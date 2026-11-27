@@ -1,0 +1,3 @@
+2: REQD-MIS: missing declarations: 'first'!
+2: REQD-MIS: missing declarations: 'middle'!
+2: REQD-MIS: missing declarations: 'last'!

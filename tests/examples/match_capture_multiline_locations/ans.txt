@@ -1,0 +1,6 @@
+5: REQD-MIS: missing declarations: 'first'!
+6: REQD-MIS: missing declarations: 'remaining'!
+7: REQD-MIS: missing declarations: 'whole'!
+11: REQD-MIS: missing declarations: 'value'!
+13: REQD-MIS: missing declarations: 'rest'!
+16: REQD-MIS: missing declarations: 'imag', 'real'!

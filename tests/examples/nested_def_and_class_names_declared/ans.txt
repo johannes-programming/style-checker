@@ -1,0 +1,2 @@
+5: EXEM-IMP: declarations for 'def'/'class'/'import' names: 'Helper'!
+7: EXEM-IMP: declarations for 'def'/'class'/'import' names: 'helper'!

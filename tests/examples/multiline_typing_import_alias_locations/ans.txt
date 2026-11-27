@@ -1,0 +1,2 @@
+3: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Iterable'!
+5: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Sequence'!

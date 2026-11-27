@@ -1,0 +1,2 @@
+ignore = []
+outmsg = "{line}: {rule}: {desc}"

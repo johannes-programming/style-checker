@@ -226,6 +226,22 @@ class _SourceLocations:
                 return next(tokens).start[0]
         return node.lineno
 
+    def mapping_rest(self: Self, /, node: ast.MatchMapping) -> int:
+        # The rest capture is the final name before the closing brace.
+        column: int
+        i: int
+        line: int
+        line = node.end_lineno or node.lineno
+        column = len(
+            self.lines[line - 1][: node.end_col_offset].decode("utf-8")
+        )
+        i = bisect_left(self.positions, (line, column)) - 1
+        while i >= 0:
+            if self.tokens[i].type == tokenize.NAME:
+                return self.tokens[i].start[0]
+            i -= 1
+        return node.lineno
+
     def definition_name(
         self: Self,
         /,
@@ -691,6 +707,27 @@ class _FunctionBodyFacts(ast.NodeVisitor):
 
     def visit_AsyncWith(self: Self, /, node: ast.AsyncWith) -> None:
         self.visit_With(node)
+
+    def visit_MatchAs(self: Self, /, node: ast.MatchAs) -> None:
+        # Capture names are strings in the AST, not ast.Name targets.
+        self.generic_visit(node)
+        if node.name is not None:
+            self._record(node.name, "bind", node.end_lineno or node.lineno)
+
+    def visit_MatchStar(self: Self, /, node: ast.MatchStar) -> None:
+        if node.name is not None:
+            self._record(node.name, "bind", node.end_lineno or node.lineno)
+
+    def visit_MatchMapping(self: Self, /, node: ast.MatchMapping) -> None:
+        line: int
+        self.generic_visit(node)
+        if node.rest is not None:
+            line = (
+                self.locations.mapping_rest(node)
+                if self.locations
+                else node.lineno
+            )
+            self._record(node.rest, "bind", line)
 
     def visit_ExceptHandler(self: Self, /, node: ast.ExceptHandler) -> None:
         line: int

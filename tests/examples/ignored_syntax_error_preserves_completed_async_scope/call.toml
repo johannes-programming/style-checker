@@ -1,0 +1,4 @@
+ignore = [
+    "SYN",
+]
+outmsg = "{line}: {rule}: {desc}"

@@ -1,0 +1,3 @@
+5: STMT-BEG: simple statements not at beginning of physical line!
+6: STMT-BEG: simple statements not at beginning of physical line!
+7: STMT-BEG: simple statements not at beginning of physical line!

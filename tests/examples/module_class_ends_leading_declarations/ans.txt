@@ -1,0 +1,2 @@
+4: PLAC-BEG: declarations not at beginning: 'value'!
+5: REQD-MIS: missing declarations: 'value'!

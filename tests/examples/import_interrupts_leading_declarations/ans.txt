@@ -1,0 +1,2 @@
+5: PLAC-BEG: declarations not at beginning: 'second'!
+7: REQD-MIS: missing declarations: 'second'!

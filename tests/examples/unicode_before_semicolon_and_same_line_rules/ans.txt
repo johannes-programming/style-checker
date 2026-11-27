@@ -1,0 +1,2 @@
+3: REQD-MIS: missing declarations: 'apple', 'zebra', 'é'!
+3: STMT-BEG: simple statements not at beginning of physical line!

@@ -1,0 +1,2 @@
+5: FUNC-POS: first argument must be positional-only!
+9: FUNC-POS: first argument must be positional-only!

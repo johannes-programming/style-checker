@@ -1,0 +1,3 @@
+3: REQD-MIS: missing declarations: 'unused'!
+8: REQD-MIS: missing declarations: 'global_capture'!
+9: DEAD-NAME: dead module names: 'unused'!

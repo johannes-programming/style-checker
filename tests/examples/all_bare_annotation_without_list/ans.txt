@@ -1,0 +1,1 @@
+1: ALL-LIST: '__all__' must be assigned a list literal!

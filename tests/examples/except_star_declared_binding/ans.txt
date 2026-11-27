@@ -1,0 +1,1 @@
+6: EXEM-EX: declarations for 'except' names: 'errors'!

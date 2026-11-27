@@ -1,0 +1,3 @@
+4: REQD-MIS: missing declarations: 'attempted'!
+8: REQD-MIS: missing declarations: 'successful'!
+10: REQD-MIS: missing declarations: 'cleaned'!

@@ -1,0 +1,4 @@
+4: PLAC-BEG: declarations not at beginning: 'value'!
+6: PLAC-BEG: declarations not at beginning: 'value'!
+6: REQD-DUP: duplicate declarations: 'value'!
+7: REQD-MIS: missing declarations: 'value'!
