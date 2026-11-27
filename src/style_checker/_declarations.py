@@ -138,10 +138,7 @@ class _LineIssues:
             ):
                 description = rule.value
                 detail = ", ".join(sorted(details - {""}))
-                if detail:
-                    description = (
-                        f"{description}: {detail}" if description else detail
-                    )
+                description = ": ".join(filter(None, (description, detail)))
                 yield FunctionViolation(
                     path, line, rule.mark, f"{description}!"
                 )
@@ -460,10 +457,14 @@ class _FunctionAnnotations(ast.NodeVisitor):
 
     def visit_ImportFrom(self: Self, /, node: ast.ImportFrom) -> None:
         alias: ast.alias
-        if node.level == 0 and node.module in {"typing", "typing_extensions"}:
-            for alias in node.names:
-                if alias.name == "Final":
-                    self.final_imports.add(alias.asname or alias.name)
+        if node.level != 0 or node.module not in {
+            "typing",
+            "typing_extensions",
+        }:
+            return
+        for alias in node.names:
+            if alias.name == "Final":
+                self.final_imports.add(alias.asname or alias.name)
 
     def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
         self.annotations.append(node)
@@ -498,14 +499,18 @@ def _function_annotations(body: list[ast.stmt]) -> list[ast.AnnAssign]:
 
 
 def _is_final_annotation(annotation: ast.expr, imports: set[str]) -> bool:
-    if isinstance(annotation, ast.Subscript):
-        annotation = annotation.value
-    if isinstance(annotation, ast.Name):
-        return annotation.id in imports
+    target: ast.expr
+    target = (
+        annotation.value
+        if isinstance(annotation, ast.Subscript)
+        else annotation
+    )
+    if isinstance(target, ast.Name):
+        return target.id in imports
     return (
-        isinstance(annotation, ast.Attribute)
-        and isinstance(annotation.value, ast.Name)
-        and f"{annotation.value.id}.{annotation.attr}" in imports
+        isinstance(target, ast.Attribute)
+        and isinstance(target.value, ast.Name)
+        and f"{target.value.id}.{target.attr}" in imports
     )
 
 
@@ -973,30 +978,38 @@ class _ParameterAssignments(_FunctionBodyFacts):
         enclosing: list[_ParameterAssignments],
     ) -> None:
         child: _ParameterAssignments
+        child_enclosing: list[_ParameterAssignments]
         line: int
         name: str
-        outer: _ParameterAssignments
         for line, name in self.assignments:
             if self.parameters is not None and name in self.parameters:
                 issues.add(line, _Rule.FUNC_ASGN, repr(name))
-            elif name in self.nonlocals:
-                for outer in reversed(enclosing):
-                    if name in outer.globals or name in outer.nonlocals:
-                        continue
-                    if name in (
-                        (outer.parameters or set())
-                        | outer.bound
-                        | outer.non_variable_bindings
-                        | outer.exception_bindings
-                        | outer.annotated_names
-                    ):
-                        if name in (outer.parameters or set()):
-                            issues.add(line, _Rule.FUNC_ASGN, repr(name))
-                        break
+            elif name in self.nonlocals and self._outer_parameter(
+                name, enclosing
+            ):
+                issues.add(line, _Rule.FUNC_ASGN, repr(name))
+        child_enclosing = enclosing
         if self.parameters is not None:
-            enclosing = [*enclosing, self]
+            child_enclosing = [*enclosing, self]
         for child in self.children:
-            child.report(issues, enclosing)
+            child.report(issues, child_enclosing)
+
+    def _outer_parameter(
+        self: Self, /, name: str, enclosing: list[_ParameterAssignments]
+    ) -> bool:
+        outer: _ParameterAssignments
+        for outer in reversed(enclosing):
+            if name in outer.globals or name in outer.nonlocals:
+                continue
+            if name in (
+                (outer.parameters or set())
+                | outer.bound
+                | outer.non_variable_bindings
+                | outer.exception_bindings
+                | outer.annotated_names
+            ):
+                return name in (outer.parameters or set())
+        return False
 
 
 def _unannotated_parameters(
@@ -1442,19 +1455,13 @@ def _check_scope(
 
     leading_decls = []
     index = start
-    while (
-        index < len(ordering_body)
-        and id(ordering_body[index]) not in finals
-        and (
-            _is_bare_name_declaration(ordering_body[index])
-            or (
-                not is_module
-                and isinstance(ordering_body[index], ast.ClassDef)
-            )
-        )
-    ):
+    while index < len(ordering_body):
+        if id(ordering_body[index]) in finals:
+            break
         if _is_bare_name_declaration(ordering_body[index]):
             leading_decls.append(ordering_body[index])  # type: ignore[arg-type]
+        elif is_module or not isinstance(ordering_body[index], ast.ClassDef):
+            break
         index += 1
 
     declaration_nodes = {id(decl) for decl in leading_decls}
@@ -1645,6 +1652,9 @@ def _external_assignments_visit(
     node: ast.AST,
 ) -> None:
     child: ast.AST
+    child_enclosing: list[
+        tuple[ast.FunctionDef | ast.AsyncFunctionDef, set[str]]
+    ]
     facts: _FunctionBodyFacts
     local_names: set[str]
     name: str
@@ -1685,11 +1695,11 @@ def _external_assignments_visit(
     }
     local_names -= facts.globals
     local_names -= facts.nonlocals
-    enclosing = [*enclosing, (node, local_names)]
+    child_enclosing = [*enclosing, (node, local_names)]
     for child in ast.iter_child_nodes(node):
         _external_assignments_visit(
             node=child,
-            enclosing=enclosing,
+            enclosing=child_enclosing,
             assignments=assignments,
             module=module,
             locations=locations,
@@ -1802,6 +1812,7 @@ def _complete_prefix(
     indents: list[str]
     last: tokenize.TokenInfo | None
     message: str
+    padded_source: str
     result: tuple[str, ast.Module] | None
     statement: str
     suffix: str
@@ -1834,14 +1845,14 @@ def _complete_prefix(
         elif token.type not in (tokenize.NL, tokenize.COMMENT):
             if first is None:
                 first = token
-    source += "\n" * max(1, stop + 1 - source.count("\n"))
+    padded_source = source + "\n" * max(1, stop + 1 - source.count("\n"))
     if message.startswith("expected an indented block") and last is not None:
         statement = "case _: pass" if last.string == "match" else "pass"
         suffixes = [indents[-1] + "    " + statement + "\n"]
     else:
         suffixes = [indent + "finally: pass\n" for indent in indents[-2::-1]]
     for suffix in suffixes:
-        candidate = source + suffix
+        candidate = padded_source + suffix
         try:
             return candidate, ast.parse(candidate, filename=path)
         except SyntaxError as exc:

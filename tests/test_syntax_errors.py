@@ -16,6 +16,7 @@ from style_checker._declarations import FunctionViolation, check_file, scan
 
 class TestSyntaxErrors(unittest.TestCase):
     def check(self: Self, /, source: str, expected: list[str]) -> None:
+        actual: list[str]
         caught: Any
         directory: str
         expected_report: list[str]
@@ -45,12 +46,10 @@ class TestSyntaxErrors(unittest.TestCase):
                 list(scan(str(path), "{line}: {rule}: {desc}", ignore=[rule])),
                 expected_report[:-1],
             )
-            self.assertEqual(
-                list(
-                    scan(str(path), "{line}: {rule}: {desc}", ignore=["SYN"])
-                ),
-                expected_report[:-1],
+            actual = list(
+                scan(str(path), "{line}: {rule}: {desc}", ignore=["SYN"])
             )
+            self.assertEqual(actual, expected_report[:-1])
             violation = check_file(str(path))[-1]
             self.assertEqual(
                 (violation.rule, violation.desc),
@@ -121,12 +120,14 @@ class TestSyntaxErrors(unittest.TestCase):
         # Static examples cannot derive the syntax message from compile()
         # or check both forms of suppression and the violation object.
         # The linter also removes trailing whitespace needed by this case.
+        expected: list[str]
+        expected = [
+            "1: LINE-TW: trailing whitespace on physical lines!",
+            "2: <syntax>",
+        ]
         self.check(
             "# before  \nx = 1; y = 2; broken =  \nafter = 1  \n",
-            [
-                "1: LINE-TW: trailing whitespace on physical lines!",
-                "2: <syntax>",
-            ],
+            expected,
         )
         self.check("x = 1; y = 2; broken =\n", ["1: <syntax>"])
 
@@ -223,6 +224,7 @@ class TestSyntaxErrors(unittest.TestCase):
         # different spellings of the ignore option through main(). The
         # linter also removes the trailing whitespace in the input.
         directory: str
+        exit_status: int
         output: io.StringIO
         path: Path
         rule: str
@@ -235,32 +237,29 @@ class TestSyntaxErrors(unittest.TestCase):
                 "IndentationError",
                 "syn",
             ):
-                with self.subTest(rule=rule):
-                    output = io.StringIO()
-                    with contextlib.redirect_stdout(output):
-                        self.assertEqual(
-                            style_checker.main(
-                                [
-                                    f"--ignore={rule}",
-                                    "--outmsg={rule}: {desc}",
-                                    str(path),
-                                ]
-                            ),
-                            1,
-                        )
-                    self.assertEqual(
-                        output.getvalue(),
-                        "SYN-IndentationError: unexpected indent!\n",
-                    )
+                self._check_cli_syntax_rule(path, rule)
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
-                self.assertEqual(
-                    style_checker.main(
-                        ["--ignore=SYN-IndentationError", str(path)]
-                    ),
-                    0,
+                exit_status = style_checker.main(
+                    ["--ignore=SYN-IndentationError", str(path)]
                 )
+                self.assertEqual(exit_status, 0)
             self.assertEqual(output.getvalue(), "")
+
+    def _check_cli_syntax_rule(self: Self, /, path: Path, rule: str) -> None:
+        args: list[str]
+        exit_status: int
+        output: io.StringIO
+        with self.subTest(rule=rule):
+            output = io.StringIO()
+            args = [f"--ignore={rule}", "--outmsg={rule}: {desc}", str(path)]
+            with contextlib.redirect_stdout(output):
+                exit_status = style_checker.main(args)
+                self.assertEqual(exit_status, 1)
+            self.assertEqual(
+                output.getvalue(),
+                "SYN-IndentationError: unexpected indent!\n",
+            )
 
     def test_all_existing_examples(self: Self, /) -> None:
         """Appending a bad statement must preserve pre-EOF findings."""
@@ -277,21 +276,25 @@ class TestSyntaxErrors(unittest.TestCase):
     def _check_example(self: Self, /, fixture: Path, path: Path) -> None:
         actual: list[str]
         actual_lines: list[str]
+        before_error: bool
         eof: int
         expected: list[str]
         expected_lines: list[str]
+        outmsg: str
         source: str
+        suppressed: list[str]
         with self.subTest(fixture=fixture):
             source = fixture.read_text(encoding="utf-8")
             eof = len(source.splitlines())
-            expected = list(scan(str(fixture), "{line}: {rule}: {desc}"))
+            outmsg = "{line}: {rule}: {desc}"
+            expected = list(scan(str(fixture), outmsg))
             path.write_text(
                 source
                 + ("" if source.endswith("\n") else "\n")
                 + "broken =\n",
                 encoding="utf-8",
             )
-            actual = list(scan(str(path), "{line}: {rule}: {desc}"))
+            actual = list(scan(str(path), outmsg))
             try:
                 ast.parse(source)
             except SyntaxError:
@@ -310,22 +313,14 @@ class TestSyntaxErrors(unittest.TestCase):
             self.assertTrue(
                 actual[-1].endswith("SYN-SyntaxError: invalid syntax!")
             )
-            self.assertTrue(
-                all(
-                    int(line.split(":", 1)[0]) < eof + 1
-                    for line in actual[:-1]
-                )
+            before_error = all(
+                int(line.split(":", 1)[0]) < eof + 1 for line in actual[:-1]
             )
-            self.assertEqual(
-                list(
-                    scan(
-                        str(path),
-                        "{line}: {rule}: {desc}",
-                        ignore=["SYN-SyntaxError"],
-                    )
-                ),
-                actual[:-1],
+            self.assertTrue(before_error)
+            suppressed = list(
+                scan(str(path), outmsg, ignore=["SYN-SyntaxError"])
             )
+            self.assertEqual(suppressed, actual[:-1])
             self.assertNotIn("dead module names", "\n".join(actual))
             self.assertNotIn("missing '__all__'", "\n".join(actual))
 
