@@ -1,16 +1,16 @@
-6: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-13: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-15: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-17: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-19: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-21: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-23: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-25: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-27: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-29: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-31: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-33: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-36: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-48: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-50: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
-55: ANNO-FIN: Final annotations should assign a value at namespace indentation level!
+6: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+13: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+15: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+17: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+19: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+21: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+23: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+25: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+27: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+29: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+31: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+33: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+36: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+48: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+50: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+55: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!

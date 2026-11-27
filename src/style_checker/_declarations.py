@@ -94,7 +94,10 @@ class _Rule(Enum):
     FUNC_KWOR = "keyword-only arguments should be in alphabetical order"
     FUNC_POS = "the first argument should be positional-only"
     ANNO_TOP = "declarations should appear at the beginning of the scope"
-    ANNO_FIN = "Final annotations should assign a value at namespace indentation level"
+    ANNO_FIN = (
+        "'Final' annotations should occur directly in a namespace body "
+        "and assign a value in the same statement"
+    )
     ANNO_SORT = "declarations should be in alphabetical order"
     ANNO_PROH = "prohibited declarations should be omitted"
     ANNO_ONCE = "each declaration should occur only once"
