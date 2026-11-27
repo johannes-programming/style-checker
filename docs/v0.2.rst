@@ -15,31 +15,41 @@ anywhere, but the trailing-whitespace rule applies to them too.
 Physical Statement Placement
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+``SP``
+^^^^^^
+
 Every decorator, compound-statement header and simple statement must start on
 a physical line with only whitespace to its left. Python syntax already
 enforces this for decorators and compound-statement headers. In particular,
 multiple simple statements on one physical line and simple statements on the
 same physical line as a compound-statement header are forbidden.
 
-``SP``
-^^^^^^
-
-Each simple statements must begin in its own physical line.
-
 Physical Line Whitespace and Indentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``TW``
+^^^^^^
 
 No physical line may end with whitespace other than its line break. This also
 applies to blank lines, comments, multiline strings and the final line of a
 file without a line break.
+
+``IND``
+^^^^^^^
 
 Block indentation must consist of exactly four spaces per nesting level
 (``"    "``). Tabs and other whitespace are not allowed for block indentation.
 Blank lines, comment-only lines and continuation lines do not determine block
 indentation.
 
+``DEEP``
+^^^^^^^^
+
 Each simple statement must start at no more than four indentation levels
 deep, counted from the module level (level zero).
+
+``CONT``
+^^^^^^^^
 
 For each simple statement, compound-statement header and decorator separately,
 no physical line used by it may start two or more indentation levels deeper
@@ -51,91 +61,71 @@ other rules are checked. Blank and comment-only lines are not used by a
 statement, header or decorator unless they occur within a multiline string.
 The body of a compound statement is not part of its header.
 
-``CONT``
-^^^^^^^^
-
-All physical lines of a simple statement, decorator, or header must be at most one indentation level deeper.
-
-``DEEP``
-^^^^^^^^
-
-Simple statements should not be indented more than four levels.
-
-``IND``
-^^^^^^^
-
-Indentation must be four spaces per level.
-
-``TW``
-^^^^^^
-
-No physical line should have trailing whitespace.
-
 Required Variable Declarations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Every variable assigned in a module's namespace must have a type annotation
-that meets all of these requirements:
-
-* It appears before the variable is used.
-* It appears in the declaration block at the beginning of the scope.
-* It does not assign a value (for example, ``count: int``, not ``count: int = 0``).
-* It is listed in alphabetical order by variable name.
-* It occurs exactly once.
-
-A declaration is required whenever the variable is subject to these rules.
-Conversely, a declaration for a variable that does not require one is an error.
-
-``DDUP``
-^^^^^^^^
-
-Do not duplicate declarations.
 
 ``DMIS``
 ^^^^^^^^
 
-Variables must be declared.
-
-``DORD``
-^^^^^^^^
-
-Declarations must be in alphabetical order.
-
-``DUN``
-^^^^^^^
-
-Each declaration must be necessary.
+Every variable assigned in a module's namespace must have a type annotation,
+subject to the exemptions described below. A declaration is required whenever
+the variable is subject to these rules.
 
 ``DVAL``
 ^^^^^^^^
 
-Declaration should be separate from assignment.
+A declaration must not assign a value (for example, ``count: int``, not
+``count: int = 0``).
+
+``DORD``
+^^^^^^^^
+
+Declarations must be listed in alphabetical order by variable name.
+
+``DDUP``
+^^^^^^^^
+
+Each required declaration must occur exactly once.
 
 Names Exempt from Declarations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+``DIMP``
+^^^^^^^^
+
 The declaration requirement does not apply to:
 
-* Names automatically provided in a module's namespace.
 * Names bound by nested ``class`` and ``def`` statements,
     i.e. of the classes and functions they define.
 * Names bound by ``import`` statements.
-* Temporary exception names introduced by ``except ... as ...``, which remain
-    bound only for the duration of the exception handler.
-* Each ``TypeVar`` and every similar construct is exempt from type annotation.
+
+These names must not have separate declarations.
 
 ``DEX``
 ^^^^^^^
 
-``except`` variables should not have declarations.
+Temporary exception names introduced by ``except ... as ...``, which remain
+bound only for the duration of the exception handler, must not have separate
+declarations.
 
-``DIMP``
-^^^^^^^^
+``DUN``
+^^^^^^^
 
-``def`` / ``class`` / ``import`` statement should not have declarations.
+A declaration for a variable that does not require one is an error.
+The declaration requirement does not apply to:
+
+* Names automatically provided in a module's namespace.
+* Each ``TypeVar`` and every similar construct, which is exempt from type
+    annotation.
 
 Declaration Placement
 ~~~~~~~~~~~~~~~~~~~~~
+
+``DBEG``
+^^^^^^^^
+
+A declaration must appear before the variable is used and in the declaration
+block at the beginning of the scope.
 
 The annotations of a namespace should form one block at the beginning of the
 module or function body. Within a function body, class definitions may be
@@ -147,56 +137,47 @@ Only the following may precede that block:
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
-``DBEG``
-^^^^^^^^
-
-Declarations must be up-front.
-
 The ``__all__`` Variable
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The module-level ``__all__`` variable is exempt from the general declaration
-rules and must instead satisfy all of the following requirements:
+rules and must instead satisfy all of the following requirements.
 
-* Every module must define ``__all__``, even if it is an empty list.
-* It must be annotated as ``list[str]``.
-* It must be assigned a list literal containing string literals.
-* Its elements must be in alphabetical order.
-* Its definition must precede all imports except ``from __future__`` imports.
-* It must be defined only once.
-
-``ALDU``
+``ALMS``
 ^^^^^^^^
 
-``ALIM``
+Every module must define ``__all__``, even if it is an empty list.
+
+``ALTY``
 ^^^^^^^^
 
-``__all__`` must precede imports.
+``__all__`` must be annotated as ``list[str]``.
 
 ``ALLI``
 ^^^^^^^^
 
 ``__all__`` must be assigned a list literal.
 
-``ALMS``
+``ALST``
 ^^^^^^^^
 
-There must be an ``__all__``.
+The elements of ``__all__`` must be string literals.
 
 ``ALOR``
 ^^^^^^^^
 
-``__all__`` items not in alphabetical order.
+The elements of ``__all__`` must be in alphabetical order.
 
-``ALST``
+``ALIM``
 ^^^^^^^^
 
-``__all__`` items must be string literals.
+The definition of ``__all__`` must precede all imports except
+``from __future__`` imports.
 
-``ALTY``
+``ALDU``
 ^^^^^^^^
 
-``__all__`` must be annotated as ``list[str]``.
+``__all__`` must be defined only once.
 
 Function Scopes and Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -204,11 +185,21 @@ Function Scopes and Parameters
 The general declaration rules also apply to variables in every ``def`` and
 ``async def`` body. The special rules for ``__all__`` apply only at module level.
 
+``ARG``
+^^^^^^^
+
 Every function parameter must have a type annotation, regardless of parameter kind.
 This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
+
+``KWOR``
+^^^^^^^^
+
 The single keyword-only parameters should be alphabetically ordered.
+
+``POS``
+^^^^^^^
 
 An undecorated ``def`` or ``async def`` statement must have a positional-only
 first parameter if its nearest enclosing ``class``, ``def`` or ``async def``
@@ -237,21 +228,6 @@ For example:
 
 Omitting the ``/`` in ``method`` or ``build`` would violate the rule.
 
-``ARG``
-^^^^^^^
-
-Arguments must be annotated.
-
-``KWOR``
-^^^^^^^^
-
-Single keyword-only arguments in a ``def`` statement must be in alphabetical order.
-
-``POS``
-^^^^^^^
-
-The first argument of methods and classmethods must be positional-only.
-
 Explicit Namespace Assignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -261,6 +237,9 @@ dictionaries or dictionary-like objects using string keys, such as
 
 Dead Module-Level Names
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+``DEAD``
+^^^^^^^^
 
 An import, assigned variable, function, or class defined in the module scope
 (including module-level control-flow blocks) is an error if its name is neither
@@ -275,28 +254,19 @@ lookups (such as ``globals()[name]``). It intentionally treats ``__all__`` as
 the sole declaration of a public export, even though Python permits importing
 other names explicitly.
 
-``DEAD``
-^^^^^^^^
-
-There should not be dead module names.
-
 Imports
 ~~~~~~~
-
-The following ``import`` statements are forbidden:
-
-* Wildcard imports (using ``*``)
-* Importing annotations from ``typing`` that also exist in ``collections.abc``, e.g. ``Iterable``
-
-``TIMP``
-^^^^^^^^
-
-Import from not from ``typing`` but from ``collections.abc`` if an appropriate alternate exists.
 
 ``WILD``
 ^^^^^^^^
 
-There must be no wildcard imports.
+Wildcard imports (using ``*``) are forbidden.
+
+``TIMP``
+^^^^^^^^
+
+Importing annotations from ``typing`` that also exist in ``collections.abc``
+(e.g. ``Iterable``) is forbidden.
 
 Example
 ~~~~~~~
