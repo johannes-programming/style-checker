@@ -1,0 +1,303 @@
+[whitespace_all_physical_line_types]
+ans = [
+    "1: LINE-TW: trailing whitespace on physical lines!",
+    "2: LINE-TW: trailing whitespace on physical lines!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "5: LINE-TW: trailing whitespace on physical lines!",
+    "6: LINE-TW: trailing whitespace on physical lines!",
+    "9: LINE-NL: nonempty files must end with a linebreak!",
+    "9: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_all_physical_line_types.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_all_physical_line_types.code]
+"example.py" = "__all__: list[str] = [\"f\"]  \r\n# comment	\r\n 	\r\ndef f() -> None:\r\n    print(\"hello \") \r\n    print(\"\"\"first  \r\n    second\r\n    \"\"\")\r\n# final comment "
+
+[whitespace_class_and_decorator]
+ans = [
+    "2: LINE-TW: trailing whitespace on physical lines!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "4: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_class_and_decorator.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_class_and_decorator.code]
+"example.py" = "__all__: list[str] = [\"C\"]\n@(lambda cls: cls) \nclass C: \n    pass	\n"
+
+[whitespace_empty_and_whitespace_only_files]
+ans = [
+    "1: ALL-MIS: missing '__all__'!",
+]
+
+[whitespace_empty_and_whitespace_only_files.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_empty_and_whitespace_only_files.code]
+"example.py" = ""
+
+[whitespace_empty_and_whitespace_only_files_2]
+ans = [
+    "1: ALL-MIS: missing '__all__'!",
+    "1: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_empty_and_whitespace_only_files_2.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_empty_and_whitespace_only_files_2.code]
+"example.py" = "\n"
+
+[whitespace_empty_and_whitespace_only_files_3]
+ans = [
+    "1: ALL-MIS: missing '__all__'!",
+    "1: LINE-BL: whitespace-only lines at end of file!",
+    "1: LINE-NL: nonempty files must end with a linebreak!",
+    "1: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_empty_and_whitespace_only_files_3.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_empty_and_whitespace_only_files_3.code]
+"example.py" = " 	"
+
+[whitespace_eof_violations_use_last_physical_line]
+ans = [
+    "3: ALL-MIS: missing '__all__'!",
+    "3: DEAD-NAME: dead module names: 'f'!",
+    "3: EXEM-UN: unnecessary declarations: 'unused'!",
+    "3: LINE-NL: nonempty files must end with a linebreak!",
+]
+
+[whitespace_eof_violations_use_last_physical_line.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_eof_violations_use_last_physical_line.code]
+"example.py" = "def f() -> None:\n    unused: int\n    pass"
+
+[whitespace_eof_violations_use_last_physical_line_2]
+ans = [
+    "3: ALL-MIS: missing '__all__'!",
+    "3: DEAD-NAME: dead module names: 'f'!",
+    "3: EXEM-UN: unnecessary declarations: 'unused'!",
+]
+
+[whitespace_eof_violations_use_last_physical_line_2.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_eof_violations_use_last_physical_line_2.code]
+"example.py" = "def f() -> None:\n    unused: int\n    pass\n"
+
+[whitespace_eof_violations_use_last_physical_line_3]
+ans = [
+    "4: ALL-MIS: missing '__all__'!",
+    "4: DEAD-NAME: dead module names: 'f'!",
+    "4: EXEM-UN: unnecessary declarations: 'unused'!",
+    "4: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_eof_violations_use_last_physical_line_3.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_eof_violations_use_last_physical_line_3.code]
+"example.py" = "def f() -> None:\n    unused: int\n    pass\n\n"
+
+[whitespace_eof_violations_use_last_physical_line_4]
+ans = [
+    "4: ALL-MIS: missing '__all__'!",
+    "4: DEAD-NAME: dead module names: 'f'!",
+    "4: EXEM-UN: unnecessary declarations: 'unused'!",
+    "4: LINE-NL: nonempty files must end with a linebreak!",
+]
+
+[whitespace_eof_violations_use_last_physical_line_4.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_eof_violations_use_last_physical_line_4.code]
+"example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment"
+
+[whitespace_eof_violations_use_last_physical_line_5]
+ans = [
+    "5: ALL-MIS: missing '__all__'!",
+    "5: DEAD-NAME: dead module names: 'f'!",
+    "5: EXEM-UN: unnecessary declarations: 'unused'!",
+    "5: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_eof_violations_use_last_physical_line_5.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_eof_violations_use_last_physical_line_5.code]
+"example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment\n\n"
+
+[whitespace_eof_violations_use_last_physical_line_6]
+ans = [
+    "3: EXEM-UN: unnecessary declarations: 'unused'!",
+    "3: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_eof_violations_use_last_physical_line_6.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_eof_violations_use_last_physical_line_6.code]
+"example.py" = "__all__: list[str] = []\nunused: int\n\n"
+
+[whitespace_interior_blank_lines]
+ans = [
+    "4: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_interior_blank_lines.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_interior_blank_lines.code]
+"example.py" = "\n__all__: list[str] = []\n\n 	\n\n# last\n"
+
+[whitespace_line_breaks_and_eof]
+ans = []
+
+[whitespace_line_breaks_and_eof.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_line_breaks_and_eof.code]
+"example.py" = "__all__: list[str] = []\n"
+
+[whitespace_line_breaks_and_eof_2]
+ans = []
+
+[whitespace_line_breaks_and_eof_2.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_line_breaks_and_eof_2.code]
+"example.py" = "__all__: list[str] = []\r\n"
+
+[whitespace_line_breaks_and_eof_3]
+ans = []
+
+[whitespace_line_breaks_and_eof_3.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_line_breaks_and_eof_3.code]
+"example.py" = "__all__: list[str] = []\r"
+
+[whitespace_line_breaks_and_eof_4]
+ans = [
+    "1: LINE-NL: nonempty files must end with a linebreak!",
+]
+
+[whitespace_line_breaks_and_eof_4.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_line_breaks_and_eof_4.code]
+"example.py" = "__all__: list[str] = []"
+
+[whitespace_line_breaks_and_eof_5]
+ans = [
+    "1: LINE-NL: nonempty files must end with a linebreak!",
+    "1: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_line_breaks_and_eof_5.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_line_breaks_and_eof_5.code]
+"example.py" = "__all__: list[str] = []	"
+
+[whitespace_multiple_rules_and_scopes_on_one_line]
+ans = [
+    "3: FUNC-ARG: unannotated arguments: 'self'!",
+    "3: FUNC-POS: first argument must be positional-only!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "3: STMT-BEG: simple statements not at beginning of physical line!",
+]
+
+[whitespace_multiple_rules_and_scopes_on_one_line.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_multiple_rules_and_scopes_on_one_line.code]
+"example.py" = "__all__: list[str] = [\"C\"]\nclass C:\n    def f(self): pass  \n"
+
+[whitespace_trailing_blank_lines]
+ans = [
+    "2: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "4: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_trailing_blank_lines.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_trailing_blank_lines.code]
+"example.py" = "__all__: list[str] = []\n\n 	\f\n\n"
+
+[whitespace_trailing_blank_lines_2]
+ans = [
+    "2: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "4: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_trailing_blank_lines_2.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_trailing_blank_lines_2.code]
+"example.py" = "__all__: list[str] = []\r\n\r\n 	\f\r\n\r\n"
+
+[whitespace_trailing_blank_lines_3]
+ans = [
+    "2: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "4: LINE-BL: whitespace-only lines at end of file!",
+]
+
+[whitespace_trailing_blank_lines_3.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_trailing_blank_lines_3.code]
+"example.py" = "__all__: list[str] = []\r\r 	\f\r\r"
+
+[whitespace_trailing_blank_lines_4]
+ans = [
+    "2: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-BL: whitespace-only lines at end of file!",
+    "3: LINE-NL: nonempty files must end with a linebreak!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_trailing_blank_lines_4.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_trailing_blank_lines_4.code]
+"example.py" = "__all__: list[str] = []\n\n 	"
+
+[whitespace_trailing_whitespace_and_deep_indentation]
+ans = [
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "4: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_trailing_whitespace_and_deep_indentation.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_trailing_whitespace_and_deep_indentation.code]
+"example.py" = "__all__: list[str] = []\nprint(\n        1  \n)  \n"
+
+[whitespace_trailing_whitespace_and_deep_indentation_2]
+ans = [
+    "3: LINE-CONT: physical lines indented two or more levels deeper!",
+    "3: LINE-TW: trailing whitespace on physical lines!",
+    "4: LINE-TW: trailing whitespace on physical lines!",
+]
+
+[whitespace_trailing_whitespace_and_deep_indentation_2.call]
+outmsg = "{line}: {rule}: {desc}"
+
+[whitespace_trailing_whitespace_and_deep_indentation_2.code]
+"example.py" = "__all__: list[str] = []\nprint(\n        1  \n)  \nif True:\n    pass\n"
