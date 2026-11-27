@@ -1,0 +1,3 @@
+6: FUNC-ARG: unannotated arguments: 'value'!
+7: FUNC-POS: first argument must be positional-only!
+9: FUNC-KWOR: keyword-only arguments not in alphabetical order!

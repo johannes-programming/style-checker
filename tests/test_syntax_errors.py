@@ -58,6 +58,9 @@ class TestSyntaxErrors(unittest.TestCase):
             )
 
     def test_module_interruption(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
+        # The linter also removes trailing whitespace needed by this case.
         expected_lines: list[str]
         expected_lines = [
             "2: LINE-TW: trailing whitespace on physical lines!",
@@ -71,6 +74,8 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_open_function(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         expected_lines: list[str]
         expected_lines = [
             "2: FUNC-ARG: unannotated arguments: 'arg'!",
@@ -88,6 +93,8 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_closed_function(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             '__all__: list[str] = ["f"]\n'
             "def f() -> None:\n"
@@ -98,6 +105,8 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_completed_scope_before_error(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             '__all__: list[str] = ["f"]\n'
             "def f() -> None:\n"
@@ -109,6 +118,9 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_same_physical_line(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
+        # The linter also removes trailing whitespace needed by this case.
         self.check(
             "# before  \nx = 1; y = 2; broken =  \nafter = 1  \n",
             [
@@ -119,6 +131,8 @@ class TestSyntaxErrors(unittest.TestCase):
         self.check("x = 1; y = 2; broken =\n", ["1: <syntax>"])
 
     def test_incomplete_suite(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         expected_lines: list[str]
         expected_lines = [
             "3: FUNC-ARG: unannotated arguments: 'self'!",
@@ -134,6 +148,8 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_unfinished_nested_try(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             "__all__: list[str] = []\n"
             "try:\n"
@@ -144,18 +160,24 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_unclosed_expression(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             "__all__: list[str] = []\nvalue = 1\nbroken = (\n",
             ["2: REQD-MIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_indentation_error(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             "__all__: list[str] = []\nvalue = 1\n    broken = 2\n",
             ["2: REQD-MIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_symbol_table_error(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             '__all__: list[str] = ["f"]\n'
             "def f() -> None:\n"
@@ -165,27 +187,41 @@ class TestSyntaxErrors(unittest.TestCase):
         )
 
     def test_error_at_eof(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
         self.check(
             '__all__: list[str] = ["f"]\ndef f(arg):\n',
             ["2: <syntax>"],
         )
 
     def test_error_at_start(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
+        # The linter also removes trailing whitespace needed by this case.
         self.check("broken =\nafter = 1  \n", ["1: <syntax>"])
 
     def test_compiler_error(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
+        # The linter also removes trailing whitespace needed by this case.
         self.check(
             "__all__: list[str] = []\nvalue = 1\nreturn 1  \nafter = 2  \n",
             ["2: REQD-MIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_tab_error(self: Self, /) -> None:
+        # Static examples cannot derive the syntax message from compile()
+        # or check both forms of suppression and the violation object.
+        # The linter also removes trailing whitespace needed by this case.
         self.check(
             "__all__: list[str] = []\nif True:\n    pass\n \tpass  \n",
             ["4: <syntax>"],
         )
 
     def test_cli_exact_syntax_rule(self: Self, /) -> None:
+        # Static examples cannot check CLI exit status and the effect of
+        # different spellings of the ignore option through main(). The
+        # linter also removes the trailing whitespace in the input.
         directory: str
         output: io.StringIO
         path: Path
@@ -228,6 +264,8 @@ class TestSyntaxErrors(unittest.TestCase):
 
     def test_all_existing_examples(self: Self, /) -> None:
         """Appending a bad statement must preserve pre-EOF findings."""
+        # Static examples cannot append a syntax error to every fixture
+        # and compare the resulting diagnostics with the original findings.
         directory: str
         fixture: Path
         path: Path

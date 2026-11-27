@@ -11,11 +11,13 @@ from pathlib import Path
 from typing import Self
 
 import style_checker
-from style_checker._declarations import check_file
 
 
 class TestReport(unittest.TestCase):
     def test_default_and_order(self: Self, /) -> None:
+        # Static examples cannot check relative/absolute path deduplication,
+        # exception contents, default formatting or CLI exit status. The
+        # linter also removes the trailing whitespace needed by this test.
         directory: str
         early: Path
         expected: list[str]
@@ -64,31 +66,4 @@ class TestReport(unittest.TestCase):
             self.assertEqual(
                 output.getvalue().splitlines(),
                 ["LINE-TW/2", "REQD-MIS/2", "DEAD-NAME/10", "LINE-TW/10"] * 2,
-            )
-
-    def test_same_rule_across_scopes(self: Self, /) -> None:
-        directory: str
-        file: Path
-        source: str
-        source = (
-            '__all__: list[str] = ["f"]\n'
-            "shared: int\n"
-            "zebra: int\n"
-            "def f() -> None:\n"
-            "    apple: int\n"
-            "    shared: int\n"
-            "    pass\n"
-        )
-        with tempfile.TemporaryDirectory() as directory:
-            file = Path(directory) / "example.py"
-            file.write_text(source, encoding="utf-8")
-            self.assertEqual(
-                [(v.line, v.rule, v.desc) for v in check_file(str(file))],
-                [
-                    (
-                        7,
-                        "EXEM-UN",
-                        "unnecessary declarations: 'apple', 'shared', 'zebra'!",
-                    )
-                ],
             )

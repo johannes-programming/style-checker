@@ -1,0 +1,1 @@
+7: EXEM-UN: unnecessary declarations: 'apple', 'shared', 'zebra'!

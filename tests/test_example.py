@@ -32,6 +32,8 @@ class TestExample(unittest.TestCase):
         self.assertEqual(exception is None, not expected)
 
     def test_example(self: Self, /) -> None:
+        # This is the example runner itself: it discovers all fixtures
+        # and checks their output and exception status.
         file: Path
         for file in (Path(__file__).parent / "examples").rglob("ans.txt"):
             with self.subTest(key=os.path.basename(file.parent)):

@@ -17,6 +17,9 @@ from style_checker._declarations import _Rule, scan
 
 class TestIgnore(unittest.TestCase):
     def test_marks_and_independent_suppression(self: Self, /) -> None:
+        # Static examples cannot verify rule-mark uniqueness, coverage
+        # or suppression of every detected mark and family across all
+        # fixtures. The linter also removes the generated trailing spaces.
         actual: list[str]
         baseline: list[str]
         directory: str
@@ -107,6 +110,9 @@ class TestIgnore(unittest.TestCase):
         self.assertEqual(seen, marks)
 
     def test_cli_and_api(self: Self, /) -> None:
+        # Static examples cannot test generator-valued ignore arguments,
+        # CLI parsing or exit status. The linter also removes the spaces
+        # needed for the LINE-TW diagnostic.
         directory: str
         file: Path
         files: list[str]
@@ -167,6 +173,9 @@ class TestIgnore(unittest.TestCase):
             )
 
     def test_empty_ignore_outfile_and_next_file(self: Self, /) -> None:
+        # Static examples cannot check report-file contents, CLI parsing,
+        # exit status or read errors when all diagnostics are ignored.
+        # The linter also removes the trailing whitespace in the inputs.
         directory: str
         bad: Path
         next_file: Path
