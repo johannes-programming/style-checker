@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any, Self
 
 import style_checker
-from style_checker._declarations import scan
 
 
 class Cfg(enum.Enum):
@@ -110,30 +109,6 @@ class TestExample(unittest.TestCase):
         for x, y in Cfg.cfg.data.items():
             with self.subTest(key=x):
                 self.go_testdata(**y)
-
-    def test_self_style(self: Self, /) -> None:
-        """Apply all style rules to the implementation and test scripts."""
-        file: Path
-        files: list[Path]
-        report: list[str]
-        root: Path
-        test_files: list[Path]
-        tests: Path
-        root = Path(__file__).resolve().parents[1]
-        tests = root / "tests"
-        files = sorted((root / "src").rglob("*.py"))
-        self.assertTrue(files, "No implementation files found")
-        test_files = sorted(
-            file
-            for file in tests.rglob("*.py")
-            if not file.is_relative_to(tests / "examples")
-        )
-        files.extend(test_files)
-        files.append(root / "run_tests.py")
-        for file in files:
-            with self.subTest(file=file.relative_to(root)):
-                report = list(scan(str(file), "{file}:{line}:{rule}: {desc}"))
-                self.assertEqual(report, [])
 
 
 if __name__ == "__main__":

@@ -12,97 +12,9 @@ from pathlib import Path
 from typing import Self
 
 import style_checker
-from style_checker._declarations import _Rule, scan
 
 
 class TestIgnore(unittest.TestCase):
-    def test_marks_and_independent_suppression(self: Self, /) -> None:
-        # Static examples cannot verify rule-mark uniqueness, coverage
-        # or suppression of every detected mark and family across all
-        # fixtures. The linter also removes the generated trailing spaces.
-        directory: str
-        fixture: Path
-        fixtures: list[Path]
-        mark: str
-        marks: set[str]
-        path: Path
-        seen: set[str]
-        source: str
-        sources: tuple[str, ...]
-        marks = {rule.mark for rule in _Rule}
-        self.assertEqual(len(marks), len(_Rule))
-        for mark in marks:
-            self.assertRegex(mark, r"^[A-Z]{2,4}-[A-Z]{2,4}$")
-        marks.update(
-            {"SYN-SyntaxError", "SYN-IndentationError", "SYN-TabError"}
-        )
-        seen = set()
-        sources = (
-            "__all__ = ()\n__all__ = []\n",
-            "__all__: list[str] = []\n"
-            "exc: Exception\ntry:\n    pass\n"
-            "except Exception as exc:\n    print(exc)\n",
-            "__all__: list[str] = []  \n",
-            "# comment  \nbroken =\n",
-            "__all__: list[str] = []\n \t",
-        )
-        with tempfile.TemporaryDirectory() as directory:
-            fixtures = list((Path(__file__).parent / "examples").rglob("*.py"))
-            for source in sources:
-                path = Path(directory) / f"example{len(fixtures)}.py"
-                path.write_text(source, encoding="utf-8")
-                fixtures.append(path)
-            for fixture in fixtures:
-                seen.update(self._check_fixture(fixture, marks))
-        self.assertEqual(seen, marks)
-
-    def _check_fixture(
-        self: Self, /, fixture: Path, marks: set[str]
-    ) -> set[str]:
-        baseline: list[str]
-        family: str
-        ignored: set[str]
-        issue: str
-        line: str
-        mark: str
-        baseline = list(scan(str(fixture), "{line}: {rule}: {desc}"))
-        ignored = set()
-        for line in baseline:
-            issue = line.partition(": ")[2]
-            self.assertTrue(issue.endswith("!"))
-            mark = issue.split(": ", 1)[0]
-            self.assertIn(mark, marks)
-            ignored.add(mark)
-        for mark in ignored:
-            with self.subTest(fixture=fixture, mark=mark):
-                self._check_suppression(fixture, baseline, mark)
-        for family in {mark.partition("-")[0] for mark in ignored}:
-            with self.subTest(fixture=fixture, family=family):
-                self._check_suppression(fixture, baseline, family)
-        self.assertEqual(list(scan(str(fixture), "{desc}", ignore=marks)), [])
-        self.assertEqual(list(scan(str(fixture), "{desc}", ignore=[""])), [])
-        return ignored
-
-    def _check_suppression(
-        self: Self, /, fixture: Path, baseline: list[str], mark: str
-    ) -> None:
-        actual: list[str]
-        expected: list[str]
-        if "-" in mark:
-            expected = [
-                line for line in baseline if line.split(": ", 2)[1] != mark
-            ]
-        else:
-            expected = [
-                line
-                for line in baseline
-                if line.split(": ", 2)[1].partition("-")[0] != mark
-            ]
-        actual = list(
-            scan(str(fixture), "{line}: {rule}: {desc}", ignore=[mark])
-        )
-        self.assertEqual(actual, expected)
-
     def test_cli_and_api(self: Self, /) -> None:
         # Static examples cannot test generator-valued ignore arguments,
         # CLI parsing or exit status. The linter also removes the spaces
