@@ -68,10 +68,10 @@ The declaration requirement does not apply to:
 
 * Names automatically provided in a module's namespace.
 * Names bound by nested ``class`` and ``def`` statements,
-        i.e. of the classes and functions they define.
+    i.e. of the classes and functions they define.
 * Names bound by ``import`` statements.
 * Temporary exception names introduced by ``except ... as ...``, which remain
-        bound only for the duration of the exception handler.
+    bound only for the duration of the exception handler.
 * Each ``TypeVar`` and every similar construct is exempt from type annotation.
 
 Declaration Placement
@@ -83,7 +83,7 @@ intermixed with the declarations in that initial block.
 Only the following may precede that block:
 
 * A module or function docstring, if present. The docstring must be the first
-        statement in its scope.
+    statement in its scope.
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
@@ -124,19 +124,19 @@ For example:
 
 .. code-block:: python
 
-        __all__: list[str] = ["Example"]
+    __all__: list[str] = ["Example"]
 
-        class Example:
-                def method(self: "Example", /, value: int) -> int:
-                        return value
+    class Example:
+        def method(self: "Example", /, value: int) -> int:
+            return value
 
-                @classmethod
-                def build(cls: type["Example"], /) -> "Example":
-                        return cls()
+        @classmethod
+        def build(cls: type["Example"], /) -> "Example":
+            return cls()
 
-                @staticmethod
-                def static(value: int) -> int:
-                        return value
+        @staticmethod
+        def static(value: int) -> int:
+            return value
 
 Omitting the ``/`` in ``method`` or ``build`` would violate the rule.
 
@@ -179,21 +179,152 @@ separation between declarations and assignments:
 
 .. code-block:: python
 
-        """An example module."""
+    """An example module."""
 
-        from __future__ import annotations
+    from __future__ import annotations
 
-        __all__: list[str] = ["count", "double"]
+    __all__: list[str] = ["count", "double"]
 
-        count: int
+    count: int
 
-        count = 2
+    count = 2
 
-        def double(value: int) -> int:
-                result: int
-                result = value * 2
-                return result
+    def double(value: int) -> int:
+        result: int
+        result = value * 2
+        return result
 
+
+The Rules
+---------
+
+``ALDU``
+~~~~~~~~
+
+``ALIM``
+~~~~~~~~
+
+``__all__`` must precede imports.
+
+``ALLI``
+~~~~~~~~
+
+``__all__`` must be assigned a list literal.
+
+``ALMS``
+~~~~~~~~
+
+There must be an ``__all__``.
+
+``ALOR``
+~~~~~~~~
+
+``__all__`` items not in alphabetical order.
+
+``ALST``
+~~~~~~~~
+
+``__all__`` items must be string literals.
+
+``ALTY``
+~~~~~~~~
+
+``__all__`` must be annotated as ``list[str]``.
+
+``ARG``
+~~~~~~~
+
+Arguments must be annotated.
+
+``CONT``
+~~~~~~~~
+
+All physical lines of a simple statement, decorator, or header must be at most one indentation level deeper.
+
+``DBEG``
+~~~~~~~~
+
+Declarations must be up-front.
+
+``DDUP``
+~~~~~~~~
+
+Do not duplicate declarations.
+
+``DEAD``
+~~~~~~~~
+
+There should not be dead module names.
+
+``DEEP``
+~~~~~~~~
+
+Simple statements should not be indented more than four levels.
+
+``DEX``
+~~~~~~~
+
+``except`` variables should not have declarations.
+
+``DIMP``
+~~~~~~~~
+
+``def`` / ``class`` / ``import`` statement should not have declarations.
+
+``DMIS``
+~~~~~~~~
+
+Variables must be declared.
+
+``DORD``
+~~~~~~~~
+
+Declarations must be in alphabetical order.
+
+``DUN``
+~~~~~~~
+
+Each declaration must be necessary.
+
+``DVAL``
+~~~~~~~~
+
+Declaration should be separate from assignment.
+
+``IND``
+~~~~~~~
+
+Indentation must be four spaces per level.
+
+``KWOR``
+~~~~~~~~
+
+Single keyword-only arguments in a ``def`` statement must be in alphabetical order.
+
+``POS``
+~~~~~~~
+
+The first argument of methods and classmethods must be positional-only.
+
+``SP``
+~~~~~~
+
+Each simple statements must begin in its own physical line.
+
+``TIMP``
+~~~~~~~~
+
+Import from not from ``typing`` but from ``collections.abc`` if an appropriate alternate exists.
+
+``TW``
+~~~~~~
+
+No physical line should have trailing whitespace.
+
+``WILD``
+~~~~~~~~
+
+There must be no wildcard imports.
 
 Installation
 ------------
@@ -203,7 +334,7 @@ Open your terminal and run:
 
 .. code-block:: shell
 
-        pip install style-checker
+    pip install style-checker
 
 Typing
 ------
@@ -244,7 +375,7 @@ omitted from the report. If all issues on a line are ignored, that line is
 not reported. Unknown marks have no effect. On the command line, repeat
 ``--ignore=MARK`` for each rule to ignore, for example::
 
-        python -m style_checker --ignore=TW --ignore=DMIS example.py
+    python -m style_checker --ignore=TW --ignore=DMIS example.py
 
 ``outmsg`` controls the format of **each diagnostic line**.
 It defaults to ``"{file}:{line}:{rule}: {desc}"``.
@@ -270,41 +401,6 @@ exceptions.
 
 If any non-ignored diagnostics were produced then ``run`` raises an
 ``ExceptionGroup``.
-
-Rule Marks
-~~~~~~~~~~
-
-Each mark identifies one diagnostic category. Parser errors (including
-indentation and tab errors from Python's parser) share the mark ``SYN``;
-ignoring it does not resume checking beyond the syntax error.
-
-* ``ALDU``: multiple '__all__' assignments.
-* ``ALIM``: '__all__' must precede imports.
-* ``ALLI``: '__all__' must be assigned a list literal.
-* ``ALMS``: missing '__all__'.
-* ``ALOR``: '__all__' items not in alphabetical order.
-* ``ALST``: '__all__' items must be string literals.
-* ``ALTY``: '__all__' must be annotated as 'list[str]'.
-* ``ARG``: unannotated arguments.
-* ``CONT``: physical lines indented two or more levels deeper.
-* ``DBEG``: declarations not at beginning.
-* ``DDUP``: duplicate declarations.
-* ``DEAD``: dead module names.
-* ``DEEP``: simple statements indented more than four levels.
-* ``DEX``: declarations for 'except' names.
-* ``DIMP``: declarations for 'def'/'class'/'import' names.
-* ``DMIS``: missing declarations.
-* ``DORD``: declarations not in alphabetical order.
-* ``DUN``: unnecessary declarations.
-* ``DVAL``: declaration assigns a value.
-* ``IND``: indentation must be four spaces per level.
-* ``KWOR``: keyword-only arguments not in alphabetical order.
-* ``POS``: first argument must be positional-only.
-* ``SP``: simple statements not at beginning of physical line.
-* ``SYN``: Python syntax error.
-* ``TIMP``: 'typing' imports available in 'collections.abc'.
-* ``TW``: trailing whitespace on physical lines.
-* ``WILD``: wildcard imports are forbidden.
 
 Testing
 -------
