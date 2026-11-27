@@ -1,2 +1,2 @@
 3: ANNO-MIS: variables requiring declarations should be declared: 'apple', 'zebra', 'é'!
-3: STMT-BEG: simple statements should start at the beginning of a physical line!
+3: LINE-STMT: simple statements should start at the beginning of a physical line!

@@ -72,7 +72,7 @@ class _Rule(Enum):
     LINE_DEEP = (
         "simple statements should not be indented more than four levels"
     )
-    STMT_BEG = (
+    LINE_STMT = (
         "simple statements should start at the beginning of a physical line"
     )
     ALL_IMP = "'__all__' should precede imports"
@@ -1199,7 +1199,7 @@ def _statement_placement_issues(
     for statement in body:
         _statement_placement_visit(statement, source_lines, line_numbers)
     for line in sorted(line_numbers):
-        issues.add(line, _Rule.STMT_BEG)
+        issues.add(line, _Rule.LINE_STMT)
 
 
 def _indentation(text: str) -> int:

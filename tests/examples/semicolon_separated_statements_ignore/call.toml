@@ -1,4 +1,4 @@
 ignore = [
-    "STMT-BEG",
+    "LINE-STMT",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

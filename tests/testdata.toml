@@ -152,7 +152,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "__all__: list[str] = []	"
 
 [whitespace_multiple_rules_and_scopes_on_one_line]
-ans = "3: ANNO-PARA: function parameters should have type annotations: 'self'!\n3: ANNO-RET: functions should have return type annotations!\n3: FUNC-POS: the first argument should be positional-only!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n3: STMT-BEG: simple statements should start at the beginning of a physical line!\n"
+ans = "3: ANNO-PARA: function parameters should have type annotations: 'self'!\n3: ANNO-RET: functions should have return type annotations!\n3: FUNC-POS: the first argument should be positional-only!\n3: LINE-STMT: simple statements should start at the beginning of a physical line!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_multiple_rules_and_scopes_on_one_line.call]
 outmsg = "{line}: {rule}: {desc}!\n"

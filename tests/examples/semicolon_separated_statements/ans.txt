@@ -1,2 +1,2 @@
-1: STMT-BEG: simple statements should start at the beginning of a physical line!
-4: STMT-BEG: simple statements should start at the beginning of a physical line!
+1: LINE-STMT: simple statements should start at the beginning of a physical line!
+4: LINE-STMT: simple statements should start at the beginning of a physical line!
