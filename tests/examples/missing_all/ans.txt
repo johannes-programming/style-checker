@@ -1,2 +1,2 @@
+6: ALL-DEAD: unused module names should be listed in '__all__': 'example'!
 6: ALL-MIS: modules should define '__all__'!
-6: DEAD-NAME: module names should be used or listed in '__all__': 'example'!

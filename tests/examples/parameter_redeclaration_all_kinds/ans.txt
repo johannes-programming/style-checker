@@ -1,5 +1,5 @@
-3: ANNO-PROH: prohibited declarations should be omitted: 'a'!
-4: ANNO-PROH: prohibited declarations should be omitted: 'b'!
-5: ANNO-PROH: prohibited declarations should be omitted: 'c'!
-6: ANNO-PROH: prohibited declarations should be omitted: 'd'!
-7: ANNO-PROH: prohibited declarations should be omitted: 'e'!
+3: TYPE-PROH: prohibited declarations should be omitted: 'a'!
+4: TYPE-PROH: prohibited declarations should be omitted: 'b'!
+5: TYPE-PROH: prohibited declarations should be omitted: 'c'!
+6: TYPE-PROH: prohibited declarations should be omitted: 'd'!
+7: TYPE-PROH: prohibited declarations should be omitted: 'e'!

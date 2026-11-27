@@ -1,4 +1,4 @@
 ignore = [
-    "ANNO-PROH",
+    "TYPE-PROH",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

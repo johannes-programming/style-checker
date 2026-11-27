@@ -1,4 +1,4 @@
 ignore = [
-    "IMPT-TYPE",
+    "TYPE-UPDT",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

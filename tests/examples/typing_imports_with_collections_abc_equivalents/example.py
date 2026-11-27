@@ -1,4 +1,4 @@
-"""typing imports with collections.abc equivalents are forbidden."""
+"""Legacy typing imports alone do not violate TYPE-UPDT."""
 
 __all__: list[str] = []
 

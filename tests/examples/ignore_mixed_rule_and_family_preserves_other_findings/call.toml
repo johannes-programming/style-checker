@@ -1,6 +1,6 @@
 ignore = [
     "ALL",
-    "IMPT-TYPE",
-    "DEAD-NAME",
+    "TYPE-UPDT",
+    "ALL-DEAD",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

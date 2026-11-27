@@ -1,14 +1,14 @@
-8: FUNC-POS: the first argument should be positional-only!
-12: FUNC-POS: the first argument should be positional-only!
-15: FUNC-POS: the first argument should be positional-only!
-18: FUNC-POS: the first argument should be positional-only!
-21: FUNC-POS: the first argument should be positional-only!
-25: FUNC-POS: the first argument should be positional-only!
-30: FUNC-POS: the first argument should be positional-only!
-33: FUNC-POS: the first argument should be positional-only!
-37: FUNC-POS: the first argument should be positional-only!
-40: ANNO-PARA: function parameters should have type annotations: 'self'!
-40: FUNC-POS: the first argument should be positional-only!
-46: FUNC-POS: the first argument should be positional-only!
-50: FUNC-POS: the first argument should be positional-only!
-57: FUNC-POS: the first argument should be positional-only!
+8: DEF-SELF: the first argument should be positional-only!
+12: DEF-SELF: the first argument should be positional-only!
+15: DEF-SELF: the first argument should be positional-only!
+18: DEF-SELF: the first argument should be positional-only!
+21: DEF-SELF: the first argument should be positional-only!
+25: DEF-SELF: the first argument should be positional-only!
+30: DEF-SELF: the first argument should be positional-only!
+33: DEF-SELF: the first argument should be positional-only!
+37: DEF-SELF: the first argument should be positional-only!
+40: DEF-SELF: the first argument should be positional-only!
+40: TYPE-PARA: function parameters should have type annotations: 'self'!
+46: DEF-SELF: the first argument should be positional-only!
+50: DEF-SELF: the first argument should be positional-only!
+57: DEF-SELF: the first argument should be positional-only!

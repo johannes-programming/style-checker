@@ -1,2 +1,3 @@
-7: ANNO-PROH: prohibited declarations should be omitted: 'unused'!
-9: DEAD-NAME: module names should be used or listed in '__all__': 'g'!
+4: SYM-SEMI: semicolons should not be used!
+7: TYPE-PROH: prohibited declarations should be omitted: 'unused'!
+9: ALL-DEAD: unused module names should be listed in '__all__': 'g'!

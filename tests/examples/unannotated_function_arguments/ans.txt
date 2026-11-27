@@ -1,8 +1,8 @@
-4: ANNO-PARA: function parameters should have type annotations: 'value'!
-8: ANNO-PARA: function parameters should have type annotations: 'value'!
-12: ANNO-PARA: function parameters should have type annotations: 'values'!
-16: ANNO-PARA: function parameters should have type annotations: 'value'!
-20: ANNO-PARA: function parameters should have type annotations: 'values'!
-25: ANNO-PARA: function parameters should have type annotations: 'self'!
-29: ANNO-PARA: function parameters should have type annotations: 'value'!
-41: DEAD-NAME: module names should be used or listed in '__all__': 'Example', 'all_annotated', 'asynchronous', 'keyword_only', 'keyword_variadic', 'positional_only', 'positional_or_keyword', 'variadic'!
+4: TYPE-PARA: function parameters should have type annotations: 'value'!
+8: TYPE-PARA: function parameters should have type annotations: 'value'!
+12: TYPE-PARA: function parameters should have type annotations: 'values'!
+16: TYPE-PARA: function parameters should have type annotations: 'value'!
+20: TYPE-PARA: function parameters should have type annotations: 'values'!
+25: TYPE-PARA: function parameters should have type annotations: 'self'!
+29: TYPE-PARA: function parameters should have type annotations: 'value'!
+41: ALL-DEAD: unused module names should be listed in '__all__': 'Example', 'all_annotated', 'asynchronous', 'keyword_only', 'keyword_variadic', 'positional_only', 'positional_or_keyword', 'variadic'!

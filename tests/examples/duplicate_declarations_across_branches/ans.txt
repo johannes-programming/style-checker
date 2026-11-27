@@ -1,4 +1,4 @@
-4: ANNO-TOP: declarations should appear at the beginning of the scope: 'value'!
-6: ANNO-ONCE: each declaration should occur only once: 'value'!
-6: ANNO-TOP: declarations should appear at the beginning of the scope: 'value'!
-7: ANNO-MIS: variables requiring declarations should be declared: 'value'!
+4: TYPE-TOP: declarations should appear at the beginning of the scope: 'value'!
+6: TYPE-ONCE: each declaration should occur only once: 'value'!
+6: TYPE-TOP: declarations should appear at the beginning of the scope: 'value'!
+7: TYPE-MIS: variables requiring declarations should be declared: 'value'!

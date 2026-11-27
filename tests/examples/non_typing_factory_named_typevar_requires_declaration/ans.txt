@@ -1,1 +1,1 @@
-3: ANNO-MIS: variables requiring declarations should be declared: 'T'!
+3: TYPE-MIS: variables requiring declarations should be declared: 'T'!

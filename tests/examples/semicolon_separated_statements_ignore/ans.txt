@@ -1,0 +1,2 @@
+1: SYM-SEMI: semicolons should not be used!
+4: SYM-SEMI: semicolons should not be used!

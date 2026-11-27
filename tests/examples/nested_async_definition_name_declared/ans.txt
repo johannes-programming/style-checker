@@ -1,1 +1,1 @@
-4: ANNO-PROH: prohibited declarations should be omitted: 'worker'!
+4: TYPE-PROH: prohibited declarations should be omitted: 'worker'!

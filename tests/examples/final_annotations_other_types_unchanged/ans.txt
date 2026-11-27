@@ -1,4 +1,4 @@
-6: ANNO-BARE: declarations should not assign a value: 'value'!
-6: ANNO-MIS: variables requiring declarations should be declared: 'value'!
-10: ANNO-BARE: declarations should not assign a value: 'other'!
-10: ANNO-MIS: variables requiring declarations should be declared: 'other'!
+6: TYPE-BARE: declarations should not assign a value: 'value'!
+6: TYPE-MIS: variables requiring declarations should be declared: 'value'!
+10: TYPE-BARE: declarations should not assign a value: 'other'!
+10: TYPE-MIS: variables requiring declarations should be declared: 'other'!

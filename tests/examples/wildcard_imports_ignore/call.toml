@@ -1,4 +1,4 @@
 ignore = [
-    "IMPT-WILD",
+    "SYM-WILD",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

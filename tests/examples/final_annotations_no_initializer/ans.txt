@@ -1,4 +1,4 @@
-5: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
-10: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
-13: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
-19: ANNO-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+5: TYPE-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+10: TYPE-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+13: TYPE-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!
+19: TYPE-FIN: 'Final' annotations should occur directly in a namespace body and assign a value in the same statement!

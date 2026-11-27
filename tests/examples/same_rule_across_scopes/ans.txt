@@ -1,1 +1,1 @@
-7: ANNO-PROH: prohibited declarations should be omitted: 'apple', 'shared', 'zebra'!
+7: TYPE-PROH: prohibited declarations should be omitted: 'apple', 'shared', 'zebra'!

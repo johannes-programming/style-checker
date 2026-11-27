@@ -1,1 +1,1 @@
-40: ANNO-PARA: function parameters should have type annotations: 'self'!
+40: TYPE-PARA: function parameters should have type annotations: 'self'!

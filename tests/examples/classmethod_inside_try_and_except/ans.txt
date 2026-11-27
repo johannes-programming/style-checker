@@ -1,2 +1,2 @@
-5: FUNC-POS: the first argument should be positional-only!
-9: FUNC-POS: the first argument should be positional-only!
+5: DEF-SELF: the first argument should be positional-only!
+9: DEF-SELF: the first argument should be positional-only!

@@ -1,2 +1,4 @@
 1: LINE-STMT: simple statements should start at the beginning of a physical line!
+1: SYM-SEMI: semicolons should not be used!
 4: LINE-STMT: simple statements should start at the beginning of a physical line!
+4: SYM-SEMI: semicolons should not be used!

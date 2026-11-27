@@ -59,10 +59,10 @@ other rules are checked. Blank and comment-only lines are not used by a
 statement, header or decorator unless they occur within a multiline string.
 The body of a compound statement is not part of its header.
 
-Annotations (``ANNO``)
+Annotations (``TYPE``)
 ~~~~~~~~~~~~~~~~~~~~~~
 
-``"ANNO-MIS"``
+``"TYPE-MIS"``
 ^^^^^^^^^^^^^^
 
 Every variable assigned in a module's namespace must have a type annotation,
@@ -70,24 +70,24 @@ subject to the exemptions described below. A declaration is required whenever
 the variable is subject to these rules. A variable annotated with ``Final``
 requires no separate declaration.
 
-``"ANNO-BARE"``
+``"TYPE-BARE"``
 ^^^^^^^^^^^^^^^
 
 A declaration must not assign a value (for example, ``count: int``, not
 ``count: int = 0``). An annotation with ``Final`` is not a declaration
 and follows the separate rules below.
 
-``"ANNO-SORT"``
+``"TYPE-SORT"``
 ^^^^^^^^^^^^^^^
 
 Declarations must be listed in alphabetical order by variable name.
 
-``"ANNO-ONCE"``
+``"TYPE-ONCE"``
 ^^^^^^^^^^^^^^^
 
 Each required declaration must occur exactly once.
 
-``"ANNO-PROH"``
+``"TYPE-PROH"``
 ^^^^^^^^^^^^^^^
 
 The declaration requirement does not apply to:
@@ -109,7 +109,7 @@ The declaration requirement does not apply to:
 * Each ``TypeVar`` and every similar construct, which is exempt from type
     annotation.
 
-``"ANNO-TOP"``
+``"TYPE-TOP"``
 ^^^^^^^^^^^^^^
 
 A declaration must appear before the variable is used and in the declaration
@@ -125,7 +125,7 @@ Only the following may precede that block:
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
-``"ANNO-FIN"``
+``"TYPE-FIN"``
 ^^^^^^^^^^^^^^
 
 An annotation with ``Final`` or ``Final[T]`` is not a declaration. It must
@@ -163,12 +163,12 @@ For example:
         adjustment: Final = result + offset
         return adjustment
 
-``"ANNO-ALL"``
+``"TYPE-ALL"``
 ^^^^^^^^^^^^^^
 
 ``__all__`` must be annotated as ``list[str]``.
 
-``"ANNO-PARA"``
+``"TYPE-PARA"``
 ^^^^^^^^^^^^^^^
 
 Every function parameter must have a type annotation, regardless of parameter kind.
@@ -176,7 +176,7 @@ This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
 
-``"ANNO-RET"``
+``"TYPE-RET"``
 ^^^^^^^^^^^^^^
 
 Every ``def`` and ``async def`` must have an explicit return type annotation,
@@ -187,11 +187,60 @@ annotations on lambdas. The checker checks presence, not type correctness.
 A missing annotation is reported on the physical line of the signature's
 closing colon.
 
+``"TYPE-UPDT"``
+^^^^^^^^^^^^^^^
+
+Annotations must not use legacy aliases from ``typing`` for which Python 3.11
+provides modern alternatives. This applies to variable, parameter and return
+annotations, including class attributes, nested types and quoted forward
+annotations. The checker recognizes direct imports, qualified references and
+import aliases in the relevant namespace. Importing the names alone, using
+those names in runtime expressions outside annotations, and using typing-only
+constructs without a modern Python 3.11 replacement are not violations.
+Recognition is static, not general runtime name or type resolution; it does
+not follow re-exports, dynamic aliases or type alias assignments. Type comments
+are not annotations for this rule.
+
+The forbidden names and their alternatives are:
+
+* Builtins: ``List`` → ``list``, ``Dict`` → ``dict``, ``Set`` → ``set``,
+    ``FrozenSet`` → ``frozenset``, ``Tuple`` → ``tuple``, ``Type`` → ``type``,
+    and ``Text`` → ``str``.
+* ``collections``: ``ChainMap``, ``Counter``, ``OrderedDict`` (same names),
+    ``DefaultDict`` → ``defaultdict``, and ``Deque`` → ``deque``.
+* ``collections.abc``: ``AbstractSet`` → ``Set``, and the following names
+    unchanged: ``AsyncGenerator``, ``AsyncIterable``, ``AsyncIterator``,
+    ``Awaitable``, ``ByteString``, ``Callable``, ``Collection``, ``Container``,
+    ``Coroutine``, ``Generator``, ``Hashable``, ``ItemsView``, ``Iterable``,
+    ``Iterator``, ``KeysView``, ``Mapping``, ``MappingView``, ``MutableMapping``,
+    ``MutableSequence``, ``MutableSet``, ``Reversible``, ``Sequence``, ``Sized``,
+    and ``ValuesView``.
+* ``contextlib``: ``ContextManager`` → ``AbstractContextManager`` and
+    ``AsyncContextManager`` → ``AbstractAsyncContextManager``.
+* ``re``: ``Match`` and ``Pattern`` (same names).
+* Unions: ``Optional[T]`` → ``T | None`` and ``Union[T, U]`` → ``T | U``.
+
+For example, ``typing.List[typing.Optional[int]]`` must instead be written
+as ``list[int | None]``. The diagnostic lists the original typing names on
+the physical line of their use (the string's starting line for quoted types).
+
+``"TYPE-NONE"``
+^^^^^^^^^^^^^^^
+
+If a union in an annotation is written with ``|`` and contains ``None``,
+``None`` must be the last member of that union. Parentheses do not change
+member order: ``(int | None) | str`` and ``None | (int | str)`` are forbidden;
+``int | str | None`` is allowed. Distinct nested unions are checked separately,
+so ``list[int | None] | str`` is allowed. An annotation consisting of ``None``
+alone is also allowed. The offending ``None`` is reported on its physical line
+(or the starting line of its quoted annotation). Runtime bitwise-or operations,
+``Literal`` values and ``Annotated`` metadata are not union annotations.
+
 The ``__all__`` Variable (``ALL``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The module-level ``__all__`` variable is exempt from the general declaration
-rules and must satisfy ``ANNO-ALL`` above and the following requirements.
+rules and must satisfy ``TYPE-ALL`` above and the following requirements.
 
 ``"ALL-MIS"``
 ^^^^^^^^^^^^^
@@ -224,14 +273,31 @@ The definition of ``__all__`` must precede all imports except
 
 ``__all__`` must be defined only once.
 
-Function Scopes and Parameters (``FUNC``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``"ALL-DEAD"``
+^^^^^^^^^^^^^^
+
+Every unused module-level name must be listed in the module's literal
+``__all__`` list. This applies to imported names, assigned variables, functions
+and classes bound in module scope, including module-level control-flow blocks.
+A name missing from ``__all__`` is reported if it is not read elsewhere within
+that module. Names referenced inside nested functions and classes count as used;
+references to a shadowing local variable do not. Uses solely in postponed
+annotations also count. Python's predefined module names and ``__all__`` are
+exempt. The diagnostic is reported at the end of the module.
+
+This is static name analysis, not an inspection of other modules or dynamic
+lookups (such as ``globals()[name]``). It intentionally treats ``__all__`` as
+the sole declaration of a public export, even though Python permits importing
+other names explicitly.
+
+Function Scopes and Parameters (``DEF``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The general declaration rules also apply to variables in every ``def`` and
 ``async def`` body. The special rules for ``__all__`` apply only at module level.
 
-``"FUNC-ASGN"``
-^^^^^^^^^^^^^^^
+``"DEF-RPLC"``
+^^^^^^^^^^^^^^
 
 A function parameter must never be reassigned. This applies to all parameter
 kinds, including parameters of lambda expressions. Assignment to the parameter
@@ -251,15 +317,15 @@ The object referenced by a parameter may be mutated. For example:
         items[0] = 2
 
     def replace(items: list[int]) -> None:
-        items = [1]  # FUNC-ASGN
-        items += [2]  # FUNC-ASGN, even if the operation mutates the list
+        items = [1]  # DEF-RPLC
+        items += [2]  # DEF-RPLC, even if the operation mutates the list
 
-``"FUNC-KWOR"``
-^^^^^^^^^^^^^^^
+``"DEF-SORT"``
+^^^^^^^^^^^^^^
 
 The single keyword-only parameters should be alphabetically ordered.
 
-``"FUNC-POS"``
+``"DEF-SELF"``
 ^^^^^^^^^^^^^^
 
 An undecorated ``def`` or ``async def`` statement must have a positional-only
@@ -289,47 +355,22 @@ For example:
 
 Omitting the ``/`` in ``method`` or ``build`` would violate the rule.
 
-Explicit Namespace Assignments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Symbols (``SYM``)
+~~~~~~~~~~~~~~~~~
 
-This section describes an exemption, not a reportable rule family.
-
-These rules do not restrict assignments performed explicitly through namespace
-dictionaries or dictionary-like objects using string keys, such as
-``globals()["name"] = value``.
-
-Dead Module-Level Names (``DEAD``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``"DEAD-NAME"``
-^^^^^^^^^^^^^^^
-
-An import, assigned variable, function, or class defined in the module scope
-(including module-level control-flow blocks) is an error if its name is neither
-listed in the module's literal ``__all__`` list nor read elsewhere within that
-module. Names referenced inside nested functions and classes count as used;
-references to a shadowing local variable do not. Uses solely in postponed
-annotations also count. Python's predefined module names and ``__all__`` are
-exempt.
-
-This is static name analysis, not an inspection of other modules or dynamic
-lookups (such as ``globals()[name]``). It intentionally treats ``__all__`` as
-the sole declaration of a public export, even though Python permits importing
-other names explicitly.
-
-Imports (``IMPT``)
-~~~~~~~~~~~~~~~~~~
-
-``"IMPT-WILD"``
-^^^^^^^^^^^^^^^
+``"SYM-WILD"``
+^^^^^^^^^^^^^^
 
 Wildcard imports (using ``*``) are forbidden.
 
-``"IMPT-TYPE"``
-^^^^^^^^^^^^^^^
+``"SYM-SEMI"``
+^^^^^^^^^^^^^^
 
-Importing annotations from ``typing`` that also exist in ``collections.abc``
-(e.g. ``Iterable``) is forbidden.
+Semicolons are forbidden as Python syntax, including trailing semicolons and
+semicolons separating statements on the same or different physical lines.
+Semicolons inside comments or string literals are not syntax and are permitted.
+Each physical line containing a semicolon token produces one diagnostic.
+This rule is independent of ``LINE-STMT``.
 
 Syntax Errors (``SYN``)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -417,8 +458,8 @@ syntax errors. Unknown marks have no effect. With no ignore arguments, all
 findings are reported. On the command line, repeat ``--ignore=MARK`` to
 combine filters, for example::
 
-    python -m style_checker --ignore=LINE-TW --ignore=ANNO-MIS example.py
-    python -m style_checker --ignore=ANNO example.py
+    python -m style_checker --ignore=LINE-TW --ignore=TYPE-MIS example.py
+    python -m style_checker --ignore=TYPE example.py
     python -m style_checker --ignore=LINE --ignore=SYN example.py
     python -m style_checker --ignore=SYN-IndentationError example.py
     python -m style_checker --ignore= example.py

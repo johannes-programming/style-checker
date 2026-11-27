@@ -1,6 +1,6 @@
 ignore = [
     "LINE-TW",
-    "ANNO-MIS",
-    "DEAD-NAME",
+    "TYPE-MIS",
+    "ALL-DEAD",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

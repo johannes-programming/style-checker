@@ -1,6 +1,6 @@
-10: ANNO-SORT: declarations should be in alphabetical order!
-11: ANNO-SORT: declarations should be in alphabetical order!
-12: ANNO-ONCE: each declaration should occur only once: 'duplicate'!
-12: ANNO-SORT: declarations should be in alphabetical order!
-18: ANNO-BARE: declarations should not assign a value: 'initialized'!
-24: DEAD-NAME: module names should be used or listed in '__all__': 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!
+10: TYPE-SORT: declarations should be in alphabetical order!
+11: TYPE-SORT: declarations should be in alphabetical order!
+12: TYPE-ONCE: each declaration should occur only once: 'duplicate'!
+12: TYPE-SORT: declarations should be in alphabetical order!
+18: TYPE-BARE: declarations should not assign a value: 'initialized'!
+24: ALL-DEAD: unused module names should be listed in '__all__': 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!

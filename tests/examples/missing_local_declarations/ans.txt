@@ -1,2 +1,2 @@
-13: ANNO-MIS: variables requiring declarations should be declared: 'source'!
-14: ANNO-MIS: variables requiring declarations should be declared: 'tree'!
+13: TYPE-MIS: variables requiring declarations should be declared: 'source'!
+14: TYPE-MIS: variables requiring declarations should be declared: 'tree'!

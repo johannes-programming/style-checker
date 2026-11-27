@@ -1,2 +1,2 @@
-1: ANNO-ALL: '__all__' should be annotated as 'list[str]'!
-3: ANNO-MIS: variables requiring declarations should be declared: 'value'!
+1: TYPE-ALL: '__all__' should be annotated as 'list[str]'!
+3: TYPE-MIS: variables requiring declarations should be declared: 'value'!

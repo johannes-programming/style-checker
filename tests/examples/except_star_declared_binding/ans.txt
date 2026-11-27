@@ -1,1 +1,1 @@
-6: ANNO-PROH: prohibited declarations should be omitted: 'errors'!
+6: TYPE-PROH: prohibited declarations should be omitted: 'errors'!

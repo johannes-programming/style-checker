@@ -1,6 +1,6 @@
 ignore = [
-    "ANNO-ONCE",
-    "ANNO-SORT",
-    "ANNO-BARE",
+    "TYPE-ONCE",
+    "TYPE-SORT",
+    "TYPE-BARE",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

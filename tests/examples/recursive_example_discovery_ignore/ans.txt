@@ -1,5 +1,5 @@
-4: ANNO-RET: functions should have return type annotations!
-6: ANNO-SORT: declarations should be in alphabetical order!
-12: ANNO-RET: functions should have return type annotations!
-14: ANNO-BARE: declarations should not assign a value: 'wrong'!
-20: ANNO-RET: functions should have return type annotations!
+4: TYPE-RET: functions should have return type annotations!
+6: TYPE-SORT: declarations should be in alphabetical order!
+12: TYPE-RET: functions should have return type annotations!
+14: TYPE-BARE: declarations should not assign a value: 'wrong'!
+20: TYPE-RET: functions should have return type annotations!

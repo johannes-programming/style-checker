@@ -1,1 +1,1 @@
-10: FUNC-ASGN: parameters should not be reassigned: 'parameter'!
+10: DEF-RPLC: parameters should not be reassigned: 'parameter'!

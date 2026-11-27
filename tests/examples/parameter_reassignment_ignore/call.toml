@@ -1,4 +1,4 @@
 ignore = [
-    "FUNC-ASGN",
+    "DEF-RPLC",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

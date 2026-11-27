@@ -1,2 +1,1 @@
-8: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Callable', 'Sequence'!
-9: DEAD-NAME: module names should be used or listed in '__all__': 'load'!
+9: ALL-DEAD: unused module names should be listed in '__all__': 'load'!

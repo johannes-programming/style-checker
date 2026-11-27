@@ -1,4 +1,4 @@
 ignore = [
-    "FUNC-KWOR",
+    "DEF-SORT",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

@@ -1,1 +1,1 @@
-3: FUNC-ASGN: parameters should not be reassigned: 'count'!
+3: DEF-RPLC: parameters should not be reassigned: 'count'!

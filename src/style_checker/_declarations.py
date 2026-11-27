@@ -78,31 +78,30 @@ class _Rule(Enum):
     ALL_IMP = "'__all__' should precede imports"
     ALL_MIS = "modules should define '__all__'"
     ALL_DUP = "'__all__' should be defined only once"
-    ANNO_ALL = "'__all__' should be annotated as 'list[str]'"
+    TYPE_ALL = "'__all__' should be annotated as 'list[str]'"
     ALL_LIST = "'__all__' should be assigned a list literal"
     ALL_STR = "'__all__' items should be string literals"
     ALL_ORD = "'__all__' items should be in alphabetical order"
-    IMPT_WILD = "wildcard imports should not be used"
-    IMPT_TYPE = (
-        "imports available in 'collections.abc' should come from "
-        "'collections.abc' rather than 'typing'"
-    )
-    DEAD_NAME = "module names should be used or listed in '__all__'"
-    ANNO_PARA = "function parameters should have type annotations"
-    ANNO_RET = "functions should have return type annotations"
-    FUNC_ASGN = "parameters should not be reassigned"
-    FUNC_KWOR = "keyword-only arguments should be in alphabetical order"
-    FUNC_POS = "the first argument should be positional-only"
-    ANNO_TOP = "declarations should appear at the beginning of the scope"
-    ANNO_FIN = (
+    SYM_WILD = "wildcard imports should not be used"
+    SYM_SEMI = "semicolons should not be used"
+    TYPE_UPDT = "annotations should use modern alternatives to typing aliases"
+    TYPE_NONE = "None should be the last member of a union annotation"
+    ALL_DEAD = "unused module names should be listed in '__all__'"
+    TYPE_PARA = "function parameters should have type annotations"
+    TYPE_RET = "functions should have return type annotations"
+    DEF_RPLC = "parameters should not be reassigned"
+    DEF_SORT = "keyword-only arguments should be in alphabetical order"
+    DEF_SELF = "the first argument should be positional-only"
+    TYPE_TOP = "declarations should appear at the beginning of the scope"
+    TYPE_FIN = (
         "'Final' annotations should occur directly in a namespace body "
         "and assign a value in the same statement"
     )
-    ANNO_SORT = "declarations should be in alphabetical order"
-    ANNO_PROH = "prohibited declarations should be omitted"
-    ANNO_ONCE = "each declaration should occur only once"
-    ANNO_MIS = "variables requiring declarations should be declared"
-    ANNO_BARE = "declarations should not assign a value"
+    TYPE_SORT = "declarations should be in alphabetical order"
+    TYPE_PROH = "prohibited declarations should be omitted"
+    TYPE_ONCE = "each declaration should occur only once"
+    TYPE_MIS = "variables requiring declarations should be declared"
+    TYPE_BARE = "declarations should not assign a value"
 
     @property
     def mark(self: Self, /) -> str:
@@ -451,7 +450,7 @@ def _check_module_all(
             line = locations.following(stmt.targets[0], {"="})
         else:
             line = stmt.lineno
-        issues.add(line, _Rule.ANNO_ALL)
+        issues.add(line, _Rule.TYPE_ALL)
     value = (
         stmt.value if isinstance(stmt, (ast.AnnAssign, ast.Assign)) else None
     )
@@ -573,16 +572,11 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         self.typevar_factories: set[str] = set()
         self.typevar_modules: set[str] = {"typing", "typing_extensions"}
         self.wildcard_imports: set[int] = set()
-        self.forbidden_typing_imports: set[tuple[int, str]] = set()
 
     def import_issues(self: Self, /, issues: _LineIssues) -> None:
         line: int
         for line in sorted(self.wildcard_imports):
-            issues.add(line, _Rule.IMPT_WILD)
-        issues.names(
-            _Rule.IMPT_TYPE,
-            iter(sorted(self.forbidden_typing_imports)),
-        )
+            issues.add(line, _Rule.SYM_WILD)
 
     def _non_variable(self: Self, /, name: str, line: int) -> None:
         self.non_variable_bindings.add(name)
@@ -652,16 +646,6 @@ class _FunctionBodyFacts(ast.NodeVisitor):
         for alias in node.names:
             if alias.name == "*":
                 self.wildcard_imports.add(alias.lineno)
-            elif (
-                node.level == 0
-                and node.module == "typing"
-                and alias.name in collections_abc.__all__
-            ):
-                self._non_variable(
-                    alias.asname or alias.name,
-                    alias.end_lineno or alias.lineno,
-                )
-                self.forbidden_typing_imports.add((alias.lineno, alias.name))
             else:
                 self._non_variable(
                     alias.asname or alias.name,
@@ -1017,11 +1001,11 @@ class _ParameterAssignments(_FunctionBodyFacts):
         name: str
         for line, name in self.assignments:
             if self.parameters is not None and name in self.parameters:
-                issues.add(line, _Rule.FUNC_ASGN, repr(name))
+                issues.add(line, _Rule.DEF_RPLC, repr(name))
             elif name in self.nonlocals and self._outer_parameter(
                 name, enclosing
             ):
-                issues.add(line, _Rule.FUNC_ASGN, repr(name))
+                issues.add(line, _Rule.DEF_RPLC, repr(name))
         child_enclosing = enclosing
         if self.parameters is not None:
             child_enclosing = [*enclosing, self]
@@ -1435,7 +1419,7 @@ def _check_finals(
         finals.add(id(statement))
         line = _declaration_line(statement, locations)
         if id(statement) not in direct or statement.value is None:
-            issues.add(line, _Rule.ANNO_FIN)
+            issues.add(line, _Rule.TYPE_FIN)
     return finals, imports
 
 
@@ -1549,7 +1533,7 @@ def _check_scope(
     _statement_placement_issues(node.body, locations.lines, issues)
     if dead_module_names:
         issues.names(
-            _Rule.DEAD_NAME,
+            _Rule.ALL_DEAD,
             ((locations.last_line, name) for name in dead_module_names),
         )
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -1558,15 +1542,15 @@ def _check_scope(
             (locations.parameter_end(arg), arg.arg)
             for arg in _unannotated_parameters(node)
         )
-        issues.names(_Rule.ANNO_PARA, findings)
+        issues.names(_Rule.TYPE_PARA, findings)
         if node.returns is None:
-            issues.add(locations.return_annotation_end(node), _Rule.ANNO_RET)
+            issues.add(locations.return_annotation_end(node), _Rule.TYPE_RET)
         greatest = ""
         for arg in args.kwonlyargs:
             if arg.arg < greatest:
                 issues.add(
                     arg.lineno,
-                    _Rule.FUNC_KWOR,
+                    _Rule.DEF_SORT,
                 )
             greatest = max(greatest, arg.arg)
         if node.decorator_list:
@@ -1580,7 +1564,7 @@ def _check_scope(
         if requires_positional_only and not node.args.posonlyargs:
             issues.add(
                 locations.positional_only_end(node),
-                _Rule.FUNC_POS,
+                _Rule.DEF_SELF,
             )
 
     # A bare annotation later in the body is itself evidence that the
@@ -1598,7 +1582,7 @@ def _check_scope(
         if id(statement) not in declaration_nodes
         and isinstance(statement.target, ast.Name)
     )
-    issues.names(_Rule.ANNO_TOP, findings)
+    issues.names(_Rule.TYPE_TOP, findings)
     greatest = ""
     declaration_lines = {}
     for statement in leading_decls:
@@ -1606,7 +1590,7 @@ def _check_scope(
         name = statement.target.id
         line = _declaration_line(statement, locations)
         if name < greatest:
-            issues.add(line, _Rule.ANNO_SORT)
+            issues.add(line, _Rule.TYPE_SORT)
         greatest = max(greatest, name)
         _first_line(declaration_lines, name, line)
 
@@ -1614,12 +1598,12 @@ def _check_scope(
         (max(declaration_lines[name], facts.non_variable_lines[name]), name)
         for name in declared & facts.non_variable_bindings
     )
-    issues.names(_Rule.ANNO_PROH, findings)
+    issues.names(_Rule.TYPE_PROH, findings)
     findings = (
         (max(declaration_lines[name], facts.exception_lines[name]), name)
         for name in declared & facts.exception_bindings
     )
-    issues.names(_Rule.ANNO_PROH, findings)
+    issues.names(_Rule.TYPE_PROH, findings)
 
     seen = set()
     duplicates = []
@@ -1631,7 +1615,7 @@ def _check_scope(
         if name in seen:
             duplicates.append((_declaration_line(statement, locations), name))
         seen.add(name)
-    issues.names(_Rule.ANNO_ONCE, iter(duplicates))
+    issues.names(_Rule.TYPE_ONCE, iter(duplicates))
 
     binding_lines = facts.binding_lines.copy()
     for name, line in external_assignments.items():
@@ -1640,7 +1624,7 @@ def _check_scope(
         (binding_lines[name], name)
         for name in locals_that_need_declarations - declared
     )
-    issues.names(_Rule.ANNO_MIS, findings)
+    issues.names(_Rule.TYPE_MIS, findings)
     unnecessary = (
         declared
         - locals_that_need_declarations
@@ -1657,7 +1641,7 @@ def _check_scope(
         else:
             line = scope_end
         unnecessary_lines.append((line, name))
-    issues.names(_Rule.ANNO_PROH, iter(unnecessary_lines))
+    issues.names(_Rule.TYPE_PROH, iter(unnecessary_lines))
 
     # Explicitly reject annotation-with-assignment anywhere in the function
     # body when its target is a simple local name.
@@ -1668,7 +1652,7 @@ def _check_scope(
         and statement.value is not None
         and statement.target.id not in exempt
     )
-    issues.names(_Rule.ANNO_BARE, findings)
+    issues.names(_Rule.TYPE_BARE, findings)
 
 
 def _external_assignments(
@@ -1751,6 +1735,262 @@ def _external_assignments_visit(
         )
 
 
+# Fixed Python 3.11 baseline, independent of the interpreter running the checker.
+_MODERN_TYPING_ALIASES: dict[str, str] = {
+    "AbstractSet": "collections.abc.Set",
+    "AsyncContextManager": "contextlib.AbstractAsyncContextManager",
+    "AsyncGenerator": "collections.abc.AsyncGenerator",
+    "AsyncIterable": "collections.abc.AsyncIterable",
+    "AsyncIterator": "collections.abc.AsyncIterator",
+    "Awaitable": "collections.abc.Awaitable",
+    "ByteString": "collections.abc.ByteString",
+    "Callable": "collections.abc.Callable",
+    "ChainMap": "collections.ChainMap",
+    "Collection": "collections.abc.Collection",
+    "Container": "collections.abc.Container",
+    "ContextManager": "contextlib.AbstractContextManager",
+    "Coroutine": "collections.abc.Coroutine",
+    "Counter": "collections.Counter",
+    "DefaultDict": "collections.defaultdict",
+    "Deque": "collections.deque",
+    "Dict": "dict",
+    "FrozenSet": "frozenset",
+    "Generator": "collections.abc.Generator",
+    "Hashable": "collections.abc.Hashable",
+    "ItemsView": "collections.abc.ItemsView",
+    "Iterable": "collections.abc.Iterable",
+    "Iterator": "collections.abc.Iterator",
+    "KeysView": "collections.abc.KeysView",
+    "List": "list",
+    "Mapping": "collections.abc.Mapping",
+    "MappingView": "collections.abc.MappingView",
+    "Match": "re.Match",
+    "MutableMapping": "collections.abc.MutableMapping",
+    "MutableSequence": "collections.abc.MutableSequence",
+    "MutableSet": "collections.abc.MutableSet",
+    "Optional": "T | None",
+    "OrderedDict": "collections.OrderedDict",
+    "Pattern": "re.Pattern",
+    "Reversible": "collections.abc.Reversible",
+    "Sequence": "collections.abc.Sequence",
+    "Set": "set",
+    "Sized": "collections.abc.Sized",
+    "Text": "str",
+    "Tuple": "tuple",
+    "Type": "type",
+    "Union": "T | U",
+    "ValuesView": "collections.abc.ValuesView",
+}
+
+
+class _AnnotationBindings(_FunctionBodyFacts):
+    """Collect static import bindings and local names that shadow them."""
+
+    def __init__(self: Self, /) -> None:
+        super().__init__()
+        self.imports: dict[str, str | None] = {}
+
+    def visit_Import(self: Self, /, node: ast.Import) -> None:
+        alias: ast.alias
+        super().visit_Import(node)
+        for alias in node.names:
+            self.imports[alias.asname or alias.name.split(".")[0]] = (
+                (alias.name if alias.asname else alias.name.split(".")[0])
+                if alias.name in {"typing", "typing.re", "typing_extensions"}
+                else None
+            )
+
+    def visit_ImportFrom(self: Self, /, node: ast.ImportFrom) -> None:
+        alias: ast.alias
+        super().visit_ImportFrom(node)
+        if node.level == 0 and node.module == "__future__":
+            return
+        for alias in node.names:
+            if alias.name == "*":
+                if node.level == 0 and node.module == "typing":
+                    self.imports.update(
+                        {
+                            name: "typing." + name
+                            for name in _MODERN_TYPING_ALIASES.keys()
+                            | {"Annotated", "Literal"}
+                        }
+                    )
+            else:
+                self.imports[alias.asname or alias.name] = (
+                    node.module + "." + alias.name
+                    if node.level == 0
+                    and node.module is not None
+                    and node.module
+                    in {"typing", "typing.re", "typing_extensions"}
+                    else None
+                )
+
+    def environment(
+        self: Self, /, inherited: dict[str, str | None], parameters: set[str]
+    ) -> dict[str, str | None]:
+        result: dict[str, str | None]
+        shadowed: set[str]
+        result = inherited | self.imports
+        shadowed = (
+            (
+                self.bound
+                | self.exception_bindings
+                | parameters
+                | (self.non_variable_bindings - self.imports.keys())
+            )
+            - self.globals
+            - self.nonlocals
+        )
+        result.update(dict.fromkeys(shadowed))
+        return result
+
+
+def _union_members(node: ast.expr) -> Iterator[ast.expr]:
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        yield from _union_members(node.left)
+        yield from _union_members(node.right)
+    else:
+        yield node
+
+
+class _ModernAnnotations(ast.NodeVisitor):
+    """Check type expressions, not imports or ordinary runtime expressions."""
+
+    def __init__(self: Self, /, issues: _LineIssues) -> None:
+        self.issues = issues
+        self.environment: dict[str, str | None] = {}
+        self.enclosing: dict[str, str | None] = {}
+
+    def _reference(self: Self, /, node: ast.expr) -> str | None:
+        parent: str | None
+        if isinstance(node, ast.Name):
+            return self.environment.get(node.id)
+        if isinstance(node, ast.Attribute):
+            parent = self._reference(node.value)
+            if parent is not None:
+                return parent + "." + node.attr
+        return None
+
+    def _annotation(
+        self: Self, /, node: ast.expr, quoted_line: int | None = None
+    ) -> None:
+        child: ast.AST
+        line: int
+        member: ast.expr
+        members: list[ast.expr]
+        name: str | None
+        parsed: ast.expr
+        line = quoted_line or node.lineno
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            try:
+                parsed = ast.parse(node.value, mode="eval").body
+            except (SyntaxError, ValueError, RecursionError):
+                return
+            self._annotation(parsed, line)
+            return
+        name = self._reference(node)
+        if name is not None and name.startswith("typing."):
+            name = name.removeprefix("typing.").removeprefix("re.")
+            if name in _MODERN_TYPING_ALIASES:
+                self.issues.add(line, _Rule.TYPE_UPDT, repr(name))
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            members = list(_union_members(node))
+            for member in members[:-1]:
+                if isinstance(member, ast.Constant) and member.value is None:
+                    self.issues.add(
+                        quoted_line or member.lineno, _Rule.TYPE_NONE
+                    )
+            for member in members:
+                self._annotation(member, quoted_line)
+            return
+        if isinstance(node, ast.Subscript):
+            self._annotation(node.value, quoted_line)
+            name = self._reference(node.value)
+            # Literal arguments and Annotated metadata are values, not types.
+            if name in {"typing.Literal", "typing_extensions.Literal"}:
+                return
+            if name in {
+                "typing.Annotated",
+                "typing_extensions.Annotated",
+            } and isinstance(node.slice, ast.Tuple):
+                if node.slice.elts:
+                    self._annotation(node.slice.elts[0], quoted_line)
+                return
+            self._annotation(node.slice, quoted_line)
+            return
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.expr):
+                self._annotation(child, quoted_line)
+
+    def _body(
+        self: Self,
+        /,
+        body: list[ast.stmt],
+        *,
+        is_class: bool = False,
+        parameters: set[str] | None = None,
+    ) -> None:
+        bindings: _AnnotationBindings
+        old_environment: dict[str, str | None]
+        old_enclosing: dict[str, str | None]
+        statement: ast.stmt
+        old_environment, old_enclosing = self.environment, self.enclosing
+        bindings = _AnnotationBindings()
+        for statement in body:
+            bindings.visit(statement)
+        self.environment = bindings.environment(
+            self.enclosing, parameters or set()
+        )
+        if not is_class:
+            self.enclosing = self.environment
+        for statement in body:
+            self.visit(statement)
+        self.environment, self.enclosing = old_environment, old_enclosing
+
+    def visit_Module(self: Self, /, node: ast.Module) -> None:
+        self._body(node.body)
+
+    def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
+        self._body(node.body, is_class=True)
+
+    def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
+        self._function(node)
+
+    def visit_AsyncFunctionDef(
+        self: Self, /, node: ast.AsyncFunctionDef
+    ) -> None:
+        self._function(node)
+
+    def _function(
+        self: Self, /, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> None:
+        arg: ast.arg
+        for arg in ast.walk(node.args):
+            if isinstance(arg, ast.arg) and arg.annotation is not None:
+                self._annotation(arg.annotation)
+        if node.returns is not None:
+            self._annotation(node.returns)
+        self._body(node.body, parameters=_parameter_names(node))
+
+    def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
+        self._annotation(node.annotation)
+
+
+def _semicolon_issues(
+    source: str, issues: _LineIssues, stop: int | None = None
+) -> None:
+    """Report only actual semicolon tokens, not strings or comments."""
+    token: tokenize.TokenInfo
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(source).readline):
+            if stop is not None and token.start[0] >= stop:
+                break
+            if token.type == tokenize.OP and token.string == ";":
+                issues.add(token.start[0], _Rule.SYM_SEMI)
+    except (SyntaxError, tokenize.TokenError):
+        pass
+
+
 class _FunctionChecker(ast.NodeVisitor):
     def __init__(
         self: Self, /, filename: str, source: str, ignore: frozenset[str]
@@ -1790,6 +2030,7 @@ class _FunctionChecker(ast.NodeVisitor):
             if self.locations.prefix_end is not None
             else _dead_module_names(node, self.source, self.filename),
         )
+        _ModernAnnotations(self.issues).visit(node)
         self.generic_visit(node)
 
     def _visit_function(
@@ -2010,6 +2251,7 @@ def _check_prefix(
         break
     else:
         issues = _LineIssues(ignore)
+    _semicolon_issues(source, issues, stop)
     # Whitespace on physical lines is independent of AST recovery.
     for line, text in enumerate(lines[: stop - 1], 1):
         if text.rstrip("\n") != text.rstrip():
@@ -2038,6 +2280,7 @@ def check_file(
         checker = _FunctionChecker(path, source, ignored)
         checker.visit(tree)
         issues = checker.issues
+        _semicolon_issues(source, issues)
     except SyntaxError as exc:
         issues = _check_prefix(path, source, exc, ignored)
         violations = list(issues.violations(path))

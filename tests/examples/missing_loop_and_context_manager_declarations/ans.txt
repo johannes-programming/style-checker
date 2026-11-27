@@ -1,4 +1,4 @@
-7: ANNO-MIS: variables requiring declarations should be declared: 'file'!
-17: ANNO-MIS: variables requiring declarations should be declared: 'line'!
-28: ANNO-MIS: variables requiring declarations should be declared: 'stream'!
-33: DEAD-NAME: module names should be used or listed in '__all__': 'bar', 'baz', 'foo'!
+7: TYPE-MIS: variables requiring declarations should be declared: 'file'!
+17: TYPE-MIS: variables requiring declarations should be declared: 'line'!
+28: TYPE-MIS: variables requiring declarations should be declared: 'stream'!
+33: ALL-DEAD: unused module names should be listed in '__all__': 'bar', 'baz', 'foo'!

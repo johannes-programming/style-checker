@@ -1,2 +1,2 @@
-5: FUNC-KWOR: keyword-only arguments should be in alphabetical order!
-6: FUNC-KWOR: keyword-only arguments should be in alphabetical order!
+5: DEF-SORT: keyword-only arguments should be in alphabetical order!
+6: DEF-SORT: keyword-only arguments should be in alphabetical order!

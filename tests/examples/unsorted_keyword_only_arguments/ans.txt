@@ -1,2 +1,2 @@
-4: FUNC-KWOR: keyword-only arguments should be in alphabetical order!
-5: DEAD-NAME: module names should be used or listed in '__all__': 'unordered_keyword_only'!
+4: DEF-SORT: keyword-only arguments should be in alphabetical order!
+5: ALL-DEAD: unused module names should be listed in '__all__': 'unordered_keyword_only'!

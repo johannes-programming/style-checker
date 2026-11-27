@@ -1,1 +1,1 @@
-10: DEAD-NAME: module names should be used or listed in '__all__': 'example'!
+10: ALL-DEAD: unused module names should be listed in '__all__': 'example'!

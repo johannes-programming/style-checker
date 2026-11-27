@@ -1,5 +1,5 @@
 ignore = [
     "ALL-DUP",
-    "ANNO-ALL",
+    "TYPE-ALL",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

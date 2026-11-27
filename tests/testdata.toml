@@ -44,7 +44,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = " 	"
 
 [whitespace_eof_violations_use_last_physical_line]
-ans = "3: ALL-MIS: modules should define '__all__'!\n3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n3: LINE-NL: nonempty files should end with a linebreak!\n"
+ans = "3: ALL-DEAD: unused module names should be listed in '__all__': 'f'!\n3: ALL-MIS: modules should define '__all__'!\n3: LINE-NL: nonempty files should end with a linebreak!\n3: TYPE-PROH: prohibited declarations should be omitted: 'unused'!\n"
 
 [whitespace_eof_violations_use_last_physical_line.call]
 outmsg = "{line}: {rule}: {desc}!\n"
@@ -53,7 +53,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "def f() -> None:\n    unused: int\n    pass"
 
 [whitespace_eof_violations_use_last_physical_line_2]
-ans = "3: ALL-MIS: modules should define '__all__'!\n3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n"
+ans = "3: ALL-DEAD: unused module names should be listed in '__all__': 'f'!\n3: ALL-MIS: modules should define '__all__'!\n3: TYPE-PROH: prohibited declarations should be omitted: 'unused'!\n"
 
 [whitespace_eof_violations_use_last_physical_line_2.call]
 outmsg = "{line}: {rule}: {desc}!\n"
@@ -62,7 +62,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n"
 
 [whitespace_eof_violations_use_last_physical_line_3]
-ans = "4: ALL-MIS: modules should define '__all__'!\n4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n4: LINE-BL: files should not end with whitespace-only lines!\n"
+ans = "4: ALL-DEAD: unused module names should be listed in '__all__': 'f'!\n4: ALL-MIS: modules should define '__all__'!\n4: LINE-BL: files should not end with whitespace-only lines!\n4: TYPE-PROH: prohibited declarations should be omitted: 'unused'!\n"
 
 [whitespace_eof_violations_use_last_physical_line_3.call]
 outmsg = "{line}: {rule}: {desc}!\n"
@@ -71,7 +71,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n\n"
 
 [whitespace_eof_violations_use_last_physical_line_4]
-ans = "4: ALL-MIS: modules should define '__all__'!\n4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n4: LINE-NL: nonempty files should end with a linebreak!\n"
+ans = "4: ALL-DEAD: unused module names should be listed in '__all__': 'f'!\n4: ALL-MIS: modules should define '__all__'!\n4: LINE-NL: nonempty files should end with a linebreak!\n4: TYPE-PROH: prohibited declarations should be omitted: 'unused'!\n"
 
 [whitespace_eof_violations_use_last_physical_line_4.call]
 outmsg = "{line}: {rule}: {desc}!\n"
@@ -80,7 +80,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment"
 
 [whitespace_eof_violations_use_last_physical_line_5]
-ans = "5: ALL-MIS: modules should define '__all__'!\n5: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n5: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n5: LINE-BL: files should not end with whitespace-only lines!\n"
+ans = "5: ALL-DEAD: unused module names should be listed in '__all__': 'f'!\n5: ALL-MIS: modules should define '__all__'!\n5: LINE-BL: files should not end with whitespace-only lines!\n5: TYPE-PROH: prohibited declarations should be omitted: 'unused'!\n"
 
 [whitespace_eof_violations_use_last_physical_line_5.call]
 outmsg = "{line}: {rule}: {desc}!\n"
@@ -89,7 +89,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment\n\n"
 
 [whitespace_eof_violations_use_last_physical_line_6]
-ans = "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n3: LINE-BL: files should not end with whitespace-only lines!\n"
+ans = "3: LINE-BL: files should not end with whitespace-only lines!\n3: TYPE-PROH: prohibited declarations should be omitted: 'unused'!\n"
 
 [whitespace_eof_violations_use_last_physical_line_6.call]
 outmsg = "{line}: {rule}: {desc}!\n"
@@ -152,7 +152,7 @@ outmsg = "{line}: {rule}: {desc}!\n"
 "example.py" = "__all__: list[str] = []	"
 
 [whitespace_multiple_rules_and_scopes_on_one_line]
-ans = "3: ANNO-PARA: function parameters should have type annotations: 'self'!\n3: ANNO-RET: functions should have return type annotations!\n3: FUNC-POS: the first argument should be positional-only!\n3: LINE-STMT: simple statements should start at the beginning of a physical line!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n"
+ans = "3: DEF-SELF: the first argument should be positional-only!\n3: LINE-STMT: simple statements should start at the beginning of a physical line!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n3: TYPE-PARA: function parameters should have type annotations: 'self'!\n3: TYPE-RET: functions should have return type annotations!\n"
 
 [whitespace_multiple_rules_and_scopes_on_one_line.call]
 outmsg = "{line}: {rule}: {desc}!\n"

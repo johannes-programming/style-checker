@@ -1,5 +1,5 @@
-4: ANNO-RET: functions should have return type annotations!
-9: ANNO-ONCE: each declaration should occur only once: 'beta'!
-9: ANNO-TOP: declarations should appear at the beginning of the scope: 'beta'!
-11: ANNO-BARE: declarations should not assign a value: 'beta'!
-13: DEAD-NAME: module names should be used or listed in '__all__': 'nested_annotations'!
+4: TYPE-RET: functions should have return type annotations!
+9: TYPE-ONCE: each declaration should occur only once: 'beta'!
+9: TYPE-TOP: declarations should appear at the beginning of the scope: 'beta'!
+11: TYPE-BARE: declarations should not assign a value: 'beta'!
+13: ALL-DEAD: unused module names should be listed in '__all__': 'nested_annotations'!

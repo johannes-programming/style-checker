@@ -1,2 +1,2 @@
-5: ANNO-PROH: prohibited declarations should be omitted: 'Helper'!
-7: ANNO-PROH: prohibited declarations should be omitted: 'helper'!
+5: TYPE-PROH: prohibited declarations should be omitted: 'Helper'!
+7: TYPE-PROH: prohibited declarations should be omitted: 'helper'!

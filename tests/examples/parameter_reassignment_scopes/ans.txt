@@ -1,4 +1,4 @@
-5: FUNC-ASGN: parameters should not be reassigned: 'value'!
-17: FUNC-ASGN: parameters should not be reassigned: 'value'!
-18: FUNC-ASGN: parameters should not be reassigned: 'value'!
-20: FUNC-ASGN: parameters should not be reassigned: 'value'!
+5: DEF-RPLC: parameters should not be reassigned: 'value'!
+17: DEF-RPLC: parameters should not be reassigned: 'value'!
+18: DEF-RPLC: parameters should not be reassigned: 'value'!
+20: DEF-RPLC: parameters should not be reassigned: 'value'!

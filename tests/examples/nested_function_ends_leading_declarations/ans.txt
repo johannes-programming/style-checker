@@ -1,2 +1,2 @@
-5: ANNO-TOP: declarations should appear at the beginning of the scope: 'value'!
-6: ANNO-MIS: variables requiring declarations should be declared: 'value'!
+5: TYPE-TOP: declarations should appear at the beginning of the scope: 'value'!
+6: TYPE-MIS: variables requiring declarations should be declared: 'value'!
