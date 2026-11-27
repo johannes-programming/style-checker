@@ -1,0 +1,8 @@
+4: FUNC-ASGN: reassigned parameters: 'a'!
+5: FUNC-ASGN: reassigned parameters: 'a'!
+6: FUNC-ASGN: reassigned parameters: 'b'!
+7: FUNC-ASGN: reassigned parameters: 'args'!
+8: FUNC-ASGN: reassigned parameters: 'c', 'kwargs'!
+9: FUNC-ASGN: reassigned parameters: 'c'!
+10: FUNC-ASGN: reassigned parameters: 'b'!
+11: FUNC-ASGN: reassigned parameters: 'a'!

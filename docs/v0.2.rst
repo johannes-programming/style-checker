@@ -240,6 +240,30 @@ This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
 
+``FUNC-ASGN``
+^^^^^^^^^^^^^
+
+A function parameter must never be reassigned. This applies to all parameter
+kinds, including parameters of lambda expressions. Assignment to the parameter
+name is forbidden, including augmented assignment, assignment expressions,
+and rebinding through a loop target, context manager, pattern capture, exception
+handler, import, or definition. Reassignment through ``nonlocal`` is also
+forbidden. A binding of the same name in a different namespace is not a
+reassignment of the parameter. Deleting the name without assigning a new value
+is not reassignment under this rule.
+
+The object referenced by a parameter may be mutated. For example:
+
+.. code-block:: python
+
+    def update(items: list[int]) -> None:
+        items.append(1)
+        items[0] = 2
+
+    def replace(items: list[int]) -> None:
+        items = [1]  # FUNC-ASGN
+        items += [2]  # FUNC-ASGN, even if the operation mutates the list
+
 ``FUNC-KWOR``
 ^^^^^^^^^^^^^
 

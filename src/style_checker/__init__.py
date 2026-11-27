@@ -16,7 +16,8 @@ At module level and inside every ``def`` or ``async def``:
     after the declaration block or later, and are not declarations;
 * the first non-declaration occurrence of each local variable must be a binding
     occurrence, not a read;
-* every function parameter must have a type annotation.
+* every function parameter must have a type annotation;
+* function parameters must not be reassigned.
 
 Function parameters, ``global`` names, and ``nonlocal`` names are exempt from
 local-variable declarations.

@@ -1,0 +1,4 @@
+ignore = [
+    "FUNC-ASGN",
+]
+outmsg = "{line}: {rule}: {desc}"

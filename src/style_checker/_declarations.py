@@ -16,6 +16,7 @@ At module level and inside every ``def`` or ``async def``:
 * ``Final`` annotations are initialized in place, outside the declaration
     block and at the indentation level of their namespace (also in classes);
 * every function parameter must have a type annotation;
+* function parameters must not be reassigned;
 * undecorated methods and functions directly decorated by ``@classmethod``
     must have a positional-only first parameter.
 
@@ -75,6 +76,7 @@ class _Rule(Enum):
     IMPT_TYPE = "'typing' imports available in 'collections.abc'"
     DEAD_NAME = "dead module names"
     FUNC_ARG = "unannotated arguments"
+    FUNC_ASGN = "reassigned parameters"
     FUNC_KWOR = "keyword-only arguments not in alphabetical order"
     FUNC_POS = "first argument must be positional-only"
     PLAC_BEG = "declarations not at beginning"
@@ -858,7 +860,9 @@ class _FunctionBodyFacts(ast.NodeVisitor):
             self.visit(generator)
 
 
-def _parameter_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+def _parameter_names(
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda,
+) -> set[str]:
     args: ast.arguments
     result: set[str]
 
@@ -871,6 +875,128 @@ def _parameter_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     if args.kwarg is not None:
         result.add(args.kwarg.arg)
     return result
+
+
+class _ParameterAssignments(_FunctionBodyFacts):
+    """Collect every parameter rebinding, including writes through nonlocal."""
+
+    def __init__(
+        self: Self,
+        /,
+        locations: _SourceLocations,
+        parameters: set[str] | None = None,
+    ) -> None:
+        super().__init__(locations)
+        self.parameters = parameters
+        self.assignments: set[tuple[int, str]] = set()
+        self.annotated_names: set[str] = set()
+        self.children: list[_ParameterAssignments] = []
+
+    def _record(self: Self, /, name: str, kind: str, line: int) -> None:
+        super()._record(name, kind, line)
+        if kind == "bind":
+            self.assignments.add((max(line, self.binding_floor), name))
+
+    def _non_variable(self: Self, /, name: str, line: int) -> None:
+        super()._non_variable(name, line)
+        self.assignments.add((line, name))
+
+    def visit_Name(self: Self, /, node: ast.Name) -> None:
+        if isinstance(node.ctx, ast.Del):
+            # Deletion establishes a local name, but is not reassignment.
+            super()._record(node.id, "bind", node.lineno)
+        else:
+            super().visit_Name(node)
+
+    def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
+        if node.simple and isinstance(node.target, ast.Name):
+            self.annotated_names.add(node.target.id)
+        super().visit_AnnAssign(node)
+        if node.value is None and not isinstance(node.target, ast.Name):
+            self.visit(node.target)
+
+    def visit_ExceptHandler(self: Self, /, node: ast.ExceptHandler) -> None:
+        super().visit_ExceptHandler(node)
+        if node.name is not None:
+            assert self.locations is not None
+            self.assignments.add(
+                (self.locations.exception_name(node), node.name)
+            )
+
+    def _child(
+        self: Self, /, parameters: set[str] | None, body: list[ast.AST]
+    ) -> None:
+        child: _ParameterAssignments
+        statement: ast.AST
+        assert self.locations is not None
+        child = _ParameterAssignments(self.locations, parameters)
+        self.children.append(child)
+        for statement in body:
+            child.visit(statement)
+
+    def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
+        self._visit_function(node)
+
+    def visit_AsyncFunctionDef(
+        self: Self, /, node: ast.AsyncFunctionDef
+    ) -> None:
+        self._visit_function(node)
+
+    def _visit_function(
+        self: Self, /, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> None:
+        decorator: ast.expr
+        assert self.locations is not None
+        self._non_variable(node.name, self.locations.definition_name(node))
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        self.visit(node.args)
+        if node.returns is not None:
+            self.visit(node.returns)
+        self._child(_parameter_names(node), list(node.body))
+
+    def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
+        header: ast.AST
+        super().visit_ClassDef(node)
+        for header in [*node.decorator_list, *node.bases, *node.keywords]:
+            self.visit(header)
+        self._child(None, list(node.body))
+
+    def visit_Lambda(self: Self, /, node: ast.Lambda) -> None:
+        self.visit(node.args)
+        self._child(_parameter_names(node), [node.body])
+
+    def report(
+        self: Self,
+        /,
+        issues: _LineIssues,
+        enclosing: list[_ParameterAssignments],
+    ) -> None:
+        child: _ParameterAssignments
+        line: int
+        name: str
+        outer: _ParameterAssignments
+        for line, name in self.assignments:
+            if self.parameters is not None and name in self.parameters:
+                issues.add(line, _Rule.FUNC_ASGN, repr(name))
+            elif name in self.nonlocals:
+                for outer in reversed(enclosing):
+                    if name in outer.globals or name in outer.nonlocals:
+                        continue
+                    if name in (
+                        (outer.parameters or set())
+                        | outer.bound
+                        | outer.non_variable_bindings
+                        | outer.exception_bindings
+                        | outer.annotated_names
+                    ):
+                        if name in (outer.parameters or set()):
+                            issues.add(line, _Rule.FUNC_ASGN, repr(name))
+                        break
+        if self.parameters is not None:
+            enclosing = [*enclosing, self]
+        for child in self.children:
+            child.report(issues, enclosing)
 
 
 def _unannotated_parameters(
@@ -1584,6 +1710,10 @@ class _FunctionChecker(ast.NodeVisitor):
 
     def visit_Module(self: Self, /, node: ast.Module) -> None:
         finals: set[int]
+        parameter_assignments: _ParameterAssignments
+        parameter_assignments = _ParameterAssignments(self.locations)
+        parameter_assignments.visit(node)
+        parameter_assignments.report(self.issues, [])
         finals, self.final_imports = _check_finals(
             node.body,
             self.final_imports,
