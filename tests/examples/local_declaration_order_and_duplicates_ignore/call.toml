@@ -1,0 +1,6 @@
+ignore = [
+    "REQD-DUP",
+    "REQD-ORD",
+    "REQD-VAL",
+]
+outmsg = "{line}: {rule}: {desc}"

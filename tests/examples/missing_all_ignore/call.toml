@@ -1,0 +1,4 @@
+ignore = [
+    "ALL-MIS",
+]
+outmsg = "{line}: {rule}: {desc}"

@@ -1,0 +1,5 @@
+ignore = [
+    "DEAD-NAME",
+    "REQD-MIS",
+]
+outmsg = "{line}: {rule}: {desc}"

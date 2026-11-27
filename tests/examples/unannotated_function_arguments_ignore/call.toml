@@ -1,0 +1,4 @@
+ignore = [
+    "FUNC-ARG",
+]
+outmsg = "{line}: {rule}: {desc}"

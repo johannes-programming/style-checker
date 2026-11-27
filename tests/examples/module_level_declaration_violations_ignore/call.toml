@@ -1,0 +1,5 @@
+ignore = [
+    "PLAC-BEG",
+    "REQD-MIS",
+]
+outmsg = "{line}: {rule}: {desc}"

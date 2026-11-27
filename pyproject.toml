@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "style-checker"
-version = "0.2.17"
+version = "0.2.18"
 description = "Check style."
 readme = "README.rst"
 keywords = []

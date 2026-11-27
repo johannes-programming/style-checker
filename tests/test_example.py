@@ -3,6 +3,7 @@ __all__: list[str] = ["TestExample"]
 import contextlib
 import io
 import os
+import tomllib
 import unittest
 from pathlib import Path
 from typing import Self
@@ -12,29 +13,23 @@ import style_checker
 
 class TestExample(unittest.TestCase):
     def go(self: Self, file: Path, /) -> None:
-        args: list[str]
         expected: str
         stdout: io.StringIO
-        try:
-            ignore_txt = (file.parent / "ignore.txt").read_text()
-        except FileNotFoundError:
-            ignore_txt = None
-        args = list()
-        if ignore_txt is not None:
-            if ignore_txt.endswith("\n"):
-                ignore_txt = ignore_txt[:-1]
-            for ignore in ignore_txt.split("\n"):
-                args.append(f"--ignore={ignore}")
-        args += [
-            "--outmsg={line}: {rule}: {desc}",
-            "--",
-            str(file.parent / "**" / "*.py"),
-        ]
+        calldata = tomllib.loads((file.parent / "call.toml").read_text())
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            style_checker.main(args)
+            try:
+                style_checker.run(
+                    str(file.parent / "**" / "*.py"),
+                    **calldata,
+                )
+            except ExceptionGroup as eg:
+                exception = eg
+            else:
+                exception = None
         expected = file.read_text(encoding="utf-8")
         self.assertEqual(stdout.getvalue(), expected)
+        self.assertEqual(exception is None, not expected)
 
     def test_example(self: Self, /) -> None:
         file: Path

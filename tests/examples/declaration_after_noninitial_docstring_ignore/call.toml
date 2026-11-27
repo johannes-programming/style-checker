@@ -1,0 +1,4 @@
+ignore = [
+    "DEAD-NAME",
+]
+outmsg = "{line}: {rule}: {desc}"

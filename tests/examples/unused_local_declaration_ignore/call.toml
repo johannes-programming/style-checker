@@ -1,0 +1,4 @@
+ignore = [
+    "EXEM-UN",
+]
+outmsg = "{line}: {rule}: {desc}"

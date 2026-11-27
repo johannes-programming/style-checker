@@ -1,0 +1,4 @@
+ignore = [
+    "EXEM-IMP",
+]
+outmsg = "{line}: {rule}: {desc}"

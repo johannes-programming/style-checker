@@ -1,0 +1,4 @@
+ignore = [
+    "STMT-BEG",
+]
+outmsg = "{line}: {rule}: {desc}"

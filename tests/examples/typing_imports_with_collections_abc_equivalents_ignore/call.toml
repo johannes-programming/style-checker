@@ -1,0 +1,4 @@
+ignore = [
+    "IMPT-TYPE",
+]
+outmsg = "{line}: {rule}: {desc}"

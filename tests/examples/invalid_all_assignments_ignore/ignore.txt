@@ -1,2 +1,0 @@
-ALL-DUP
-ALL-TYPE

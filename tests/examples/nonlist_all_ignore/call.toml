@@ -1,0 +1,4 @@
+ignore = [
+    "ALL-LIST",
+]
+outmsg = "{line}: {rule}: {desc}"

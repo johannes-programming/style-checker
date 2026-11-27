@@ -1,0 +1,4 @@
+ignore = [
+    "ALL-IMP",
+]
+outmsg = "{line}: {rule}: {desc}"

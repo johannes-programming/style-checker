@@ -1,0 +1,4 @@
+ignore = [
+    "FUNC-KWOR",
+]
+outmsg = "{line}: {rule}: {desc}"
