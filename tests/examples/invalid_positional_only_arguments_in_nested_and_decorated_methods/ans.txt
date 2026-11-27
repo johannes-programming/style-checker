@@ -1,14 +1,14 @@
-8: POS: first argument must be positional-only!
-12: POS: first argument must be positional-only!
-15: POS: first argument must be positional-only!
-18: POS: first argument must be positional-only!
-21: POS: first argument must be positional-only!
-25: POS: first argument must be positional-only!
-30: POS: first argument must be positional-only!
-33: POS: first argument must be positional-only!
-37: POS: first argument must be positional-only!
-40: ARG: unannotated arguments: 'self'!
-40: POS: first argument must be positional-only!
-46: POS: first argument must be positional-only!
-50: POS: first argument must be positional-only!
-57: POS: first argument must be positional-only!
+8: FUNC-POS: first argument must be positional-only!
+12: FUNC-POS: first argument must be positional-only!
+15: FUNC-POS: first argument must be positional-only!
+18: FUNC-POS: first argument must be positional-only!
+21: FUNC-POS: first argument must be positional-only!
+25: FUNC-POS: first argument must be positional-only!
+30: FUNC-POS: first argument must be positional-only!
+33: FUNC-POS: first argument must be positional-only!
+37: FUNC-POS: first argument must be positional-only!
+40: FUNC-ARG: unannotated arguments: 'self'!
+40: FUNC-POS: first argument must be positional-only!
+46: FUNC-POS: first argument must be positional-only!
+50: FUNC-POS: first argument must be positional-only!
+57: FUNC-POS: first argument must be positional-only!

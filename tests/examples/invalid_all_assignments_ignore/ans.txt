@@ -1,1 +1,1 @@
-1: ALLI: '__all__' must be assigned a list literal!
+1: ALL-LIST: '__all__' must be assigned a list literal!

@@ -1,1 +1,1 @@
-18: DEAD: dead module names: 'P', 'T', 'Ts', 'local_typevar'!
+18: DEAD-NAME: dead module names: 'P', 'T', 'Ts', 'local_typevar'!

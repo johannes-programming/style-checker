@@ -1,1 +1,1 @@
-10: DEAD: dead module names: 'f'!
+10: DEAD-NAME: dead module names: 'f'!

@@ -31,12 +31,12 @@ class TestSyntaxErrors(unittest.TestCase):
                 compile(source, str(path), "exec", dont_inherit=True)
             syntax = "{name}: {msg}!".format(
                 msg=caught.exception.msg,
-                name=type(caught.exception).__name__,
+                name="SYN-" + type(caught.exception).__name__,
             )
             expected_report = [
                 line.replace("<syntax>", syntax) for line in expected
             ]
-            rule = type(caught.exception).__name__
+            rule = "SYN-" + type(caught.exception).__name__
             self.assertEqual(
                 list(scan(str(path), "{line}: {rule}: {desc}")),
                 expected_report,
@@ -49,7 +49,7 @@ class TestSyntaxErrors(unittest.TestCase):
                 list(
                     scan(str(path), "{line}: {rule}: {desc}", ignore=["SYN"])
                 ),
-                expected_report,
+                expected_report[:-1],
             )
             violation = check_file(str(path))[-1]
             self.assertEqual(
@@ -60,9 +60,9 @@ class TestSyntaxErrors(unittest.TestCase):
     def test_module_interruption(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "2: DMIS: missing declarations: 'value'!",
-            "2: TW: trailing whitespace on physical lines!",
-            "3: TW: trailing whitespace on physical lines!",
+            "2: LINE-TW: trailing whitespace on physical lines!",
+            "2: REQD-MIS: missing declarations: 'value'!",
+            "3: LINE-TW: trailing whitespace on physical lines!",
             "4: <syntax>",
         ]
         self.check(
@@ -73,8 +73,8 @@ class TestSyntaxErrors(unittest.TestCase):
     def test_open_function(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "2: ARG: unannotated arguments: 'arg'!",
-            "4: DMIS: missing declarations: 'value'!",
+            "2: FUNC-ARG: unannotated arguments: 'arg'!",
+            "4: REQD-MIS: missing declarations: 'value'!",
             "5: <syntax>",
         ]
         self.check(
@@ -105,21 +105,24 @@ class TestSyntaxErrors(unittest.TestCase):
             "    pass\n"
             "print(1)\n"
             "broken =\n",
-            ["5: DUN: unnecessary declarations: 'unused'!", "6: <syntax>"],
+            ["5: EXEM-UN: unnecessary declarations: 'unused'!", "6: <syntax>"],
         )
 
     def test_same_physical_line(self: Self, /) -> None:
         self.check(
             "# before  \nx = 1; y = 2; broken =  \nafter = 1  \n",
-            ["1: TW: trailing whitespace on physical lines!", "2: <syntax>"],
+            [
+                "1: LINE-TW: trailing whitespace on physical lines!",
+                "2: <syntax>",
+            ],
         )
         self.check("x = 1; y = 2; broken =\n", ["1: <syntax>"])
 
     def test_incomplete_suite(self: Self, /) -> None:
         expected_lines: list[str]
         expected_lines = [
-            "3: ARG: unannotated arguments: 'self'!",
-            "3: POS: first argument must be positional-only!",
+            "3: FUNC-ARG: unannotated arguments: 'self'!",
+            "3: FUNC-POS: first argument must be positional-only!",
             "4: <syntax>",
         ]
         self.check(
@@ -137,19 +140,19 @@ class TestSyntaxErrors(unittest.TestCase):
             "    try:\n"
             "        value = 1\n"
             "        broken =\n",
-            ["4: DMIS: missing declarations: 'value'!", "5: <syntax>"],
+            ["4: REQD-MIS: missing declarations: 'value'!", "5: <syntax>"],
         )
 
     def test_unclosed_expression(self: Self, /) -> None:
         self.check(
             "__all__: list[str] = []\nvalue = 1\nbroken = (\n",
-            ["2: DMIS: missing declarations: 'value'!", "3: <syntax>"],
+            ["2: REQD-MIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_indentation_error(self: Self, /) -> None:
         self.check(
             "__all__: list[str] = []\nvalue = 1\n    broken = 2\n",
-            ["2: DMIS: missing declarations: 'value'!", "3: <syntax>"],
+            ["2: REQD-MIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_symbol_table_error(self: Self, /) -> None:
@@ -158,7 +161,7 @@ class TestSyntaxErrors(unittest.TestCase):
             "def f() -> None:\n"
             "    value = 1\n"
             "    global value\n",
-            ["3: DMIS: missing declarations: 'value'!", "4: <syntax>"],
+            ["3: REQD-MIS: missing declarations: 'value'!", "4: <syntax>"],
         )
 
     def test_error_at_eof(self: Self, /) -> None:
@@ -173,7 +176,7 @@ class TestSyntaxErrors(unittest.TestCase):
     def test_compiler_error(self: Self, /) -> None:
         self.check(
             "__all__: list[str] = []\nvalue = 1\nreturn 1  \nafter = 2  \n",
-            ["2: DMIS: missing declarations: 'value'!", "3: <syntax>"],
+            ["2: REQD-MIS: missing declarations: 'value'!", "3: <syntax>"],
         )
 
     def test_tab_error(self: Self, /) -> None:
@@ -190,7 +193,12 @@ class TestSyntaxErrors(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "example.py"
             path.write_text("    pass  \nafter = 2  \n", encoding="utf-8")
-            for rule in ("SyntaxError", "indentationerror", "SYN"):
+            for rule in (
+                "SYN-SyntaxError",
+                "SYN-indentationerror",
+                "IndentationError",
+                "syn",
+            ):
                 with self.subTest(rule=rule):
                     output = io.StringIO()
                     with contextlib.redirect_stdout(output):
@@ -206,13 +214,13 @@ class TestSyntaxErrors(unittest.TestCase):
                         )
                     self.assertEqual(
                         output.getvalue(),
-                        "IndentationError: unexpected indent!\n",
+                        "SYN-IndentationError: unexpected indent!\n",
                     )
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 self.assertEqual(
                     style_checker.main(
-                        ["--ignore=IndentationError", str(path)]
+                        ["--ignore=SYN-IndentationError", str(path)]
                     ),
                     0,
                 )
@@ -262,7 +270,7 @@ class TestSyntaxErrors(unittest.TestCase):
             self.assertEqual(actual_lines, expected_lines)
             self.assertTrue(actual[-1].startswith(f"{eof + 1}: "))
             self.assertTrue(
-                actual[-1].endswith("SyntaxError: invalid syntax!")
+                actual[-1].endswith("SYN-SyntaxError: invalid syntax!")
             )
             self.assertTrue(
                 all(
@@ -275,7 +283,7 @@ class TestSyntaxErrors(unittest.TestCase):
                     scan(
                         str(path),
                         "{line}: {rule}: {desc}",
-                        ignore=["SyntaxError"],
+                        ignore=["SYN-SyntaxError"],
                     )
                 ),
                 actual[:-1],

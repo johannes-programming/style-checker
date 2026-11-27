@@ -21,6 +21,7 @@ class TestIgnore(unittest.TestCase):
         baseline: list[str]
         directory: str
         expected: list[str]
+        family: str
         fixture: Path
         fixtures: list[Path]
         ignored: set[str]
@@ -32,11 +33,13 @@ class TestIgnore(unittest.TestCase):
         seen: set[str]
         source: str
         sources: tuple[str, ...]
-        marks = set(_Rule.__members__)
+        marks = {rule.mark for rule in _Rule}
         self.assertEqual(len(marks), len(_Rule))
         for mark in marks:
-            self.assertRegex(mark, r"^[A-Z]{2,4}$")
-        marks.update({"SyntaxError", "IndentationError", "TabError"})
+            self.assertRegex(mark, r"^[A-Z]{2,4}-[A-Z]{2,4}$")
+        marks.update(
+            {"SYN-SyntaxError", "SYN-IndentationError", "SYN-TabError"}
+        )
         seen = set()
         sources = (
             "__all__ = ()\n__all__ = []\n",
@@ -77,8 +80,29 @@ class TestIgnore(unittest.TestCase):
                             )
                         )
                         self.assertEqual(actual, expected)
+                for family in {mark.partition("-")[0] for mark in ignored}:
+                    with self.subTest(fixture=fixture, family=family):
+                        expected = [
+                            line
+                            for line in baseline
+                            if line.split(": ", 2)[1].partition("-")[0]
+                            != family
+                        ]
+                        self.assertEqual(
+                            list(
+                                scan(
+                                    str(fixture),
+                                    "{line}: {rule}: {desc}",
+                                    ignore=[family],
+                                )
+                            ),
+                            expected,
+                        )
                 self.assertEqual(
                     list(scan(str(fixture), "{desc}", ignore=marks)), []
+                )
+                self.assertEqual(
+                    list(scan(str(fixture), "{desc}", ignore=[""])), []
                 )
         self.assertEqual(seen, marks)
 
@@ -101,7 +125,7 @@ class TestIgnore(unittest.TestCase):
                 with self.assertRaises(ExceptionGroup):
                     style_checker.run(
                         *files,
-                        ignore=(mark for mark in ("TW", "DMIS")),
+                        ignore=(mark for mark in ("LINE-TW", "REQD-MIS")),
                         outmsg="{desc}",
                     )
             self.assertEqual(
@@ -112,9 +136,9 @@ class TestIgnore(unittest.TestCase):
                 self.assertEqual(
                     style_checker.main(
                         [
-                            "--ignore=TW",
-                            "--ignore=DMIS",
-                            "--ignore=DEAD",
+                            "--ignore=LINE-TW",
+                            "--ignore=REQD-MIS",
+                            "--ignore=DEAD-NAME",
                             *files,
                         ]
                     ),
@@ -123,9 +147,9 @@ class TestIgnore(unittest.TestCase):
             self.assertEqual(output.getvalue(), "")
             self.assertEqual(
                 style_checker.parse_args(
-                    ["--ignore=TW", "--ignore=DMIS"]
+                    ["--ignore=LINE-TW", "--ignore=REQD-MIS"]
                 ).ignore,
-                ["TW", "DMIS"],
+                ["LINE-TW", "REQD-MIS"],
             )
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
@@ -138,6 +162,63 @@ class TestIgnore(unittest.TestCase):
             self.assertEqual(
                 output.getvalue(),
                 "dead module names: 'x'!\n"
-                "missing declarations: 'x'!\n"
-                "trailing whitespace on physical lines!\n",
+                "trailing whitespace on physical lines!\n"
+                "missing declarations: 'x'!\n",
             )
+
+    def test_empty_ignore_outfile_and_next_file(self: Self, /) -> None:
+        directory: str
+        bad: Path
+        next_file: Path
+        outfile: Path
+        with tempfile.TemporaryDirectory() as directory:
+            bad = Path(directory) / "a.py"
+            next_file = Path(directory) / "b.py"
+            outfile = Path(directory) / "report.txt"
+            bad.write_text(
+                "# before  \nbroken =\n# after  \n", encoding="utf-8"
+            )
+            next_file.write_text(
+                "__all__: list[str] = []  \n", encoding="utf-8"
+            )
+            self.assertEqual(
+                style_checker.main(
+                    [
+                        "--ignore=SYN",
+                        f"--outfile={outfile}",
+                        "--outmsg={file}:{line}:{rule}",
+                        str(bad),
+                        str(next_file),
+                    ]
+                ),
+                1,
+            )
+            self.assertEqual(
+                outfile.read_text(encoding="utf-8"),
+                f"{bad}:1:LINE-TW\n{next_file}:1:LINE-TW\n",
+            )
+            self.assertEqual(
+                style_checker.main(
+                    [
+                        "--ignore=",
+                        "--ignore=UNKNOWN",
+                        f"--outfile={outfile}",
+                        str(bad),
+                        str(next_file),
+                    ]
+                ),
+                0,
+            )
+            self.assertEqual(outfile.read_bytes(), b"")
+            style_checker.run(
+                str(bad), str(next_file), ignore=[""], outfile=str(outfile)
+            )
+            self.assertEqual(outfile.read_bytes(), b"")
+            self.assertEqual(
+                style_checker.parse_args(["--ignore="]).ignore, [""]
+            )
+            self.assertEqual(style_checker.parse_args([]).ignore, [])
+            # Ignoring diagnostics does not skip reading/checking files.
+            with self.assertRaises(UnicodeDecodeError):
+                bad.write_bytes(b"\xff")
+                style_checker.run(str(bad), ignore=[""], outfile=str(outfile))

@@ -57,32 +57,40 @@ class FunctionViolation:
 
 
 class _Rule(Enum):
-    TW = "trailing whitespace on physical lines"
-    IND = "indentation must be four spaces per level"
-    CONT = "physical lines indented two or more levels deeper"
-    DEEP = "simple statements indented more than four levels"
-    SP = "simple statements not at beginning of physical line"
-    ALIM = "'__all__' must precede imports"
-    ALMS = "missing '__all__'"
-    ALDU = "multiple '__all__' assignments"
-    ALTY = "'__all__' must be annotated as 'list[str]'"
-    ALLI = "'__all__' must be assigned a list literal"
-    ALST = "'__all__' items must be string literals"
-    ALOR = "'__all__' items not in alphabetical order"
-    WILD = "wildcard imports are forbidden"
-    TIMP = "'typing' imports available in 'collections.abc'"
-    DEAD = "dead module names"
-    ARG = "unannotated arguments"
-    KWOR = "keyword-only arguments not in alphabetical order"
-    POS = "first argument must be positional-only"
-    DBEG = "declarations not at beginning"
-    DORD = "declarations not in alphabetical order"
-    DIMP = "declarations for 'def'/'class'/'import' names"
-    DEX = "declarations for 'except' names"
-    DDUP = "duplicate declarations"
-    DMIS = "missing declarations"
-    DUN = "unnecessary declarations"
-    DVAL = "declaration assigns a value"
+    LINE_TW = "trailing whitespace on physical lines"
+    LINE_IND = "indentation must be four spaces per level"
+    LINE_CONT = "physical lines indented two or more levels deeper"
+    LINE_DEEP = "simple statements indented more than four levels"
+    STMT_BEG = "simple statements not at beginning of physical line"
+    ALL_IMP = "'__all__' must precede imports"
+    ALL_MIS = "missing '__all__'"
+    ALL_DUP = "multiple '__all__' assignments"
+    ALL_TYPE = "'__all__' must be annotated as 'list[str]'"
+    ALL_LIST = "'__all__' must be assigned a list literal"
+    ALL_STR = "'__all__' items must be string literals"
+    ALL_ORD = "'__all__' items not in alphabetical order"
+    IMPT_WILD = "wildcard imports are forbidden"
+    IMPT_TYPE = "'typing' imports available in 'collections.abc'"
+    DEAD_NAME = "dead module names"
+    FUNC_ARG = "unannotated arguments"
+    FUNC_KWOR = "keyword-only arguments not in alphabetical order"
+    FUNC_POS = "first argument must be positional-only"
+    PLAC_BEG = "declarations not at beginning"
+    REQD_ORD = "declarations not in alphabetical order"
+    EXEM_IMP = "declarations for 'def'/'class'/'import' names"
+    EXEM_EX = "declarations for 'except' names"
+    REQD_DUP = "duplicate declarations"
+    REQD_MIS = "missing declarations"
+    EXEM_UN = "unnecessary declarations"
+    REQD_VAL = "declaration assigns a value"
+
+    @property
+    def mark(self: Self, /) -> str:
+        return self.name.replace("_", "-")
+
+
+def _is_ignored(rule: str, ignore: frozenset[str]) -> bool:
+    return "" in ignore or rule in ignore or rule.partition("-")[0] in ignore
 
 
 class _LineIssues:
@@ -99,7 +107,7 @@ class _LineIssues:
         rule: _Rule,
         detail: str = "",
     ) -> None:
-        if rule.name in self.ignore:
+        if _is_ignored(rule.mark, self.ignore):
             return
         self.by_line.setdefault(line, {}).setdefault(rule, set()).add(detail)
 
@@ -120,7 +128,7 @@ class _LineIssues:
         rules: dict[_Rule, set[str]]
         for line, rules in sorted(self.by_line.items()):
             for rule, details in sorted(
-                rules.items(), key=lambda item: item[0].name
+                rules.items(), key=lambda item: item[0].mark
             ):
                 description = rule.value
                 detail = ", ".join(sorted(details - {""}))
@@ -129,7 +137,7 @@ class _LineIssues:
                         f"{description}: {detail}" if description else detail
                     )
                 yield FunctionViolation(
-                    path, line, rule.name, f"{description}!"
+                    path, line, rule.mark, f"{description}!"
                 )
 
 
@@ -367,14 +375,14 @@ def _check_module_all(
                 if locations.tokens[i].string == "from"
             )
             line = next(indices, line)
-        issues.add(line, _Rule.ALIM)
+        issues.add(line, _Rule.ALL_IMP)
         break
     if not matches:
-        issues.add(locations.last_line, _Rule.ALMS)
+        issues.add(locations.last_line, _Rule.ALL_MIS)
         return
     _, stmt = matches[0]
     for _, repeated in matches[1:]:
-        issues.add(repeated.lineno, _Rule.ALDU)
+        issues.add(repeated.lineno, _Rule.ALL_DUP)
 
     if not (
         isinstance(stmt, ast.AnnAssign)
@@ -390,7 +398,7 @@ def _check_module_all(
             line = locations.following(stmt.targets[0], {"="})
         else:
             line = stmt.lineno
-        issues.add(line, _Rule.ALTY)
+        issues.add(line, _Rule.ALL_TYPE)
     value = (
         stmt.value if isinstance(stmt, (ast.AnnAssign, ast.Assign)) else None
     )
@@ -400,7 +408,7 @@ def _check_module_all(
             if value is not None
             else (stmt.end_lineno or stmt.lineno)
         )
-        issues.add(line, _Rule.ALLI)
+        issues.add(line, _Rule.ALL_LIST)
         return
     greatest = None
     for item in value.elts:
@@ -408,9 +416,9 @@ def _check_module_all(
         if not isinstance(item, ast.Constant) or not isinstance(
             item.value, str
         ):
-            issues.add(line, _Rule.ALST)
+            issues.add(line, _Rule.ALL_STR)
         elif greatest is not None and item.value < greatest:
-            issues.add(line, _Rule.ALOR)
+            issues.add(line, _Rule.ALL_ORD)
         else:
             greatest = item.value
 
@@ -479,9 +487,9 @@ class _FunctionBodyFacts(ast.NodeVisitor):
     def import_issues(self: Self, /, issues: _LineIssues) -> None:
         line: int
         for line in sorted(self.wildcard_imports):
-            issues.add(line, _Rule.WILD)
+            issues.add(line, _Rule.IMPT_WILD)
         issues.names(
-            _Rule.TIMP,
+            _Rule.IMPT_TYPE,
             iter(sorted(self.forbidden_typing_imports)),
         )
 
@@ -947,7 +955,7 @@ def _statement_placement_issues(
     for statement in body:
         _statement_placement_visit(statement, source_lines, line_numbers)
     for line in sorted(line_numbers):
-        issues.add(line, _Rule.SP)
+        issues.add(line, _Rule.STMT_BEG)
 
 
 def _indentation(text: str) -> int:
@@ -1127,10 +1135,10 @@ def _physical_line_issues(
             )
 
     for rule, findings in (
-        (_Rule.TW, trailing),
-        (_Rule.IND, incorrect_indentation),
-        (_Rule.CONT, deep),
-        (_Rule.DEEP, deep_start_lines),
+        (_Rule.LINE_TW, trailing),
+        (_Rule.LINE_IND, incorrect_indentation),
+        (_Rule.LINE_CONT, deep),
+        (_Rule.LINE_DEEP, deep_start_lines),
     ):
         for line in sorted(findings):
             issues.add(line, rule)
@@ -1241,7 +1249,7 @@ def _check_scope(
     _statement_placement_issues(node.body, locations.lines, issues)
     if dead_module_names:
         issues.names(
-            _Rule.DEAD,
+            _Rule.DEAD_NAME,
             ((locations.last_line, name) for name in dead_module_names),
         )
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -1250,13 +1258,13 @@ def _check_scope(
             (locations.parameter_end(arg), arg.arg)
             for arg in _unannotated_parameters(node)
         )
-        issues.names(_Rule.ARG, findings)
+        issues.names(_Rule.FUNC_ARG, findings)
         greatest = ""
         for arg in args.kwonlyargs:
             if arg.arg < greatest:
                 issues.add(
                     arg.lineno,
-                    _Rule.KWOR,
+                    _Rule.FUNC_KWOR,
                 )
             greatest = max(greatest, arg.arg)
         if node.decorator_list:
@@ -1270,7 +1278,7 @@ def _check_scope(
         if requires_positional_only and not node.args.posonlyargs:
             issues.add(
                 locations.positional_only_end(node),
-                _Rule.POS,
+                _Rule.FUNC_POS,
             )
 
     # A bare annotation later in the body is itself evidence that the
@@ -1288,7 +1296,7 @@ def _check_scope(
         if id(statement) not in declaration_nodes
         and isinstance(statement.target, ast.Name)
     )
-    issues.names(_Rule.DBEG, findings)
+    issues.names(_Rule.PLAC_BEG, findings)
     greatest = ""
     declaration_lines = {}
     for statement in leading_decls:
@@ -1296,7 +1304,7 @@ def _check_scope(
         name = statement.target.id
         line = _declaration_line(statement, locations)
         if name < greatest:
-            issues.add(line, _Rule.DORD)
+            issues.add(line, _Rule.REQD_ORD)
         greatest = max(greatest, name)
         _first_line(declaration_lines, name, line)
 
@@ -1304,12 +1312,12 @@ def _check_scope(
         (max(declaration_lines[name], facts.non_variable_lines[name]), name)
         for name in declared & facts.non_variable_bindings
     )
-    issues.names(_Rule.DIMP, findings)
+    issues.names(_Rule.EXEM_IMP, findings)
     findings = (
         (max(declaration_lines[name], facts.exception_lines[name]), name)
         for name in declared & facts.exception_bindings
     )
-    issues.names(_Rule.DEX, findings)
+    issues.names(_Rule.EXEM_EX, findings)
 
     seen = set()
     duplicates = []
@@ -1321,7 +1329,7 @@ def _check_scope(
         if name in seen:
             duplicates.append((_declaration_line(statement, locations), name))
         seen.add(name)
-    issues.names(_Rule.DDUP, iter(duplicates))
+    issues.names(_Rule.REQD_DUP, iter(duplicates))
 
     binding_lines = facts.binding_lines.copy()
     for name, line in external_assignments.items():
@@ -1330,7 +1338,7 @@ def _check_scope(
         (binding_lines[name], name)
         for name in locals_that_need_declarations - declared
     )
-    issues.names(_Rule.DMIS, findings)
+    issues.names(_Rule.REQD_MIS, findings)
     unnecessary = (
         declared
         - locals_that_need_declarations
@@ -1347,7 +1355,7 @@ def _check_scope(
         else:
             line = scope_end
         unnecessary_lines.append((line, name))
-    issues.names(_Rule.DUN, iter(unnecessary_lines))
+    issues.names(_Rule.EXEM_UN, iter(unnecessary_lines))
 
     # Explicitly reject annotation-with-assignment anywhere in the function
     # body when its target is a simple local name.
@@ -1358,7 +1366,7 @@ def _check_scope(
         and statement.value is not None
         and statement.target.id not in exempt
     )
-    issues.names(_Rule.DVAL, findings)
+    issues.names(_Rule.REQD_VAL, findings)
 
 
 def _external_assignments(
@@ -1673,7 +1681,7 @@ def _check_prefix(
     # Whitespace on physical lines is independent of AST recovery.
     for line, text in enumerate(lines[: stop - 1], 1):
         if text.rstrip("\n") != text.rstrip():
-            issues.add(line, _Rule.TW)
+            issues.add(line, _Rule.LINE_TW)
     return issues
 
 
@@ -1701,8 +1709,8 @@ def check_file(
     except SyntaxError as exc:
         issues = _check_prefix(path, source, exc, ignored)
         violations = list(issues.violations(path))
-        rule = type(exc).__name__
-        if rule not in ignored:
+        rule = "SYN-" + type(exc).__name__
+        if not _is_ignored(rule, ignored):
             violations.append(
                 FunctionViolation(path, exc.lineno or 1, rule, exc.msg + "!")
             )

@@ -1,2 +1,2 @@
-3: DBEG: declarations not at beginning: 'alpha'!
-4: DMIS: missing declarations: 'alpha'!
+3: PLAC-BEG: declarations not at beginning: 'alpha'!
+4: REQD-MIS: missing declarations: 'alpha'!

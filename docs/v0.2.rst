@@ -12,11 +12,11 @@ They concern variables bound through ordinary assignment syntax; names that
 are exempt from these rules are described below. Comments can be placed
 anywhere, but the trailing-whitespace rule applies to them too.
 
-Physical Statement Placement
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Physical Statement Placement (``STMT``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``SP``
-^^^^^^
+``STMT-BEG``
+^^^^^^^^^^^^
 
 Every decorator, compound-statement header and simple statement must start on
 a physical line with only whitespace to its left. Python syntax already
@@ -24,32 +24,32 @@ enforces this for decorators and compound-statement headers. In particular,
 multiple simple statements on one physical line and simple statements on the
 same physical line as a compound-statement header are forbidden.
 
-Physical Line Whitespace and Indentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Physical Line Whitespace and Indentation (``LINE``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``TW``
-^^^^^^
+``LINE-TW``
+^^^^^^^^^^^
 
 No physical line may end with whitespace other than its line break. This also
 applies to blank lines, comments, multiline strings and the final line of a
 file without a line break.
 
-``IND``
-^^^^^^^
+``LINE-IND``
+^^^^^^^^^^^^
 
 Block indentation must consist of exactly four spaces per nesting level
 (``"    "``). Tabs and other whitespace are not allowed for block indentation.
 Blank lines, comment-only lines and continuation lines do not determine block
 indentation.
 
-``DEEP``
-^^^^^^^^
+``LINE-DEEP``
+^^^^^^^^^^^^^
 
 Each simple statement must start at no more than four indentation levels
 deep, counted from the module level (level zero).
 
-``CONT``
-^^^^^^^^
+``LINE-CONT``
+^^^^^^^^^^^^^
 
 For each simple statement, compound-statement header and decorator separately,
 no physical line used by it may start two or more indentation levels deeper
@@ -61,37 +61,37 @@ other rules are checked. Blank and comment-only lines are not used by a
 statement, header or decorator unless they occur within a multiline string.
 The body of a compound statement is not part of its header.
 
-Required Variable Declarations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Required Variable Declarations (``REQD``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``DMIS``
-^^^^^^^^
+``REQD-MIS``
+^^^^^^^^^^^^
 
 Every variable assigned in a module's namespace must have a type annotation,
 subject to the exemptions described below. A declaration is required whenever
 the variable is subject to these rules.
 
-``DVAL``
-^^^^^^^^
+``REQD-VAL``
+^^^^^^^^^^^^
 
 A declaration must not assign a value (for example, ``count: int``, not
 ``count: int = 0``).
 
-``DORD``
-^^^^^^^^
+``REQD-ORD``
+^^^^^^^^^^^^
 
 Declarations must be listed in alphabetical order by variable name.
 
-``DDUP``
-^^^^^^^^
+``REQD-DUP``
+^^^^^^^^^^^^
 
 Each required declaration must occur exactly once.
 
-Names Exempt from Declarations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Names Exempt from Declarations (``EXEM``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``DIMP``
-^^^^^^^^
+``EXEM-IMP``
+^^^^^^^^^^^^
 
 The declaration requirement does not apply to:
 
@@ -101,15 +101,15 @@ The declaration requirement does not apply to:
 
 These names must not have separate declarations.
 
-``DEX``
-^^^^^^^
+``EXEM-EX``
+^^^^^^^^^^^
 
 Temporary exception names introduced by ``except ... as ...``, which remain
 bound only for the duration of the exception handler, must not have separate
 declarations.
 
-``DUN``
-^^^^^^^
+``EXEM-UN``
+^^^^^^^^^^^
 
 A declaration for a variable that does not require one is an error.
 The declaration requirement does not apply to:
@@ -118,11 +118,11 @@ The declaration requirement does not apply to:
 * Each ``TypeVar`` and every similar construct, which is exempt from type
     annotation.
 
-Declaration Placement
-~~~~~~~~~~~~~~~~~~~~~
+Declaration Placement (``PLAC``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``DBEG``
-^^^^^^^^
+``PLAC-BEG``
+^^^^^^^^^^^^
 
 A declaration must appear before the variable is used and in the declaration
 block at the beginning of the scope.
@@ -137,69 +137,69 @@ Only the following may precede that block:
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
-The ``__all__`` Variable
-~~~~~~~~~~~~~~~~~~~~~~~~
+The ``__all__`` Variable (``ALL``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The module-level ``__all__`` variable is exempt from the general declaration
 rules and must instead satisfy all of the following requirements.
 
-``ALMS``
-^^^^^^^^
+``ALL-MIS``
+^^^^^^^^^^^
 
 Every module must define ``__all__``, even if it is an empty list.
 
-``ALTY``
-^^^^^^^^
+``ALL-TYPE``
+^^^^^^^^^^^^
 
 ``__all__`` must be annotated as ``list[str]``.
 
-``ALLI``
-^^^^^^^^
+``ALL-LIST``
+^^^^^^^^^^^^
 
 ``__all__`` must be assigned a list literal.
 
-``ALST``
-^^^^^^^^
+``ALL-STR``
+^^^^^^^^^^^
 
 The elements of ``__all__`` must be string literals.
 
-``ALOR``
-^^^^^^^^
+``ALL-ORD``
+^^^^^^^^^^^
 
 The elements of ``__all__`` must be in alphabetical order.
 
-``ALIM``
-^^^^^^^^
+``ALL-IMP``
+^^^^^^^^^^^
 
 The definition of ``__all__`` must precede all imports except
 ``from __future__`` imports.
 
-``ALDU``
-^^^^^^^^
+``ALL-DUP``
+^^^^^^^^^^^
 
 ``__all__`` must be defined only once.
 
-Function Scopes and Parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Function Scopes and Parameters (``FUNC``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The general declaration rules also apply to variables in every ``def`` and
 ``async def`` body. The special rules for ``__all__`` apply only at module level.
 
-``ARG``
-^^^^^^^
+``FUNC-ARG``
+^^^^^^^^^^^^
 
 Every function parameter must have a type annotation, regardless of parameter kind.
 This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
 
-``KWOR``
-^^^^^^^^
+``FUNC-KWOR``
+^^^^^^^^^^^^^
 
 The single keyword-only parameters should be alphabetically ordered.
 
-``POS``
-^^^^^^^
+``FUNC-POS``
+^^^^^^^^^^^^
 
 An undecorated ``def`` or ``async def`` statement must have a positional-only
 first parameter if its nearest enclosing ``class``, ``def`` or ``async def``
@@ -231,15 +231,17 @@ Omitting the ``/`` in ``method`` or ``build`` would violate the rule.
 Explicit Namespace Assignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This section describes an exemption, not a reportable rule family.
+
 These rules do not restrict assignments performed explicitly through namespace
 dictionaries or dictionary-like objects using string keys, such as
 ``globals()["name"] = value``.
 
-Dead Module-Level Names
-~~~~~~~~~~~~~~~~~~~~~~~
+Dead Module-Level Names (``DEAD``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``DEAD``
-^^^^^^^^
+``DEAD-NAME``
+^^^^^^^^^^^^^
 
 An import, assigned variable, function, or class defined in the module scope
 (including module-level control-flow blocks) is an error if its name is neither
@@ -254,19 +256,27 @@ lookups (such as ``globals()[name]``). It intentionally treats ``__all__`` as
 the sole declaration of a public export, even though Python permits importing
 other names explicitly.
 
-Imports
-~~~~~~~
+Imports (``IMPT``)
+~~~~~~~~~~~~~~~~~~
 
-``WILD``
-^^^^^^^^
+``IMPT-WILD``
+^^^^^^^^^^^^^
 
 Wildcard imports (using ``*``) are forbidden.
 
-``TIMP``
-^^^^^^^^
+``IMPT-TYPE``
+^^^^^^^^^^^^^
 
 Importing annotations from ``typing`` that also exist in ``collections.abc``
 (e.g. ``Iterable``) is forbidden.
+
+Syntax Errors (``SYN``)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Syntax errors and their subclasses use their full exception class name as
+the personal name: ``SYN-SyntaxError``, ``SYN-IndentationError``, and
+``SYN-TabError``. The checker stops checking the file at the syntax-error
+line, even if that diagnostic is ignored.
 
 Example
 ~~~~~~~
@@ -336,14 +346,25 @@ e.g. ``**/*.py``.
 ``exclude`` is an iterable you can supply.
 It excludes from the analysis files otherwise covered by ``include``.
 
-``ignore`` is an iterable of case-sensitive rule marks or syntax exception
-class names. Ignored issues are
-omitted from the report. If all issues on a line are ignored, that line is
-not reported. Unknown marks have no effect. On the command line, repeat
-``--ignore=MARK`` for each rule to ignore, for example::
+``ignore`` is an iterable of case-sensitive rule marks or family names.
+Style rule marks consist of a family and personal name, each containing two
+to four uppercase ASCII letters, separated by a dash. Syntax-error marks
+use the full exception class name after ``SYN-`` instead.
+Ignored issues are omitted from the report. A family name suppresses all
+rules in that family; an empty string suppresses every diagnostic, including
+syntax errors. Unknown marks have no effect. With no ignore arguments, all
+findings are reported. On the command line, repeat ``--ignore=MARK`` to
+combine filters, for example::
 
-    python -m style_checker --ignore=TW --ignore=DMIS example.py
-    python -m style_checker --ignore=SyntaxError --ignore=IndentationError --ignore=TabError example.py
+    python -m style_checker --ignore=LINE-TW --ignore=REQD-MIS example.py
+    python -m style_checker --ignore=LINE --ignore=SYN example.py
+    python -m style_checker --ignore=SYN-IndentationError example.py
+    python -m style_checker --ignore= example.py
+
+The corresponding API call for suppressing all diagnostics is
+``run("example.py", ignore=[""])``. An empty iterable (the default) does not
+suppress anything. Files are still checked, and file-reading errors are not
+suppressed.
 
 ``outmsg`` controls the format of **each diagnostic line**.
 It defaults to ``"{file}:{line}:{rule}: {desc}"``.
@@ -365,12 +386,12 @@ identifying duplicate file arguments. These guarantees also apply to custom
 ``outmsg`` formats, even when a format omits the distinguishing fields.
 The checker also reports module-level violations (including invalid or missing
 ``__all__``) and syntax errors. For a syntax error, ``{rule}`` is
-``type(err).__name__`` (for example, ``SyntaxError``, ``IndentationError``
-or ``TabError``), and ``{desc}`` is ``err.msg + "!"``. Only style issues
+``"SYN-" + type(err).__name__`` (for example, ``SYN-SyntaxError``,
+``SYN-IndentationError`` or ``SYN-TabError``), and ``{desc}`` is ``err.msg + "!"``. Only style issues
 on physical lines strictly before the reported syntax-error line can be
 reported for that file, even when the syntax error itself is ignored.
-Ignoring a syntax exception class name matches that exact name, not its
-subclasses. File-reading failures are propagated as exceptions.
+Ignoring a full syntax rule mark matches that exact class, not its
+subclasses. Ignoring ``SYN`` matches the entire family. File-reading failures are propagated as exceptions.
 
 If any non-ignored diagnostics were produced then ``run`` raises an
 ``ExceptionGroup``.

@@ -1,1 +1,1 @@
-15: DEAD: dead module names: 'outer'!
+15: DEAD-NAME: dead module names: 'outer'!

@@ -1,2 +1,2 @@
-5: DEAD: dead module names: 'unused_declaration'!
-5: DUN: unnecessary declarations: 'leftover'!
+5: DEAD-NAME: dead module names: 'unused_declaration'!
+5: EXEM-UN: unnecessary declarations: 'leftover'!

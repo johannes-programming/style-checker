@@ -35,10 +35,10 @@ class TestReport(unittest.TestCase):
             for file in (str(early), relative):
                 expected.extend(
                     [
-                        f"{file}:2:DMIS: missing declarations: 'x'!",
-                        f"{file}:2:TW: trailing whitespace on physical lines!",
-                        f"{file}:10:DEAD: dead module names: 'x'!",
-                        f"{file}:10:TW: trailing whitespace on physical lines!",
+                        f"{file}:2:LINE-TW: trailing whitespace on physical lines!",
+                        f"{file}:2:REQD-MIS: missing declarations: 'x'!",
+                        f"{file}:10:DEAD-NAME: dead module names: 'x'!",
+                        f"{file}:10:LINE-TW: trailing whitespace on physical lines!",
                     ]
                 )
             output = io.StringIO()
@@ -63,7 +63,7 @@ class TestReport(unittest.TestCase):
                 )
             self.assertEqual(
                 output.getvalue().splitlines(),
-                ["DMIS/2", "TW/2", "DEAD/10", "TW/10"] * 2,
+                ["LINE-TW/2", "REQD-MIS/2", "DEAD-NAME/10", "LINE-TW/10"] * 2,
             )
 
     def test_same_rule_across_scopes(self: Self, /) -> None:
@@ -87,7 +87,7 @@ class TestReport(unittest.TestCase):
                 [
                     (
                         7,
-                        "DUN",
+                        "EXEM-UN",
                         "unnecessary declarations: 'apple', 'shared', 'zebra'!",
                     )
                 ],

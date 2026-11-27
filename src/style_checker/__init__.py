@@ -102,9 +102,7 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
         "--ignore",
         action="append",
         default=[],
-        help=(
-            "ignore a rule mark or syntax exception class name (repeatable)"
-        ),
+        help=("ignore a rule or family; empty mark ignores all (repeatable)"),
         metavar="mark",
     )
     parser.add_argument(

@@ -1,2 +1,2 @@
-8: DEAD: dead module names: 'Example'!
-8: TIMP: 'typing' imports available in 'collections.abc': 'Iterator'!
+8: DEAD-NAME: dead module names: 'Example'!
+8: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Iterator'!

@@ -1,1 +1,1 @@
-6: DEAD: dead module names: 'example'!
+6: DEAD-NAME: dead module names: 'example'!

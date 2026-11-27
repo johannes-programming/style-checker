@@ -1,2 +1,2 @@
-1: ALIM: '__all__' must precede imports!
-3: ALST: '__all__' items must be string literals!
+1: ALL-IMP: '__all__' must precede imports!
+3: ALL-STR: '__all__' items must be string literals!

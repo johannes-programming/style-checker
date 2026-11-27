@@ -1,1 +1,1 @@
-6: DEAD: dead module names: 'Mapping', 'TypeVar', 'Values'!
+6: DEAD-NAME: dead module names: 'Mapping', 'TypeVar', 'Values'!

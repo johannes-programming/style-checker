@@ -1,1 +1,1 @@
-3: ALST: '__all__' items must be string literals!
+3: ALL-STR: '__all__' items must be string literals!

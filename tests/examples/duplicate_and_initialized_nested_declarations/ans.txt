@@ -1,4 +1,4 @@
-9: DBEG: declarations not at beginning: 'beta'!
-9: DDUP: duplicate declarations: 'beta'!
-11: DVAL: declaration assigns a value: 'beta'!
-13: DEAD: dead module names: 'nested_annotations'!
+9: PLAC-BEG: declarations not at beginning: 'beta'!
+9: REQD-DUP: duplicate declarations: 'beta'!
+11: REQD-VAL: declaration assigns a value: 'beta'!
+13: DEAD-NAME: dead module names: 'nested_annotations'!

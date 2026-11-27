@@ -1,1 +1,1 @@
-40: ARG: unannotated arguments: 'self'!
+40: FUNC-ARG: unannotated arguments: 'self'!

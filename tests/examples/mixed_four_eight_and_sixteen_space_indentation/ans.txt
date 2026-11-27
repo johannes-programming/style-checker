@@ -1,6 +1,6 @@
-3: CONT: physical lines indented two or more levels deeper!
-6: CONT: physical lines indented two or more levels deeper!
-11: IND: indentation must be four spaces per level!
-12: CONT: physical lines indented two or more levels deeper!
-14: IND: indentation must be four spaces per level!
-17: CONT: physical lines indented two or more levels deeper!
+3: LINE-CONT: physical lines indented two or more levels deeper!
+6: LINE-CONT: physical lines indented two or more levels deeper!
+11: LINE-IND: indentation must be four spaces per level!
+12: LINE-CONT: physical lines indented two or more levels deeper!
+14: LINE-IND: indentation must be four spaces per level!
+17: LINE-CONT: physical lines indented two or more levels deeper!

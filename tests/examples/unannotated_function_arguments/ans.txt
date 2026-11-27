@@ -1,8 +1,8 @@
-4: ARG: unannotated arguments: 'value'!
-8: ARG: unannotated arguments: 'value'!
-12: ARG: unannotated arguments: 'values'!
-16: ARG: unannotated arguments: 'value'!
-20: ARG: unannotated arguments: 'values'!
-25: ARG: unannotated arguments: 'self'!
-29: ARG: unannotated arguments: 'value'!
-41: DEAD: dead module names: 'Example', 'all_annotated', 'asynchronous', 'keyword_only', 'keyword_variadic', 'positional_only', 'positional_or_keyword', 'variadic'!
+4: FUNC-ARG: unannotated arguments: 'value'!
+8: FUNC-ARG: unannotated arguments: 'value'!
+12: FUNC-ARG: unannotated arguments: 'values'!
+16: FUNC-ARG: unannotated arguments: 'value'!
+20: FUNC-ARG: unannotated arguments: 'values'!
+25: FUNC-ARG: unannotated arguments: 'self'!
+29: FUNC-ARG: unannotated arguments: 'value'!
+41: DEAD-NAME: dead module names: 'Example', 'all_annotated', 'asynchronous', 'keyword_only', 'keyword_variadic', 'positional_only', 'positional_or_keyword', 'variadic'!

@@ -1,2 +1,2 @@
-1: SP: simple statements not at beginning of physical line!
-4: SP: simple statements not at beginning of physical line!
+1: STMT-BEG: simple statements not at beginning of physical line!
+4: STMT-BEG: simple statements not at beginning of physical line!

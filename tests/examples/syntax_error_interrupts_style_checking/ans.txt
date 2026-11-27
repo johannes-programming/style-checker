@@ -1,2 +1,2 @@
-2: DMIS: missing declarations: 'value'!
-4: SyntaxError: invalid syntax!
+2: REQD-MIS: missing declarations: 'value'!
+4: SYN-SyntaxError: invalid syntax!

@@ -1,1 +1,1 @@
-11: DEAD: dead module names: 'Path', 'Unused', 'count', 'math', 'spare'!
+11: DEAD-NAME: dead module names: 'Path', 'Unused', 'count', 'math', 'spare'!

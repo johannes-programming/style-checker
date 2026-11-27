@@ -1,6 +1,6 @@
-10: DORD: declarations not in alphabetical order!
-11: DORD: declarations not in alphabetical order!
-12: DDUP: duplicate declarations: 'duplicate'!
-12: DORD: declarations not in alphabetical order!
-18: DVAL: declaration assigns a value: 'initialized'!
-24: DEAD: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!
+10: REQD-ORD: declarations not in alphabetical order!
+11: REQD-ORD: declarations not in alphabetical order!
+12: REQD-DUP: duplicate declarations: 'duplicate'!
+12: REQD-ORD: declarations not in alphabetical order!
+18: REQD-VAL: declaration assigns a value: 'initialized'!
+24: DEAD-NAME: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!

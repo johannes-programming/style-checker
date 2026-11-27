@@ -1,5 +1,5 @@
-8: DEEP: simple statements indented more than four levels!
-10: DEEP: simple statements indented more than four levels!
-18: DEEP: simple statements indented more than four levels!
-24: DEEP: simple statements indented more than four levels!
-31: DEEP: simple statements indented more than four levels!
+8: LINE-DEEP: simple statements indented more than four levels!
+10: LINE-DEEP: simple statements indented more than four levels!
+18: LINE-DEEP: simple statements indented more than four levels!
+24: LINE-DEEP: simple statements indented more than four levels!
+31: LINE-DEEP: simple statements indented more than four levels!

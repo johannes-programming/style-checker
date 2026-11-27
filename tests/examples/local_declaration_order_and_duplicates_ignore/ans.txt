@@ -1,3 +1,3 @@
-14: DMIS: missing declarations: 'wrong'!
-16: DMIS: missing declarations: 'missing'!
-26: DEAD: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!
+14: REQD-MIS: missing declarations: 'wrong'!
+16: REQD-MIS: missing declarations: 'missing'!
+26: DEAD-NAME: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!
