@@ -100,10 +100,11 @@ class TestReport(unittest.TestCase):
                 self.assertRaises(ExceptionGroup),
             ):
                 style_checker.run(str(path))
+            expected = [
+                f"{path}:1:LINE-TW: trailing whitespace on physical lines!",
+                f"{path}:2:SYN-SyntaxError: invalid syntax!",
+            ]
             self.assertEqual(
                 output.getvalue().splitlines(),
-                [
-                    f"{path}:1:LINE-TW: trailing whitespace on physical lines!",
-                    f"{path}:2:SYN-SyntaxError: invalid syntax!",
-                ],
+                expected,
             )
