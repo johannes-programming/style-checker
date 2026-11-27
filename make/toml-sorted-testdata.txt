@@ -1,3 +1,3 @@
 --sort
 --
-tests/testdata.toml
+tests/examples/**/*.toml
