@@ -13,6 +13,8 @@ At module level and inside every ``def`` or ``async def``:
     within the block in function scopes);
 * declarations must not assign a value;
 * declaration names must be in alphabetical order;
+* ``Final`` annotations are initialized in place, outside the declaration
+    block and at the indentation level of their namespace (also in classes);
 * every function parameter must have a type annotation;
 * undecorated methods and functions directly decorated by ``@classmethod``
     must have a positional-only first parameter.
@@ -76,6 +78,8 @@ class _Rule(Enum):
     FUNC_KWOR = "keyword-only arguments not in alphabetical order"
     FUNC_POS = "first argument must be positional-only"
     PLAC_BEG = "declarations not at beginning"
+    FIN_PLAC = "Final annotations not at namespace indentation level"
+    FIN_VAL = "Final annotation has no assignment"
     REQD_ORD = "declarations not in alphabetical order"
     EXEM_IMP = "declarations for 'def'/'class'/'import' names"
     EXEM_EX = "declarations for 'except' names"
@@ -444,6 +448,20 @@ class _FunctionAnnotations(ast.NodeVisitor):
 
     def __init__(self: Self, /) -> None:
         self.annotations: list[ast.AnnAssign] = []
+        self.final_imports: set[str] = set()
+
+    def visit_Import(self: Self, /, node: ast.Import) -> None:
+        alias: ast.alias
+        for alias in node.names:
+            if alias.name in {"typing", "typing_extensions"}:
+                self.final_imports.add((alias.asname or alias.name) + ".Final")
+
+    def visit_ImportFrom(self: Self, /, node: ast.ImportFrom) -> None:
+        alias: ast.alias
+        if node.level == 0 and node.module in {"typing", "typing_extensions"}:
+            for alias in node.names:
+                if alias.name == "Final":
+                    self.final_imports.add(alias.asname or alias.name)
 
     def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
         self.annotations.append(node)
@@ -463,14 +481,30 @@ class _FunctionAnnotations(ast.NodeVisitor):
         return
 
 
-def _function_annotations(body: list[ast.stmt]) -> list[ast.AnnAssign]:
+def _collect_annotations(body: list[ast.stmt]) -> _FunctionAnnotations:
     collector: _FunctionAnnotations
     statement: ast.stmt
 
     collector = _FunctionAnnotations()
     for statement in body:
         collector.visit(statement)
-    return collector.annotations
+    return collector
+
+
+def _function_annotations(body: list[ast.stmt]) -> list[ast.AnnAssign]:
+    return _collect_annotations(body).annotations
+
+
+def _is_final_annotation(annotation: ast.expr, imports: set[str]) -> bool:
+    if isinstance(annotation, ast.Subscript):
+        annotation = annotation.value
+    if isinstance(annotation, ast.Name):
+        return annotation.id in imports
+    return (
+        isinstance(annotation, ast.Attribute)
+        and isinstance(annotation.value, ast.Name)
+        and f"{annotation.value.id}.{annotation.attr}" in imports
+    )
 
 
 class _FunctionBodyFacts(ast.NodeVisitor):
@@ -1188,9 +1222,45 @@ def _declaration_line(
     return locations.following(statement.target, {":"})
 
 
+def _check_finals(
+    body: list[ast.stmt],
+    inherited_imports: set[str],
+    locations: _SourceLocations,
+    issues: _LineIssues,
+    is_module: bool = False,
+) -> tuple[set[int], set[str]]:
+    collector: _FunctionAnnotations
+    direct: set[int]
+    finals: set[int]
+    imports: set[str]
+    line: int
+    statement: ast.AnnAssign
+    collector = _collect_annotations(body)
+    imports = inherited_imports | collector.final_imports
+    direct = {id(stmt) for stmt in body}
+    finals = set()
+    for statement in collector.annotations:
+        if (
+            is_module
+            and id(statement) in direct
+            and _is_module_all_statement(statement)
+        ):
+            continue
+        if not _is_final_annotation(statement.annotation, imports):
+            continue
+        finals.add(id(statement))
+        line = _declaration_line(statement, locations)
+        if id(statement) not in direct:
+            issues.add(line, _Rule.FIN_PLAC)
+        if statement.value is None:
+            issues.add(line, _Rule.FIN_VAL)
+    return finals, imports
+
+
 def _check_scope(
     node: ast.Module | ast.FunctionDef | ast.AsyncFunctionDef,
     external_assignments: dict[str, int],
+    finals: set[int],
     locations: _SourceLocations,
     issues: _LineIssues,
     dead_module_names: list[str] | None = None,
@@ -1210,6 +1280,7 @@ def _check_scope(
     duplicates: list[tuple[int, str]]
     exempt: set[str]
     facts: _FunctionBodyFacts
+    final_names: set[str]
     findings: Iterator[tuple[int, str]]
     greatest: str
     index: int
@@ -1245,9 +1316,16 @@ def _check_scope(
 
     leading_decls = []
     index = start
-    while index < len(ordering_body) and (
-        _is_bare_name_declaration(ordering_body[index])
-        or (not is_module and isinstance(ordering_body[index], ast.ClassDef))
+    while (
+        index < len(ordering_body)
+        and id(ordering_body[index]) not in finals
+        and (
+            _is_bare_name_declaration(ordering_body[index])
+            or (
+                not is_module
+                and isinstance(ordering_body[index], ast.ClassDef)
+            )
+        )
     ):
         if _is_bare_name_declaration(ordering_body[index]):
             leading_decls.append(ordering_body[index])  # type: ignore[arg-type]
@@ -1257,6 +1335,14 @@ def _check_scope(
     declaration_names = [decl.target.id for decl in leading_decls]  # type: ignore[union-attr]
     declared = set(declaration_names)
     annotations = _function_annotations(body)
+    final_names = {
+        statement.target.id
+        for statement in annotations
+        if id(statement) in finals
+        and isinstance(statement.target, ast.Name)
+        and statement.simple
+    }
+    annotations = [stmt for stmt in annotations if id(stmt) not in finals]
 
     facts = _collect_body_facts(body, declaration_nodes, locations)
     if isinstance(node, ast.Module):
@@ -1278,6 +1364,7 @@ def _check_scope(
         (facts.bound | external_assignments.keys())
         - exempt
         - facts.typevar_bindings
+        - final_names
     )
 
     if isinstance(node, ast.Module):
@@ -1493,8 +1580,17 @@ class _FunctionChecker(ast.NodeVisitor):
         self.issues = _LineIssues(ignore)
         self.external_assignments: dict[int, dict[str, int]] = {}
         self.in_class: bool = False
+        self.final_imports: set[str] = set()
 
     def visit_Module(self: Self, /, node: ast.Module) -> None:
+        finals: set[int]
+        finals, self.final_imports = _check_finals(
+            node.body,
+            self.final_imports,
+            self.locations,
+            self.issues,
+            is_module=True,
+        )
         self.external_assignments = _external_assignments(node, self.locations)
         _physical_line_issues(
             node, self.source, self.issues, self.locations.prefix_end
@@ -1502,6 +1598,7 @@ class _FunctionChecker(ast.NodeVisitor):
         _check_scope(
             node,
             self.external_assignments.get(id(node), {}),
+            finals,
             self.locations,
             self.issues,
             None
@@ -1515,11 +1612,18 @@ class _FunctionChecker(ast.NodeVisitor):
         /,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
     ) -> None:
+        final_imports: set[str]
+        finals: set[int]
         in_class: bool
         statement: ast.stmt
+        final_imports = self.final_imports
+        finals, self.final_imports = _check_finals(
+            node.body, final_imports, self.locations, self.issues
+        )
         _check_scope(
             node,
             self.external_assignments.get(id(node), {}),
+            finals,
             self.locations,
             self.issues,
             in_class=self.in_class,
@@ -1531,6 +1635,7 @@ class _FunctionChecker(ast.NodeVisitor):
         for statement in node.body:
             self.visit(statement)
         self.in_class = in_class
+        self.final_imports = final_imports
 
     def visit_FunctionDef(self: Self, /, node: ast.FunctionDef) -> None:
         self._visit_function(node)
@@ -1542,6 +1647,10 @@ class _FunctionChecker(ast.NodeVisitor):
 
     def visit_ClassDef(self: Self, /, node: ast.ClassDef) -> None:
         in_class: bool
+        # Class-local imports are visible in the class body, not its methods.
+        _check_finals(
+            node.body, self.final_imports, self.locations, self.issues
+        )
         _collect_body_facts(node.body, set(), self.locations).import_issues(
             self.issues
         )

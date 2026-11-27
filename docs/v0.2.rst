@@ -8,6 +8,7 @@ Style Guide
 -----------
 
 The following rules govern declarations in module and function namespaces.
+The rules for ``Final`` annotations also apply in class namespaces.
 They concern variables bound through ordinary assignment syntax; names that
 are exempt from these rules are described below. Comments can be placed
 anywhere, but the trailing-whitespace rule applies to them too.
@@ -69,13 +70,15 @@ Required Variable Declarations (``REQD``)
 
 Every variable assigned in a module's namespace must have a type annotation,
 subject to the exemptions described below. A declaration is required whenever
-the variable is subject to these rules.
+the variable is subject to these rules. A variable annotated with ``Final``
+requires no separate declaration.
 
 ``REQD-VAL``
 ^^^^^^^^^^^^
 
 A declaration must not assign a value (for example, ``count: int``, not
-``count: int = 0``).
+``count: int = 0``). An annotation with ``Final`` is not a declaration
+and follows the separate rules below.
 
 ``REQD-ORD``
 ^^^^^^^^^^^^
@@ -127,7 +130,7 @@ Declaration Placement (``PLAC``)
 A declaration must appear before the variable is used and in the declaration
 block at the beginning of the scope.
 
-The annotations of a namespace should form one block at the beginning of the
+The declarations of a namespace should form one block at the beginning of the
 module or function body. Within a function body, class definitions may be
 intermixed with the declarations in that initial block.
 Only the following may precede that block:
@@ -136,6 +139,50 @@ Only the following may precede that block:
     statement in its scope.
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
+
+Final Annotations (``FIN``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An annotation with ``Final`` or ``Final[T]`` is not a declaration. It must
+not be included in the declaration block and need not be alphabetically
+ordered. The earliest permitted position is immediately after the declaration
+block (if any), but it may also appear later in the namespace.
+
+The checker recognizes ``Final`` imported from ``typing`` or
+``typing_extensions``, including qualified forms and import aliases in the
+applicable or an enclosing module or function namespace. This is static
+recognition of imports, not general type or name resolution.
+
+``FIN-VAL``
+^^^^^^^^^^^
+
+A ``Final`` annotation must assign a value in the same statement, for
+example, ``limit: Final[int] = 10`` or ``limit: Final = 10``.
+
+``FIN-PLAC``
+^^^^^^^^^^^^
+
+A ``Final`` annotation must be a direct statement in its module, function,
+async function or class body. It must not appear inside a suite that does not
+introduce a separate namespace, such as an ``if``, ``for``, ``while``,
+``try``, ``with`` or ``match`` suite (including their alternative suites).
+A function or class defined inside such a suite introduces its own namespace.
+
+For example:
+
+.. code-block:: python
+
+    __all__: list[str] = ["calculate"]
+
+    from typing import Final
+
+    def calculate(value: int) -> int:
+        result: int
+        scale: Final = 2
+        offset: Final[int] = 1
+        result = value * scale
+        adjustment: Final = result + offset
+        return adjustment
 
 The ``__all__`` Variable (``ALL``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

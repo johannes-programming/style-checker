@@ -1,0 +1,4 @@
+6: REQD-MIS: missing declarations: 'value'!
+6: REQD-VAL: declaration assigns a value: 'value'!
+10: REQD-MIS: missing declarations: 'other'!
+10: REQD-VAL: declaration assigns a value: 'other'!

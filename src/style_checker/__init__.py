@@ -12,6 +12,8 @@ At module level and inside every ``def`` or ``async def``:
     body (an optional docstring and interleaved classes are permitted);
 * declarations must not assign a value;
 * declaration names must be in alphabetical order;
+* ``Final`` annotations are initialized in place at namespace indentation,
+    after the declaration block or later, and are not declarations;
 * the first non-declaration occurrence of each local variable must be a binding
     occurrence, not a read;
 * every function parameter must have a type annotation.

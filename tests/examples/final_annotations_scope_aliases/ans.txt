@@ -1,0 +1,4 @@
+18: REQD-MIS: missing declarations: 'local'!
+18: REQD-VAL: declaration assigns a value: 'local'!
+24: REQD-MIS: missing declarations: 'value'!
+24: REQD-VAL: declaration assigns a value: 'value'!
