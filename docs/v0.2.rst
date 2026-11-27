@@ -370,12 +370,14 @@ e.g. ``**/*.py``.
 ``exclude`` is an iterable you can supply.
 It excludes from the analysis files otherwise covered by ``include``.
 
-``ignore`` is an iterable of case-sensitive rule marks. Ignored issues are
+``ignore`` is an iterable of case-sensitive rule marks or syntax exception
+class names. Ignored issues are
 omitted from the report. If all issues on a line are ignored, that line is
 not reported. Unknown marks have no effect. On the command line, repeat
 ``--ignore=MARK`` for each rule to ignore, for example::
 
     python -m style_checker --ignore=TW --ignore=DMIS example.py
+    python -m style_checker --ignore=SyntaxError --ignore=IndentationError --ignore=TabError example.py
 
 ``outmsg`` controls the format of **each diagnostic line**.
 It defaults to ``"{file}:{line}:{rule}: {desc}"``.
@@ -396,8 +398,13 @@ original spelling in the output; absolute paths are used for ordering and
 identifying duplicate file arguments. These guarantees also apply to custom
 ``outmsg`` formats, even when a format omits the distinguishing fields.
 The checker also reports module-level violations (including invalid or missing
-``__all__``) and syntax errors. File-reading failures are propagated as
-exceptions.
+``__all__``) and syntax errors. For a syntax error, ``{rule}`` is
+``type(err).__name__`` (for example, ``SyntaxError``, ``IndentationError``
+or ``TabError``), and ``{desc}`` is ``err.msg + "!"``. Only style issues
+on physical lines strictly before the reported syntax-error line can be
+reported for that file, even when the syntax error itself is ignored.
+Ignoring a syntax exception class name matches that exact name, not its
+subclasses. File-reading failures are propagated as exceptions.
 
 If any non-ignored diagnostics were produced then ``run`` raises an
 ``ExceptionGroup``.

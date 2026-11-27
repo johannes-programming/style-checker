@@ -36,6 +36,7 @@ class TestIgnore(unittest.TestCase):
         self.assertEqual(len(marks), len(_Rule))
         for mark in marks:
             self.assertRegex(mark, r"^[A-Z]{2,4}$")
+        marks.update({"SyntaxError", "IndentationError", "TabError"})
         seen = set()
         sources = (
             "__all__ = ()\n__all__ = []\n",

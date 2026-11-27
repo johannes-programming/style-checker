@@ -1,1 +1,1 @@
-2: SYN: SyntaxError: invalid syntax!
+2: SyntaxError: invalid syntax!

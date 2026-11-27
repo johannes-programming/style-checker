@@ -83,7 +83,6 @@ class _Rule(Enum):
     DMIS = "missing declarations"
     DUN = "unnecessary declarations"
     DVAL = "declaration assigns a value"
-    SYN = ""
 
 
 class _LineIssues:
@@ -1603,7 +1602,7 @@ def _next_real_token(
 def _check_prefix(
     path: str, source: str, error: SyntaxError, ignore: frozenset[str]
 ) -> _LineIssues:
-    """Check completed statements before the parser's reported error."""
+    """Recover prefix findings strictly before the syntax-error line."""
     before: str
     boundaries: list[tuple[int, int]]
     checker: _FunctionChecker
@@ -1666,7 +1665,7 @@ def _check_prefix(
         checker.visit(tree)
         issues = checker.issues
         issues.by_line = {
-            n: messages for n, messages in issues.by_line.items() if n <= stop
+            n: messages for n, messages in issues.by_line.items() if n < stop
         }
         break
     else:
@@ -1684,21 +1683,30 @@ def check_file(
     checker: _FunctionChecker
     ignored: frozenset[str]
     issues: _LineIssues
+    rule: str
     source: str
     tree: ast.Module
+    violations: list[FunctionViolation]
 
     ignored = frozenset(ignore)
     source = Path(path).read_text(encoding="utf-8")
     try:
         tree = ast.parse(source, filename=path)
+        # Parsing alone does not reject every syntax error (e.g. return
+        # outside a function). Validate without executing the source.
+        compile(tree, path, "exec", dont_inherit=True)
         checker = _FunctionChecker(path, source, ignored)
         checker.visit(tree)
         issues = checker.issues
     except SyntaxError as exc:
         issues = _check_prefix(path, source, exc, ignored)
-        issues.add(
-            exc.lineno or 1, _Rule.SYN, f"{type(exc).__name__}: {exc.msg}"
-        )
+        violations = list(issues.violations(path))
+        rule = type(exc).__name__
+        if rule not in ignored:
+            violations.append(
+                FunctionViolation(path, exc.lineno or 1, rule, exc.msg + "!")
+            )
+        return violations
     return list(issues.violations(path))
 
 

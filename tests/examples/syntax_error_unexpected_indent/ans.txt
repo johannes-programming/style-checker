@@ -1,1 +1,1 @@
-2: SYN: IndentationError: unexpected indent!
+2: IndentationError: unexpected indent!
