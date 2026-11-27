@@ -395,8 +395,8 @@ This function is the CLI-rendering of ``run``.
 ``style_checker.parse_args(args: Iterable[str] | None = None) -> Namespace``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``style_checker.run(*include: str, exclude: Iterable[str] = (), ignore: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}:{rule}: {desc}!") -> None``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``style_checker.run(*include: str, exclude: Iterable[str] = (), ignore: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}:{rule}: {desc}!\n") -> None``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``run`` checks Python source files and prints a diagnostic report.
 
@@ -431,8 +431,8 @@ The corresponding API call for suppressing all diagnostics is
 suppress anything. Files are still checked, and file-reading errors are not
 suppressed.
 
-``outmsg`` controls the format of **each diagnostic line**.
-It defaults to ``"{file}:{line}:{rule}: {desc}!"``.
+``outmsg`` controls the format of **each diagnostic message**.
+It defaults to ``"{file}:{line}:{rule}: {desc}!\n"``.
 The supported substitution fields are:
 
 - ``{file}``: the filename containing the violation;
@@ -444,10 +444,21 @@ The supported substitution fields are:
 Every style-rule description uses the word ``should``. Syntax-error
 descriptions instead retain the original Python exception message.
 
-The default format supplies the final exclamation mark. Custom formats can
-omit it, replace it or place it elsewhere.
+The default format supplies both the final exclamation mark and newline.
+Custom formats can omit, replace or move either of them. No separator is
+added automatically. For example::
 
-The checker produces **exactly one report line per distinct combination of
+    run("example.py", outmsg="{rule}\n\n")
+    run("example.py", outmsg="{rule}; ")
+    run("example.py", outmsg="{rule}")
+
+The same applies to ``--outmsg`` on the command line: pass an actual newline
+if needed (for example, in Bash, ``--outmsg=$'{rule}\n'``). A literal
+backslash followed by ``n`` is not converted into a newline by the checker.
+Each exception in the raised ``ExceptionGroup`` contains the formatted
+message, including any separator supplied by ``outmsg``.
+
+The checker produces **exactly one report message per distinct combination of
 file, physical line, and rule**. Repeated findings for the same combination
 are consolidated, with distinct affected names listed in alphabetical order.
 The report is ordered by ``os.path.abspath(file)``, then by numeric line

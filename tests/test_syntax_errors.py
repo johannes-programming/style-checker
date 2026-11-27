@@ -46,7 +46,7 @@ class TestSyntaxErrors(unittest.TestCase):
         output: io.StringIO
         with self.subTest(rule=rule):
             output = io.StringIO()
-            args = [f"--ignore={rule}", "--outmsg={rule}: {desc}", str(path)]
+            args = [f"--ignore={rule}", "--outmsg={rule}: {desc}\n", str(path)]
             with contextlib.redirect_stdout(output):
                 exit_status = style_checker.main(args)
                 self.assertEqual(exit_status, 1)

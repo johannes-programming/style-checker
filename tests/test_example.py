@@ -87,13 +87,7 @@ class TestExample(unittest.TestCase):
             else:
                 exception = None
             self.assertEqual(exception is None, not ans)
-            if stdout.getvalue() == "":
-                self.assertListEqual(ans, [])
-                return
-            self.assertListEqual(
-                ans + [""],
-                stdout.getvalue().split("\n"),
-            )
+            self.assertEqual(ans, stdout.getvalue())
 
     def test_example(self: Self, /) -> None:
         # This is the example runner itself: it discovers all fixtures

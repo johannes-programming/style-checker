@@ -3,4 +3,4 @@ ignore = [
     "IMPT-TYPE",
     "DEAD-NAME",
 ]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"

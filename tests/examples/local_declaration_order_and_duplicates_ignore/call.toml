@@ -3,4 +3,4 @@ ignore = [
     "ANNO-SORT",
     "ANNO-BARE",
 ]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"

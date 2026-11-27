@@ -43,7 +43,7 @@ class TestIgnore(unittest.TestCase):
                 style_checker.run(
                     *files,
                     ignore=(mark for mark in ("LINE-TW", "ANNO-MIS")),
-                    outmsg="{desc}",
+                    outmsg="{desc}\n",
                 )
             self.assertEqual(
                 output.getvalue(),
@@ -65,7 +65,7 @@ class TestIgnore(unittest.TestCase):
             parsed_ignore = style_checker.parse_args(args).ignore
             self.assertEqual(parsed_ignore, ["LINE-TW", "ANNO-MIS"])
             output = io.StringIO()
-            args = ["--ignore=UNKNOWN", "--outmsg={desc}", files[0]]
+            args = ["--ignore=UNKNOWN", "--outmsg={desc}\n", files[0]]
             with contextlib.redirect_stdout(output):
                 self.assertEqual(style_checker.main(args), 1)
             self.assertEqual(
@@ -97,7 +97,7 @@ class TestIgnore(unittest.TestCase):
             args = [
                 "--ignore=SYN",
                 f"--outfile={outfile}",
-                "--outmsg={file}:{line}:{rule}",
+                "--outmsg={file}:{line}:{rule}\n",
                 str(bad),
                 str(next_file),
             ]

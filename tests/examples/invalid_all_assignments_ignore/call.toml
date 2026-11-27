@@ -2,4 +2,4 @@ ignore = [
     "ALL-DUP",
     "ANNO-ALL",
 ]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"

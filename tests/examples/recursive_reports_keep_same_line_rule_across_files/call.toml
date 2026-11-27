@@ -1,2 +1,2 @@
 ignore = []
-outmsg = "{rule}"
+outmsg = "{rule}\n"

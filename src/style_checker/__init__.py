@@ -25,7 +25,7 @@ local-variable declarations.
 Nested functions/classes are checked independently and their bodies are not
 treated as part of the enclosing function.
 
-Each distinct file, physical line, and rule produces one report line.
+Each distinct file, physical line, and rule produces one report message.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ from style_checker import _declarations
 
 ERRMSG_DEFAULT: str
 
-ERRMSG_DEFAULT = "{file}:{line}:{rule}: {desc}!"
+ERRMSG_DEFAULT = "{file}:{line}:{rule}: {desc}!\n"
 
 
 def get_files(
@@ -117,7 +117,7 @@ def parse_args(args: abc.Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--outmsg",
         default=ERRMSG_DEFAULT,
-        help="format each message",
+        help="format each message, including its separator",
     )
     version = "%(prog)s, version " + metadata.version("style-checker")
     parser.add_argument(
@@ -169,7 +169,7 @@ def run(
             for line in _declarations.scan(
                 file, errmsg=outmsg, ignore=ignored
             ):
-                print(line, file=stream)
+                stream.write(line)
                 exceptions.append(Exception(line))
     if exceptions:
         raise ExceptionGroup(

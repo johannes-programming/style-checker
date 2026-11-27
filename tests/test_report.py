@@ -45,25 +45,25 @@ class TestReport(unittest.TestCase):
                 "10:LINE-TW: physical lines should not end with trailing whitespace!",
             ]
             for file in (str(early), relative):
-                expected.extend(f"{file}:{message}" for message in messages)
+                expected.extend(f"{file}:{message}\n" for message in messages)
             output = io.StringIO()
             with (
                 contextlib.redirect_stdout(output),
                 self.assertRaises(ExceptionGroup) as caught,
             ):
                 style_checker.run(str(late), str(early), relative)
-            self.assertEqual(output.getvalue().splitlines(), expected)
+            self.assertEqual(output.getvalue(), "".join(expected))
             self.assertEqual(
                 [str(exc) for exc in caught.exception.exceptions], expected
             )
             self.assertEqual(
                 style_checker.parse_args([]).outmsg,
-                "{file}:{line}:{rule}: {desc}!",
+                "{file}:{line}:{rule}: {desc}!\n",
             )
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 exit_status = style_checker.main(
-                    ["--outmsg={rule}/{line}", relative, str(early)]
+                    ["--outmsg={rule}/{line}\n", relative, str(early)]
                 )
                 self.assertEqual(exit_status, 1)
             self.assertEqual(
@@ -81,16 +81,16 @@ class TestReport(unittest.TestCase):
             path = Path(directory) / "example.py"
             path.write_text("# before  \nbroken =\n", encoding="utf-8")
             expected = [
-                "!LINE-TW: physical lines should not end with trailing whitespace.",
-                "!SYN-SyntaxError: invalid syntax.",
+                "!LINE-TW: physical lines should not end with trailing whitespace.\n",
+                "!SYN-SyntaxError: invalid syntax.\n",
             ]
             output = io.StringIO()
             with (
                 contextlib.redirect_stdout(output),
                 self.assertRaises(ExceptionGroup) as caught,
             ):
-                style_checker.run(str(path), outmsg="!{rule}: {desc}.")
-            self.assertEqual(output.getvalue().splitlines(), expected)
+                style_checker.run(str(path), outmsg="!{rule}: {desc}.\n")
+            self.assertEqual(output.getvalue(), "".join(expected))
             self.assertEqual(
                 [str(exc) for exc in caught.exception.exceptions], expected
             )
@@ -101,10 +101,83 @@ class TestReport(unittest.TestCase):
             ):
                 style_checker.run(str(path))
             expected = [
-                f"{path}:1:LINE-TW: physical lines should not end with trailing whitespace!",
-                f"{path}:2:SYN-SyntaxError: invalid syntax!",
+                f"{path}:1:LINE-TW: physical lines should not end with trailing whitespace!\n",
+                f"{path}:2:SYN-SyntaxError: invalid syntax!\n",
             ]
             self.assertEqual(
-                output.getvalue().splitlines(),
-                expected,
+                output.getvalue(),
+                "".join(expected),
             )
+
+    def test_custom_separators(self: Self, /) -> None:
+        directory: str
+        with tempfile.TemporaryDirectory() as directory:
+            self.temp_custom_separators(directory=directory)
+
+    def temp_custom_separators(self: Self, /, *, directory: str) -> None:
+        args: list[str]
+        caught: Any
+        expected: list[str]
+        outfile: Path
+        outmsg: str
+        output: io.StringIO
+        path: Path
+        separator: str
+        path = Path(directory) / "example.py"
+        outfile = Path(directory) / "report.txt"
+        path.write_text("# before  \nbroken =\n", encoding="utf-8")
+        for separator in ("", "; ", "\n\n", "\r\n", "\\n"):
+            with self.subTest(separator=separator):
+                outmsg = "{rule}" + separator
+                expected = [
+                    rule + separator for rule in ("LINE-TW", "SYN-SyntaxError")
+                ]
+                self.go_custom_separators(
+                    expected=expected,
+                    outmsg=outmsg,
+                    path=path,
+                )
+                args = [
+                    f"--outmsg={outmsg}",
+                    f"--outfile={outfile}",
+                    str(path),
+                ]
+                self.assertEqual(
+                    style_checker.main(args),
+                    1,
+                )
+                self.assertEqual(
+                    outfile.read_bytes(), "".join(expected).encode()
+                )
+        # Suppressing the message text does not suppress the violation.
+        output = io.StringIO()
+        with (
+            contextlib.redirect_stdout(output),
+            self.assertRaises(ExceptionGroup) as caught,
+        ):
+            style_checker.run(str(path), outmsg="")
+        self.assertEqual(output.getvalue(), "")
+        self.assertEqual(
+            [str(exc) for exc in caught.exception.exceptions], ["", ""]
+        )
+
+    def go_custom_separators(
+        self: Self,
+        /,
+        expected: list[str],
+        outmsg: str,
+        path: Path,
+    ) -> None:
+        caught: Any
+        output: io.StringIO
+        output = io.StringIO()
+        with (
+            contextlib.redirect_stdout(output),
+            self.assertRaises(ExceptionGroup) as caught,
+        ):
+            style_checker.run(str(path), outmsg=outmsg)
+        self.assertEqual(output.getvalue(), "".join(expected))
+        self.assertEqual(
+            [str(exc) for exc in caught.exception.exceptions],
+            expected,
+        )

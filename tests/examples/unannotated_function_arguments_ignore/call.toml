@@ -1,4 +1,4 @@
 ignore = [
     "ANNO-PARA",
 ]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"

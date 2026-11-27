@@ -1,304 +1,215 @@
 [whitespace_all_physical_line_types]
-ans = [
-    "1: LINE-TW: physical lines should not end with trailing whitespace!",
-    "2: LINE-TW: physical lines should not end with trailing whitespace!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "5: LINE-TW: physical lines should not end with trailing whitespace!",
-    "6: LINE-TW: physical lines should not end with trailing whitespace!",
-    "9: LINE-NL: nonempty files should end with a linebreak!",
-    "9: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "1: LINE-TW: physical lines should not end with trailing whitespace!\n2: LINE-TW: physical lines should not end with trailing whitespace!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n5: LINE-TW: physical lines should not end with trailing whitespace!\n6: LINE-TW: physical lines should not end with trailing whitespace!\n9: LINE-NL: nonempty files should end with a linebreak!\n9: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_all_physical_line_types.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_all_physical_line_types.code]
 "example.py" = "__all__: list[str] = [\"f\"]  \r\n# comment	\r\n 	\r\ndef f() -> None:\r\n    print(\"hello \") \r\n    print(\"\"\"first  \r\n    second\r\n    \"\"\")\r\n# final comment "
 
 [whitespace_class_and_decorator]
-ans = [
-    "2: LINE-TW: physical lines should not end with trailing whitespace!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "4: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "2: LINE-TW: physical lines should not end with trailing whitespace!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n4: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_class_and_decorator.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_class_and_decorator.code]
 "example.py" = "__all__: list[str] = [\"C\"]\n@(lambda cls: cls) \nclass C: \n    pass	\n"
 
 [whitespace_empty_and_whitespace_only_files]
-ans = [
-    "1: ALL-MIS: modules should define '__all__'!",
-]
+ans = "1: ALL-MIS: modules should define '__all__'!\n"
 
 [whitespace_empty_and_whitespace_only_files.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_empty_and_whitespace_only_files.code]
 "example.py" = ""
 
 [whitespace_empty_and_whitespace_only_files_2]
-ans = [
-    "1: ALL-MIS: modules should define '__all__'!",
-    "1: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "1: ALL-MIS: modules should define '__all__'!\n1: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_empty_and_whitespace_only_files_2.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_empty_and_whitespace_only_files_2.code]
 "example.py" = "\n"
 
 [whitespace_empty_and_whitespace_only_files_3]
-ans = [
-    "1: ALL-MIS: modules should define '__all__'!",
-    "1: LINE-BL: files should not end with whitespace-only lines!",
-    "1: LINE-NL: nonempty files should end with a linebreak!",
-    "1: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "1: ALL-MIS: modules should define '__all__'!\n1: LINE-BL: files should not end with whitespace-only lines!\n1: LINE-NL: nonempty files should end with a linebreak!\n1: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_empty_and_whitespace_only_files_3.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_empty_and_whitespace_only_files_3.code]
 "example.py" = " 	"
 
 [whitespace_eof_violations_use_last_physical_line]
-ans = [
-    "3: ALL-MIS: modules should define '__all__'!",
-    "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
-    "3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "3: LINE-NL: nonempty files should end with a linebreak!",
-]
+ans = "3: ALL-MIS: modules should define '__all__'!\n3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n3: LINE-NL: nonempty files should end with a linebreak!\n"
 
 [whitespace_eof_violations_use_last_physical_line.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_eof_violations_use_last_physical_line.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass"
 
 [whitespace_eof_violations_use_last_physical_line_2]
-ans = [
-    "3: ALL-MIS: modules should define '__all__'!",
-    "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
-    "3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-]
+ans = "3: ALL-MIS: modules should define '__all__'!\n3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n"
 
 [whitespace_eof_violations_use_last_physical_line_2.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_eof_violations_use_last_physical_line_2.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n"
 
 [whitespace_eof_violations_use_last_physical_line_3]
-ans = [
-    "4: ALL-MIS: modules should define '__all__'!",
-    "4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
-    "4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "4: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "4: ALL-MIS: modules should define '__all__'!\n4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n4: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_eof_violations_use_last_physical_line_3.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_eof_violations_use_last_physical_line_3.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n\n"
 
 [whitespace_eof_violations_use_last_physical_line_4]
-ans = [
-    "4: ALL-MIS: modules should define '__all__'!",
-    "4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
-    "4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "4: LINE-NL: nonempty files should end with a linebreak!",
-]
+ans = "4: ALL-MIS: modules should define '__all__'!\n4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n4: LINE-NL: nonempty files should end with a linebreak!\n"
 
 [whitespace_eof_violations_use_last_physical_line_4.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_eof_violations_use_last_physical_line_4.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment"
 
 [whitespace_eof_violations_use_last_physical_line_5]
-ans = [
-    "5: ALL-MIS: modules should define '__all__'!",
-    "5: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
-    "5: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "5: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "5: ALL-MIS: modules should define '__all__'!\n5: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n5: DEAD-NAME: module names should be used or listed in '__all__': 'f'!\n5: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_eof_violations_use_last_physical_line_5.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_eof_violations_use_last_physical_line_5.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment\n\n"
 
 [whitespace_eof_violations_use_last_physical_line_6]
-ans = [
-    "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
-    "3: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!\n3: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_eof_violations_use_last_physical_line_6.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_eof_violations_use_last_physical_line_6.code]
 "example.py" = "__all__: list[str] = []\nunused: int\n\n"
 
 [whitespace_interior_blank_lines]
-ans = [
-    "4: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "4: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_interior_blank_lines.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_interior_blank_lines.code]
 "example.py" = "\n__all__: list[str] = []\n\n 	\n\n# last\n"
 
 [whitespace_line_breaks_and_eof]
-ans = []
+ans = ""
 
 [whitespace_line_breaks_and_eof.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_line_breaks_and_eof.code]
 "example.py" = "__all__: list[str] = []\n"
 
 [whitespace_line_breaks_and_eof_2]
-ans = []
+ans = ""
 
 [whitespace_line_breaks_and_eof_2.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_line_breaks_and_eof_2.code]
 "example.py" = "__all__: list[str] = []\r\n"
 
 [whitespace_line_breaks_and_eof_3]
-ans = []
+ans = ""
 
 [whitespace_line_breaks_and_eof_3.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_line_breaks_and_eof_3.code]
 "example.py" = "__all__: list[str] = []\r"
 
 [whitespace_line_breaks_and_eof_4]
-ans = [
-    "1: LINE-NL: nonempty files should end with a linebreak!",
-]
+ans = "1: LINE-NL: nonempty files should end with a linebreak!\n"
 
 [whitespace_line_breaks_and_eof_4.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_line_breaks_and_eof_4.code]
 "example.py" = "__all__: list[str] = []"
 
 [whitespace_line_breaks_and_eof_5]
-ans = [
-    "1: LINE-NL: nonempty files should end with a linebreak!",
-    "1: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "1: LINE-NL: nonempty files should end with a linebreak!\n1: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_line_breaks_and_eof_5.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_line_breaks_and_eof_5.code]
 "example.py" = "__all__: list[str] = []	"
 
 [whitespace_multiple_rules_and_scopes_on_one_line]
-ans = [
-    "3: ANNO-PARA: function parameters should have type annotations: 'self'!",
-    "3: ANNO-RET: functions should have return type annotations!",
-    "3: FUNC-POS: the first argument should be positional-only!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "3: STMT-BEG: simple statements should start at the beginning of a physical line!",
-]
+ans = "3: ANNO-PARA: function parameters should have type annotations: 'self'!\n3: ANNO-RET: functions should have return type annotations!\n3: FUNC-POS: the first argument should be positional-only!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n3: STMT-BEG: simple statements should start at the beginning of a physical line!\n"
 
 [whitespace_multiple_rules_and_scopes_on_one_line.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_multiple_rules_and_scopes_on_one_line.code]
 "example.py" = "__all__: list[str] = [\"C\"]\nclass C:\n    def f(self): pass  \n"
 
 [whitespace_trailing_blank_lines]
-ans = [
-    "2: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "4: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "2: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n4: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_trailing_blank_lines.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_trailing_blank_lines.code]
 "example.py" = "__all__: list[str] = []\n\n 	\f\n\n"
 
 [whitespace_trailing_blank_lines_2]
-ans = [
-    "2: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "4: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "2: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n4: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_trailing_blank_lines_2.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_trailing_blank_lines_2.code]
 "example.py" = "__all__: list[str] = []\r\n\r\n 	\f\r\n\r\n"
 
 [whitespace_trailing_blank_lines_3]
-ans = [
-    "2: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "4: LINE-BL: files should not end with whitespace-only lines!",
-]
+ans = "2: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n4: LINE-BL: files should not end with whitespace-only lines!\n"
 
 [whitespace_trailing_blank_lines_3.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_trailing_blank_lines_3.code]
 "example.py" = "__all__: list[str] = []\r\r 	\f\r\r"
 
 [whitespace_trailing_blank_lines_4]
-ans = [
-    "2: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-BL: files should not end with whitespace-only lines!",
-    "3: LINE-NL: nonempty files should end with a linebreak!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "2: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-BL: files should not end with whitespace-only lines!\n3: LINE-NL: nonempty files should end with a linebreak!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_trailing_blank_lines_4.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_trailing_blank_lines_4.code]
 "example.py" = "__all__: list[str] = []\n\n 	"
 
 [whitespace_trailing_whitespace_and_deep_indentation]
-ans = [
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "4: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "3: LINE-TW: physical lines should not end with trailing whitespace!\n4: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_trailing_whitespace_and_deep_indentation.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_trailing_whitespace_and_deep_indentation.code]
 "example.py" = "__all__: list[str] = []\nprint(\n        1  \n)  \n"
 
 [whitespace_trailing_whitespace_and_deep_indentation_2]
-ans = [
-    "3: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!",
-    "3: LINE-TW: physical lines should not end with trailing whitespace!",
-    "4: LINE-TW: physical lines should not end with trailing whitespace!",
-]
+ans = "3: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!\n3: LINE-TW: physical lines should not end with trailing whitespace!\n4: LINE-TW: physical lines should not end with trailing whitespace!\n"
 
 [whitespace_trailing_whitespace_and_deep_indentation_2.call]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
 
 [whitespace_trailing_whitespace_and_deep_indentation_2.code]
 "example.py" = "__all__: list[str] = []\nprint(\n        1  \n)  \nif True:\n    pass\n"

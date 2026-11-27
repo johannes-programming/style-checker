@@ -5,4 +5,4 @@ ignore = [
     "ANNO-MIS",
     "ANNO-MIS",
 ]
-outmsg = "{line}: {rule}: {desc}!"
+outmsg = "{line}: {rule}: {desc}!\n"
