@@ -51,6 +51,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Self
 
+_MODERN_TYPING_ALIASES: dict[str, str]
+
 
 @dataclass(frozen=True)
 class FunctionViolation:
@@ -86,6 +88,7 @@ class _Rule(Enum):
     SYM_SEMI = "semicolons should not be used"
     TYPE_UPDT = "annotations should use modern alternatives to typing aliases"
     TYPE_NONE = "None should be the last member of a union annotation"
+    TYPE_BRKT = "annotations should not contain unnecessary parentheses"
     ALL_DEAD = "unused module names should be listed in '__all__'"
     TYPE_PARA = "function parameters should have type annotations"
     TYPE_RET = "functions should have return type annotations"
@@ -159,7 +162,10 @@ class _SourceLocations:
     """Locate evidence in physical source order rather than AST walk order."""
 
     def __init__(self: Self, /, source: str) -> None:
+        i: int
         ignored: set[int]
+        stack: list[int]
+        token: tokenize.TokenInfo
         self.lines = source.encode("utf-8").split(b"\n")
         self.last_line = max(1, len(self.lines) - source.endswith("\n"))
         ignored = {
@@ -176,6 +182,15 @@ class _SourceLocations:
             if token.type not in ignored
         ]
         self.positions = [token.start for token in self.tokens]
+        self.parentheses: dict[int, int] = {}
+        stack = []
+        for i, token in enumerate(self.tokens):
+            if token.type != tokenize.OP:
+                continue
+            if token.string == "(":
+                stack.append(i)
+            elif token.string == ")" and stack:
+                self.parentheses[stack.pop()] = i
         self.prefix_end: int | None = None
         self.next_token: tokenize.TokenInfo | None = None
 
@@ -1736,7 +1751,7 @@ def _external_assignments_visit(
 
 
 # Fixed Python 3.11 baseline, independent of the interpreter running the checker.
-_MODERN_TYPING_ALIASES: dict[str, str] = {
+_MODERN_TYPING_ALIASES = {
     "AbstractSet": "collections.abc.Set",
     "AsyncContextManager": "contextlib.AbstractAsyncContextManager",
     "AsyncGenerator": "collections.abc.AsyncGenerator",
@@ -1802,20 +1817,12 @@ class _AnnotationBindings(_FunctionBodyFacts):
 
     def visit_ImportFrom(self: Self, /, node: ast.ImportFrom) -> None:
         alias: ast.alias
+        wildcard_imports: dict[str, str]
         super().visit_ImportFrom(node)
         if node.level == 0 and node.module == "__future__":
             return
         for alias in node.names:
-            if alias.name == "*":
-                if node.level == 0 and node.module == "typing":
-                    self.imports.update(
-                        {
-                            name: "typing." + name
-                            for name in _MODERN_TYPING_ALIASES.keys()
-                            | {"Annotated", "Literal"}
-                        }
-                    )
-            else:
+            if alias.name != "*":
                 self.imports[alias.asname or alias.name] = (
                     node.module + "." + alias.name
                     if node.level == 0
@@ -1824,6 +1831,15 @@ class _AnnotationBindings(_FunctionBodyFacts):
                     in {"typing", "typing.re", "typing_extensions"}
                     else None
                 )
+                continue
+            if node.level != 0 or node.module != "typing":
+                continue
+            wildcard_imports = {
+                name: "typing." + name
+                for name in _MODERN_TYPING_ALIASES.keys()
+                | {"Annotated", "Literal"}
+            }
+            self.imports.update(wildcard_imports)
 
     def environment(
         self: Self, /, inherited: dict[str, str | None], parameters: set[str]
@@ -1832,15 +1848,13 @@ class _AnnotationBindings(_FunctionBodyFacts):
         shadowed: set[str]
         result = inherited | self.imports
         shadowed = (
-            (
-                self.bound
-                | self.exception_bindings
-                | parameters
-                | (self.non_variable_bindings - self.imports.keys())
-            )
-            - self.globals
-            - self.nonlocals
+            self.bound
+            | self.exception_bindings
+            | parameters
+            | (self.non_variable_bindings - self.imports.keys())
         )
+        shadowed -= self.globals
+        shadowed -= self.nonlocals
         result.update(dict.fromkeys(shadowed))
         return result
 
@@ -1856,8 +1870,11 @@ def _union_members(node: ast.expr) -> Iterator[ast.expr]:
 class _ModernAnnotations(ast.NodeVisitor):
     """Check type expressions, not imports or ordinary runtime expressions."""
 
-    def __init__(self: Self, /, issues: _LineIssues) -> None:
+    def __init__(
+        self: Self, /, issues: _LineIssues, locations: _SourceLocations
+    ) -> None:
         self.issues = issues
+        self.locations = locations
         self.environment: dict[str, str | None] = {}
         self.enclosing: dict[str, str | None] = {}
 
@@ -1871,14 +1888,180 @@ class _ModernAnnotations(ast.NodeVisitor):
                 return parent + "." + node.attr
         return None
 
+    def _normalize_unions(self: Self, /, node: ast.expr) -> ast.expr:
+        """Compare type unions associatively, but not runtime value operations."""
+        member: ast.expr
+        members: Iterator[ast.expr]
+        name: str | None
+        result: ast.expr
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            members = iter(_union_members(node))
+            result = self._normalize_unions(next(members))
+            for member in members:
+                result = ast.BinOp(
+                    left=result,
+                    op=ast.BitOr(),
+                    right=self._normalize_unions(member),
+                )
+            return result
+        if not isinstance(node, ast.Subscript):
+            if isinstance(node, (ast.Tuple, ast.List)):
+                node.elts = [
+                    self._normalize_unions(item) for item in node.elts
+                ]
+            return node
+        node.value = self._normalize_unions(node.value)
+        name = self._reference(node.value)
+        if name in {"typing.Literal", "typing_extensions.Literal"}:
+            return node
+        if name in {
+            "typing.Annotated",
+            "typing_extensions.Annotated",
+        } and isinstance(node.slice, ast.Tuple):
+            if node.slice.elts:
+                node.slice.elts[0] = self._normalize_unions(node.slice.elts[0])
+            return node
+        node.slice = self._normalize_unions(node.slice)
+        return node
+
+    def _bracket_module(
+        self: Self, /, text: str, context: str
+    ) -> ast.Module | None:
+        """Parse and normalize a non-quoted annotation in its own context."""
+        arg: ast.arg
+        module: ast.Module
+        prefix: str
+        statement: ast.stmt
+        suffix: str
+        prefix, suffix = {
+            "variable": ("_x: ", "\n"),
+            "parameter": ("def _f(_x: ", "): pass\n"),
+            "return": ("def _f() -> ", ": pass\n"),
+        }[context]
+        module = ast.parse(prefix + text + suffix)
+        if len(module.body) != 1:
+            return None
+        statement = module.body[0]
+        if isinstance(statement, ast.AnnAssign):
+            statement.annotation = self._normalize_unions(statement.annotation)
+            return module
+        if not isinstance(statement, ast.FunctionDef):
+            return module
+        if context == "parameter":
+            arg = statement.args.args[0]
+            if arg.annotation is None:
+                return None
+            arg.annotation = self._normalize_unions(arg.annotation)
+        elif statement.returns is not None:
+            statement.returns = self._normalize_unions(statement.returns)
+        return module
+
+    def _bracket_signature(
+        self: Self, /, text: str, context: str
+    ) -> str | None:
+        """Parse in the original grammatical context, retaining its shape."""
+        expression: ast.Expression
+        tree: ast.AST | None
+        try:
+            if context == "quoted":
+                expression = ast.parse(text.lstrip(" \t"), mode="eval")
+                expression.body = self._normalize_unions(expression.body)
+                tree = expression
+            else:
+                tree = self._bracket_module(text, context)
+            if tree is None:
+                return None
+            return ast.dump(tree)
+        except (SyntaxError, ValueError, RecursionError, IndexError):
+            return None
+
+    def _check_brackets(
+        self: Self,
+        /,
+        node: ast.expr,
+        context: str,
+        locations: _SourceLocations,
+        quoted_line: int | None = None,
+    ) -> None:
+        """Remove each grouping pair experimentally and compare parse trees."""
+        a: int
+        b: int
+        candidate: str
+        closing: tuple[int, int]
+        end: tuple[int, int]
+        first: int
+        last: int
+        left: int
+        line: str
+        lines: list[str]
+        offsets: list[int]
+        opening: tuple[int, int]
+        original: str | None
+        pairs: list[tuple[int, int]]
+        physical_line: bytes
+        right: int
+        start: tuple[int, int]
+        text: str
+        if _is_ignored(_Rule.TYPE_BRKT.mark, self.issues.ignore):
+            return
+        assert node.end_lineno is not None and node.end_col_offset is not None
+        physical_line = locations.lines[node.lineno - 1][: node.col_offset]
+        start = (node.lineno, len(physical_line.decode("utf-8")))
+        physical_line = locations.lines[node.end_lineno - 1][
+            : node.end_col_offset
+        ]
+        end = (node.end_lineno, len(physical_line.decode("utf-8")))
+        first = bisect_left(locations.positions, start)
+        last = bisect_left(locations.positions, end)
+        # AST expression spans omit grouping parentheses around the root.
+        while first > 0 and locations.parentheses.get(first - 1) == last:
+            first -= 1
+            last += 1
+        if first >= last:
+            return
+        pairs = [
+            (i, locations.parentheses[i])
+            for i in range(first, last)
+            if i in locations.parentheses and locations.parentheses[i] < last
+        ]
+        if not pairs:
+            return
+        start = locations.tokens[first].start
+        end = locations.tokens[last - 1].end
+        lines = [
+            line.decode("utf-8")
+            for line in locations.lines[start[0] - 1 : end[0]]
+        ]
+        offsets = [0]
+        for line in lines[:-1]:
+            offsets.append(offsets[-1] + len(line) + 1)
+        text = "\n".join(lines)[start[1] : offsets[-1] + end[1]]
+        original = self._bracket_signature(text, context)
+        if original is None:
+            return
+        for left, right in pairs:
+            opening = locations.tokens[left].start
+            closing = locations.tokens[right].start
+            a = offsets[opening[0] - start[0]] + opening[1] - start[1]
+            b = offsets[closing[0] - start[0]] + closing[1] - start[1]
+            candidate = text[:a] + " " + text[a + 1 : b] + " " + text[b + 1 :]
+            if self._bracket_signature(candidate, context) == original:
+                self.issues.add(quoted_line or opening[0], _Rule.TYPE_BRKT)
+
+    def _root_annotation(self: Self, /, node: ast.expr, context: str) -> None:
+        self._check_brackets(node, context, self.locations)
+        self._annotation(node)
+
     def _annotation(
         self: Self, /, node: ast.expr, quoted_line: int | None = None
     ) -> None:
-        child: ast.AST
+        child: ast.expr
+        children: Iterator[ast.expr]
         line: int
         member: ast.expr
         members: list[ast.expr]
         name: str | None
+        none_members: list[ast.expr]
         parsed: ast.expr
         line = quoted_line or node.lineno
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -1886,6 +2069,9 @@ class _ModernAnnotations(ast.NodeVisitor):
                 parsed = ast.parse(node.value, mode="eval").body
             except (SyntaxError, ValueError, RecursionError):
                 return
+            self._check_brackets(
+                parsed, "quoted", _SourceLocations(node.value), line
+            )
             self._annotation(parsed, line)
             return
         name = self._reference(node)
@@ -1895,32 +2081,38 @@ class _ModernAnnotations(ast.NodeVisitor):
                 self.issues.add(line, _Rule.TYPE_UPDT, repr(name))
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
             members = list(_union_members(node))
-            for member in members[:-1]:
-                if isinstance(member, ast.Constant) and member.value is None:
-                    self.issues.add(
-                        quoted_line or member.lineno, _Rule.TYPE_NONE
-                    )
+            none_members = [
+                member
+                for member in members[:-1]
+                if isinstance(member, ast.Constant) and member.value is None
+            ]
+            for member in none_members:
+                self.issues.add(quoted_line or member.lineno, _Rule.TYPE_NONE)
             for member in members:
                 self._annotation(member, quoted_line)
             return
-        if isinstance(node, ast.Subscript):
-            self._annotation(node.value, quoted_line)
-            name = self._reference(node.value)
-            # Literal arguments and Annotated metadata are values, not types.
-            if name in {"typing.Literal", "typing_extensions.Literal"}:
-                return
-            if name in {
-                "typing.Annotated",
-                "typing_extensions.Annotated",
-            } and isinstance(node.slice, ast.Tuple):
-                if node.slice.elts:
-                    self._annotation(node.slice.elts[0], quoted_line)
-                return
-            self._annotation(node.slice, quoted_line)
-            return
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, ast.expr):
+        if not isinstance(node, ast.Subscript):
+            children = (
+                child
+                for child in ast.iter_child_nodes(node)
+                if isinstance(child, ast.expr)
+            )
+            for child in children:
                 self._annotation(child, quoted_line)
+            return
+        self._annotation(node.value, quoted_line)
+        name = self._reference(node.value)
+        # Literal arguments and Annotated metadata are values, not types.
+        if name in {"typing.Literal", "typing_extensions.Literal"}:
+            return
+        if name in {
+            "typing.Annotated",
+            "typing_extensions.Annotated",
+        } and isinstance(node.slice, ast.Tuple):
+            if node.slice.elts:
+                self._annotation(node.slice.elts[0], quoted_line)
+            return
+        self._annotation(node.slice, quoted_line)
 
     def _body(
         self: Self,
@@ -1931,8 +2123,8 @@ class _ModernAnnotations(ast.NodeVisitor):
         parameters: set[str] | None = None,
     ) -> None:
         bindings: _AnnotationBindings
-        old_environment: dict[str, str | None]
         old_enclosing: dict[str, str | None]
+        old_environment: dict[str, str | None]
         statement: ast.stmt
         old_environment, old_enclosing = self.environment, self.enclosing
         bindings = _AnnotationBindings()
@@ -1964,16 +2156,16 @@ class _ModernAnnotations(ast.NodeVisitor):
     def _function(
         self: Self, /, node: ast.FunctionDef | ast.AsyncFunctionDef
     ) -> None:
-        arg: ast.arg
+        arg: ast.AST
         for arg in ast.walk(node.args):
             if isinstance(arg, ast.arg) and arg.annotation is not None:
-                self._annotation(arg.annotation)
+                self._root_annotation(arg.annotation, "parameter")
         if node.returns is not None:
-            self._annotation(node.returns)
+            self._root_annotation(node.returns, "return")
         self._body(node.body, parameters=_parameter_names(node))
 
     def visit_AnnAssign(self: Self, /, node: ast.AnnAssign) -> None:
-        self._annotation(node.annotation)
+        self._root_annotation(node.annotation, "variable")
 
 
 def _semicolon_issues(
@@ -2030,7 +2222,7 @@ class _FunctionChecker(ast.NodeVisitor):
             if self.locations.prefix_end is not None
             else _dead_module_names(node, self.source, self.filename),
         )
-        _ModernAnnotations(self.issues).visit(node)
+        _ModernAnnotations(self.issues, self.locations).visit(node)
         self.generic_visit(node)
 
     def _visit_function(

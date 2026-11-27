@@ -236,6 +236,26 @@ alone is also allowed. The offending ``None`` is reported on its physical line
 (or the starting line of its quoted annotation). Runtime bitwise-or operations,
 ``Literal`` values and ``Annotated`` metadata are not union annotations.
 
+``"TYPE-BRKT"``
+^^^^^^^^^^^^^^^
+
+Type annotations must not contain unnecessary round parentheses. For example,
+``(int)``, ``list[(int)]``, ``(int | None) | str`` and ``int | (str | None)``
+are forbidden. Write ``int``, ``list[int]`` and flat unions instead. The
+order of union members must also satisfy ``TYPE-NONE``; the third example
+should therefore be written ``int | str | None``.
+
+Parentheses required by syntax, expression grouping or multiline continuation
+are permitted. The rule compares the annotation before and after removing each
+pair, treating type unions as associative without reordering their members.
+It does not flatten bitwise-or expressions in ``Literal`` values or
+``Annotated`` metadata. Required call parentheses and square brackets for
+subscriptions or callable argument lists are not prohibited. The rule checks
+variable, parameter and return annotations, including quoted forward types,
+but not ordinary expressions outside annotations or type comments. The
+opening parenthesis determines the diagnostic line (the starting line of the
+string for quoted types).
+
 The ``__all__`` Variable (``ALL``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
