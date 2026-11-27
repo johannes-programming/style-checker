@@ -16,8 +16,8 @@ anywhere, but the trailing-whitespace rule applies to them too.
 Physical Statement Placement (``STMT``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``STMT-BEG``
-^^^^^^^^^^^^
+``"STMT-BEG""``
+^^^^^^^^^^^^^^^^
 
 Every decorator, compound-statement header and simple statement must start on
 a physical line with only whitespace to its left. Python syntax already
@@ -28,29 +28,29 @@ same physical line as a compound-statement header are forbidden.
 Physical Line Whitespace and Indentation (``LINE``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``LINE-TW``
-^^^^^^^^^^^
+``"LINE-TW"``
+^^^^^^^^^^^^^
 
 No physical line may end with whitespace other than its line break. This also
 applies to blank lines, comments, multiline strings and the final line of a
 file without a line break.
 
-``LINE-IND``
-^^^^^^^^^^^^
+``"LINE-IND"``
+^^^^^^^^^^^^^^
 
 Block indentation must consist of exactly four spaces per nesting level
 (``"    "``). Tabs and other whitespace are not allowed for block indentation.
 Blank lines, comment-only lines and continuation lines do not determine block
 indentation.
 
-``LINE-DEEP``
-^^^^^^^^^^^^^
+``"LINE-DEEP"``
+^^^^^^^^^^^^^^^
 
 Each simple statement must start at no more than four indentation levels
 deep, counted from the module level (level zero).
 
-``LINE-CONT``
-^^^^^^^^^^^^^
+``"LINE-CONT"``
+^^^^^^^^^^^^^^^
 
 For each simple statement, compound-statement header and decorator separately,
 no physical line used by it may start two or more indentation levels deeper
@@ -65,33 +65,33 @@ The body of a compound statement is not part of its header.
 Annotations (``ANNO``)
 ~~~~~~~~~~~~~~~~~~~~~~
 
-``ANNO-MIS``
-^^^^^^^^^^^^
+``"ANNO-MIS"``
+^^^^^^^^^^^^^^
 
 Every variable assigned in a module's namespace must have a type annotation,
 subject to the exemptions described below. A declaration is required whenever
 the variable is subject to these rules. A variable annotated with ``Final``
 requires no separate declaration.
 
-``ANNO-BARE``
-^^^^^^^^^^^^^
+``"ANNO-BARE"``
+^^^^^^^^^^^^^^^
 
 A declaration must not assign a value (for example, ``count: int``, not
 ``count: int = 0``). An annotation with ``Final`` is not a declaration
 and follows the separate rules below.
 
-``ANNO-SORT``
-^^^^^^^^^^^^^
+``"ANNO-SORT"``
+^^^^^^^^^^^^^^^
 
 Declarations must be listed in alphabetical order by variable name.
 
-``ANNO-ONCE``
-^^^^^^^^^^^^^
+``"ANNO-ONCE"``
+^^^^^^^^^^^^^^^
 
 Each required declaration must occur exactly once.
 
-``ANNO-PROH``
-^^^^^^^^^^^^^
+``"ANNO-PROH"``
+^^^^^^^^^^^^^^^
 
 The declaration requirement does not apply to:
 
@@ -112,8 +112,8 @@ The declaration requirement does not apply to:
 * Each ``TypeVar`` and every similar construct, which is exempt from type
     annotation.
 
-``ANNO-TOP``
-^^^^^^^^^^^^
+``"ANNO-TOP"``
+^^^^^^^^^^^^^^
 
 A declaration must appear before the variable is used and in the declaration
 block at the beginning of the scope.
@@ -128,8 +128,8 @@ Only the following may precede that block:
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
-``ANNO-FIN``
-^^^^^^^^^^^^
+``"ANNO-FIN"``
+^^^^^^^^^^^^^^
 
 An annotation with ``Final`` or ``Final[T]`` is not a declaration. It must
 not be included in the declaration block and need not be alphabetically
@@ -166,21 +166,21 @@ For example:
         adjustment: Final = result + offset
         return adjustment
 
-``ANNO-ALL``
-^^^^^^^^^^^^
+``"ANNO-ALL"``
+^^^^^^^^^^^^^^
 
 ``__all__`` must be annotated as ``list[str]``.
 
-``ANNO-PARA``
-^^^^^^^^^^^^^
+``"ANNO-PARA"``
+^^^^^^^^^^^^^^^
 
 Every function parameter must have a type annotation, regardless of parameter kind.
 This includes the first parameter (such as ``self`` or ``cls``), as well
 as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
 Function parameters do not need separate declarations in the function body.
 
-``ANNO-RET``
-^^^^^^^^^^^^
+``"ANNO-RET"``
+^^^^^^^^^^^^^^
 
 Every ``def`` and ``async def`` must have an explicit return type annotation,
 including methods, constructors, nested functions, generators, and functions
@@ -196,34 +196,34 @@ The ``__all__`` Variable (``ALL``)
 The module-level ``__all__`` variable is exempt from the general declaration
 rules and must satisfy ``ANNO-ALL`` above and the following requirements.
 
-``ALL-MIS``
-^^^^^^^^^^^
+``"ALL-MIS"``
+^^^^^^^^^^^^^
 
 Every module must define ``__all__``, even if it is an empty list.
 
-``ALL-LIST``
-^^^^^^^^^^^^
+``"ALL-LIST"``
+^^^^^^^^^^^^^^
 
 ``__all__`` must be assigned a list literal.
 
-``ALL-STR``
-^^^^^^^^^^^
+``"ALL-STR"``
+^^^^^^^^^^^^^
 
 The elements of ``__all__`` must be string literals.
 
-``ALL-ORD``
-^^^^^^^^^^^
+``"ALL-ORD"``
+^^^^^^^^^^^^^
 
 The elements of ``__all__`` must be in alphabetical order.
 
-``ALL-IMP``
-^^^^^^^^^^^
+``"ALL-IMP"``
+^^^^^^^^^^^^^
 
 The definition of ``__all__`` must precede all imports except
 ``from __future__`` imports.
 
-``ALL-DUP``
-^^^^^^^^^^^
+``"ALL-DUP"``
+^^^^^^^^^^^^^
 
 ``__all__`` must be defined only once.
 
@@ -233,8 +233,8 @@ Function Scopes and Parameters (``FUNC``)
 The general declaration rules also apply to variables in every ``def`` and
 ``async def`` body. The special rules for ``__all__`` apply only at module level.
 
-``FUNC-ASGN``
-^^^^^^^^^^^^^
+``"FUNC-ASGN"``
+^^^^^^^^^^^^^^^
 
 A function parameter must never be reassigned. This applies to all parameter
 kinds, including parameters of lambda expressions. Assignment to the parameter
@@ -257,13 +257,13 @@ The object referenced by a parameter may be mutated. For example:
         items = [1]  # FUNC-ASGN
         items += [2]  # FUNC-ASGN, even if the operation mutates the list
 
-``FUNC-KWOR``
-^^^^^^^^^^^^^
+``"FUNC-KWOR"``
+^^^^^^^^^^^^^^^
 
 The single keyword-only parameters should be alphabetically ordered.
 
-``FUNC-POS``
-^^^^^^^^^^^^
+``"FUNC-POS"``
+^^^^^^^^^^^^^^
 
 An undecorated ``def`` or ``async def`` statement must have a positional-only
 first parameter if its nearest enclosing ``class``, ``def`` or ``async def``
@@ -304,8 +304,8 @@ dictionaries or dictionary-like objects using string keys, such as
 Dead Module-Level Names (``DEAD``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``DEAD-NAME``
-^^^^^^^^^^^^^
+``"DEAD-NAME"``
+^^^^^^^^^^^^^^^
 
 An import, assigned variable, function, or class defined in the module scope
 (including module-level control-flow blocks) is an error if its name is neither
@@ -323,13 +323,13 @@ other names explicitly.
 Imports (``IMPT``)
 ~~~~~~~~~~~~~~~~~~
 
-``IMPT-WILD``
-^^^^^^^^^^^^^
+``"IMPT-WILD"``
+^^^^^^^^^^^^^^^
 
 Wildcard imports (using ``*``) are forbidden.
 
-``IMPT-TYPE``
-^^^^^^^^^^^^^
+``"IMPT-TYPE"``
+^^^^^^^^^^^^^^^
 
 Importing annotations from ``typing`` that also exist in ``collections.abc``
 (e.g. ``Iterable``) is forbidden.
