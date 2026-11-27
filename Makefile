@@ -132,7 +132,7 @@ toml-sorted: make-style-checker
 	conda run -n make-style-checker pip install 'toml-sorted<3,>=2.2' >/dev/null;
 	conda run -n make-style-checker python -m toml_sorted -- '**/*.toml';
 	conda run -n make-style-checker python -m toml_sorted @make/toml-sorted-pyproject.txt;
-	conda run -n make-style-checker python -m toml_sorted @make/toml-sorted-testdata.txt;
+	conda run -n make-style-checker python -m toml_sorted @make/toml-sorted-all.txt;
 
 upload: make-style-checker
 	conda run -n make-style-checker pip install 'twine<7,>=5.2' >/dev/null;
