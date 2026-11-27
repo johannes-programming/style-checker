@@ -108,6 +108,9 @@ ruff: make-style-checker out
 	conda run -n make-style-checker ruff format . ;
 
 test: dist make-style-checker out
+	conda run -n base python make/env.py --python=3.11 --recreate self-style-checker >/dev/null;
+	conda run -n self-style-checker pip install -e .;
+	conda run -n self-style-checker python -m style_checker --exclude "tests/examples/**/*.py" -- "**/*.py" > dist/out/self-out.txt 2> dist/out/self-err.txt || true;
 	conda run -n make-style-checker pip install "style-checker<0.3,>=0.2.20";
 	conda run -n make-style-checker python -m style_checker --exclude 'tests/examples/**/*.py' -- "**/*.py" > dist/out/style-out.txt 2> dist/out/style-err.txt || true;
 	conda run -n base python make/env.py --python=3.11 --recreate -- mypy-style-checker >/dev/null;
@@ -121,9 +124,6 @@ test: dist make-style-checker out
 	conda run -n base python make/env.py --python=3.11 --recreate tests-style-checker >/dev/null;
 	conda run -n tests-style-checker pip install dist/*.tar.gz >/dev/null;
 	conda run -n tests-style-checker python run_tests.py > dist/out/tests-out.txt 2> dist/out/tests-err.txt || true;
-	conda run -n base python make/env.py --python=3.11 --recreate self-style-checker >/dev/null;
-	conda run -n self-style-checker pip install -e .;
-	conda run -n self-style-checker python -m style_checker --exclude "tests/examples/**/*.py" -- "**/*.py" > dist/out/self-out.txt 2> dist/out/self-err.txt || true;
 	zip -r dist/out.zip dist/out;
 
 toml-sorted: make-style-checker
