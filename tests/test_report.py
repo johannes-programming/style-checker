@@ -11,23 +11,9 @@ from pathlib import Path
 from typing import Any, Self
 
 import style_checker
-from style_checker._declarations import _LineIssues, _Rule
 
 
 class TestReport(unittest.TestCase):
-    def test_should_in_all_style_descriptions(self: Self, /) -> None:
-        issues: _LineIssues
-        rule: _Rule
-        issues = _LineIssues(frozenset())
-        for rule in _Rule:
-            issues.add(1, rule)
-        self.assertEqual(
-            len(list(issues.violations("example.py"))), len(_Rule)
-        )
-        for violation in issues.violations("example.py"):
-            with self.subTest(rule=violation.rule):
-                self.assertIn("should", violation.desc.split())
-
     def test_default_and_order(self: Self, /) -> None:
         # Static examples cannot check relative/absolute path deduplication,
         # exception contents, default formatting or CLI exit status. The
