@@ -111,6 +111,5 @@ class TestExample(unittest.TestCase):
                 self.go_testdata(**y)
 
 
-
 if __name__ == "__main__":
     unittest.main()
