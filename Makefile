@@ -13,6 +13,8 @@ amend: add
 beautiful: beautiful-other beautiful-py beautiful-toml
 
 beautiful-other: jacobus-other
+	rm -f setup.cfg
+	touch setup.cfg
 
 beautiful-py: jacobus-py ruff
 
