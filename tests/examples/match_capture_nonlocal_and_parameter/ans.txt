@@ -1,1 +1,1 @@
-10: FUNC-ASGN: reassigned parameters: 'parameter'!
+10: FUNC-ASGN: parameters should not be reassigned: 'parameter'!

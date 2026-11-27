@@ -1,1 +1,1 @@
-15: DEAD-NAME: dead module names: 'outer'!
+15: DEAD-NAME: module names should be used or listed in '__all__': 'outer'!

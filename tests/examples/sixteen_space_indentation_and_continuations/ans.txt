@@ -1,4 +1,4 @@
-9: LINE-IND: indentation must be four spaces per level!
-12: LINE-IND: indentation must be four spaces per level!
-13: LINE-IND: indentation must be four spaces per level!
-19: LINE-IND: indentation must be four spaces per level!
+9: LINE-IND: indentation should be four spaces per level!
+12: LINE-IND: indentation should be four spaces per level!
+13: LINE-IND: indentation should be four spaces per level!
+19: LINE-IND: indentation should be four spaces per level!

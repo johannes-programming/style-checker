@@ -1,2 +1,2 @@
-3: REQD-MIS: missing declarations: 'found'!
-5: REQD-MIS: missing declarations: 'remaining'!
+3: REQD-MIS: variables requiring declarations should be declared: 'found'!
+5: REQD-MIS: variables requiring declarations should be declared: 'remaining'!

@@ -1,1 +1,1 @@
-4: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Callable'!
+4: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Callable'!

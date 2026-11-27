@@ -1,2 +1,2 @@
-8: EXEM-IMP: declarations for 'def'/'class'/'import' names: 'deque'!
-10: DEAD-NAME: dead module names: 'example'!
+8: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'deque'!
+10: DEAD-NAME: module names should be used or listed in '__all__': 'example'!

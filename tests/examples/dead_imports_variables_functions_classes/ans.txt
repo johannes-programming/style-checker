@@ -1,1 +1,1 @@
-11: DEAD-NAME: dead module names: 'Path', 'Unused', 'count', 'math', 'spare'!
+11: DEAD-NAME: module names should be used or listed in '__all__': 'Path', 'Unused', 'count', 'math', 'spare'!

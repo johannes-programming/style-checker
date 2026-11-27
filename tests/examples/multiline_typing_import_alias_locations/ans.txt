@@ -1,2 +1,2 @@
-3: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Iterable'!
-5: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Sequence'!
+3: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Iterable'!
+5: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Sequence'!

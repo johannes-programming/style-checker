@@ -1,3 +1,3 @@
-5: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Iterable'!
-6: DEAD-NAME: dead module names: 'Mapping', 'TypeVar', 'Values'!
-6: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Mapping'!
+5: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Iterable'!
+6: DEAD-NAME: module names should be used or listed in '__all__': 'Mapping', 'TypeVar', 'Values'!
+6: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Mapping'!

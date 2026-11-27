@@ -1,2 +1,2 @@
-3: LINE-IND: indentation must be four spaces per level!
-5: LINE-CONT: physical lines indented two or more levels deeper!
+3: LINE-IND: indentation should be four spaces per level!
+5: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!

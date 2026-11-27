@@ -1,2 +1,2 @@
-8: DEAD-NAME: dead module names: 'Example'!
-8: IMPT-TYPE: 'typing' imports available in 'collections.abc': 'Iterator'!
+8: DEAD-NAME: module names should be used or listed in '__all__': 'Example'!
+8: IMPT-TYPE: imports available in 'collections.abc' should come from 'collections.abc' rather than 'typing': 'Iterator'!

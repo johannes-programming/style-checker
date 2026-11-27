@@ -1,5 +1,5 @@
-3: EXEM-UN: unnecessary declarations: 'a'!
-4: EXEM-UN: unnecessary declarations: 'b'!
-5: EXEM-UN: unnecessary declarations: 'c'!
-6: EXEM-UN: unnecessary declarations: 'd'!
-7: EXEM-UN: unnecessary declarations: 'e'!
+3: EXEM-UN: unnecessary declarations should be omitted: 'a'!
+4: EXEM-UN: unnecessary declarations should be omitted: 'b'!
+5: EXEM-UN: unnecessary declarations should be omitted: 'c'!
+6: EXEM-UN: unnecessary declarations should be omitted: 'd'!
+7: EXEM-UN: unnecessary declarations should be omitted: 'e'!

@@ -1,1 +1,1 @@
-3: REQD-MIS: missing declarations: 'extra', 'left', 'right'!
+3: REQD-MIS: variables requiring declarations should be declared: 'extra', 'left', 'right'!

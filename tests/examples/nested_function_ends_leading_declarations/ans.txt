@@ -1,2 +1,2 @@
-5: PLAC-BEG: declarations not at beginning: 'value'!
-6: REQD-MIS: missing declarations: 'value'!
+5: PLAC-BEG: declarations should appear at the beginning of the scope: 'value'!
+6: REQD-MIS: variables requiring declarations should be declared: 'value'!

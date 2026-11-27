@@ -1,11 +1,11 @@
-3: LINE-CONT: physical lines indented two or more levels deeper!
-6: LINE-CONT: physical lines indented two or more levels deeper!
-9: LINE-CONT: physical lines indented two or more levels deeper!
-12: LINE-CONT: physical lines indented two or more levels deeper!
-15: LINE-CONT: physical lines indented two or more levels deeper!
-18: LINE-CONT: physical lines indented two or more levels deeper!
-24: LINE-CONT: physical lines indented two or more levels deeper!
-29: LINE-CONT: physical lines indented two or more levels deeper!
-33: LINE-CONT: physical lines indented two or more levels deeper!
-36: LINE-CONT: physical lines indented two or more levels deeper!
-40: LINE-CONT: physical lines indented two or more levels deeper!
+3: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+6: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+9: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+12: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+15: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+18: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+24: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+29: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+33: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+36: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+40: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!

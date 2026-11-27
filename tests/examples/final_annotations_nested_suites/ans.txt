@@ -1,16 +1,16 @@
-6: FIN-PLAC: Final annotations not at namespace indentation level!
-13: FIN-PLAC: Final annotations not at namespace indentation level!
-15: FIN-PLAC: Final annotations not at namespace indentation level!
-17: FIN-PLAC: Final annotations not at namespace indentation level!
-19: FIN-PLAC: Final annotations not at namespace indentation level!
-21: FIN-PLAC: Final annotations not at namespace indentation level!
-23: FIN-PLAC: Final annotations not at namespace indentation level!
-25: FIN-PLAC: Final annotations not at namespace indentation level!
-27: FIN-PLAC: Final annotations not at namespace indentation level!
-29: FIN-PLAC: Final annotations not at namespace indentation level!
-31: FIN-PLAC: Final annotations not at namespace indentation level!
-33: FIN-PLAC: Final annotations not at namespace indentation level!
-36: FIN-PLAC: Final annotations not at namespace indentation level!
-48: FIN-PLAC: Final annotations not at namespace indentation level!
-50: FIN-PLAC: Final annotations not at namespace indentation level!
-55: FIN-PLAC: Final annotations not at namespace indentation level!
+6: FIN-PLAC: Final annotations should be at namespace indentation level!
+13: FIN-PLAC: Final annotations should be at namespace indentation level!
+15: FIN-PLAC: Final annotations should be at namespace indentation level!
+17: FIN-PLAC: Final annotations should be at namespace indentation level!
+19: FIN-PLAC: Final annotations should be at namespace indentation level!
+21: FIN-PLAC: Final annotations should be at namespace indentation level!
+23: FIN-PLAC: Final annotations should be at namespace indentation level!
+25: FIN-PLAC: Final annotations should be at namespace indentation level!
+27: FIN-PLAC: Final annotations should be at namespace indentation level!
+29: FIN-PLAC: Final annotations should be at namespace indentation level!
+31: FIN-PLAC: Final annotations should be at namespace indentation level!
+33: FIN-PLAC: Final annotations should be at namespace indentation level!
+36: FIN-PLAC: Final annotations should be at namespace indentation level!
+48: FIN-PLAC: Final annotations should be at namespace indentation level!
+50: FIN-PLAC: Final annotations should be at namespace indentation level!
+55: FIN-PLAC: Final annotations should be at namespace indentation level!

@@ -11,9 +11,23 @@ from pathlib import Path
 from typing import Any, Self
 
 import style_checker
+from style_checker._declarations import _LineIssues, _Rule
 
 
 class TestReport(unittest.TestCase):
+    def test_should_in_all_style_descriptions(self: Self, /) -> None:
+        issues: _LineIssues
+        rule: _Rule
+        issues = _LineIssues(frozenset())
+        for rule in _Rule:
+            issues.add(1, rule)
+        self.assertEqual(
+            len(list(issues.violations("example.py"))), len(_Rule)
+        )
+        for violation in issues.violations("example.py"):
+            with self.subTest(rule=violation.rule):
+                self.assertIn("should", violation.desc.split())
+
     def test_default_and_order(self: Self, /) -> None:
         # Static examples cannot check relative/absolute path deduplication,
         # exception contents, default formatting or CLI exit status. The
@@ -39,10 +53,10 @@ class TestReport(unittest.TestCase):
             relative = os.path.relpath(late)
             expected = []
             messages = [
-                "2:LINE-TW: trailing whitespace on physical lines!",
-                "2:REQD-MIS: missing declarations: 'x'!",
-                "10:DEAD-NAME: dead module names: 'x'!",
-                "10:LINE-TW: trailing whitespace on physical lines!",
+                "2:LINE-TW: physical lines should not end with trailing whitespace!",
+                "2:REQD-MIS: variables requiring declarations should be declared: 'x'!",
+                "10:DEAD-NAME: module names should be used or listed in '__all__': 'x'!",
+                "10:LINE-TW: physical lines should not end with trailing whitespace!",
             ]
             for file in (str(early), relative):
                 expected.extend(f"{file}:{message}" for message in messages)
@@ -81,7 +95,7 @@ class TestReport(unittest.TestCase):
             path = Path(directory) / "example.py"
             path.write_text("# before  \nbroken =\n", encoding="utf-8")
             expected = [
-                "!LINE-TW: trailing whitespace on physical lines.",
+                "!LINE-TW: physical lines should not end with trailing whitespace.",
                 "!SYN-SyntaxError: invalid syntax.",
             ]
             output = io.StringIO()
@@ -101,7 +115,7 @@ class TestReport(unittest.TestCase):
             ):
                 style_checker.run(str(path))
             expected = [
-                f"{path}:1:LINE-TW: trailing whitespace on physical lines!",
+                f"{path}:1:LINE-TW: physical lines should not end with trailing whitespace!",
                 f"{path}:2:SYN-SyntaxError: invalid syntax!",
             ]
             self.assertEqual(

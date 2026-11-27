@@ -1,1 +1,1 @@
-3: LINE-IND: indentation must be four spaces per level!
+3: LINE-IND: indentation should be four spaces per level!

@@ -1,5 +1,5 @@
-5: FIN-VAL: Final annotation has no assignment!
-10: FIN-VAL: Final annotation has no assignment!
-13: FIN-PLAC: Final annotations not at namespace indentation level!
-13: FIN-VAL: Final annotation has no assignment!
-19: FIN-VAL: Final annotation has no assignment!
+5: FIN-VAL: Final annotations should assign a value!
+10: FIN-VAL: Final annotations should assign a value!
+13: FIN-PLAC: Final annotations should be at namespace indentation level!
+13: FIN-VAL: Final annotations should assign a value!
+19: FIN-VAL: Final annotations should assign a value!

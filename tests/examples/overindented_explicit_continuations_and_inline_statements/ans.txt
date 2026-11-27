@@ -1,5 +1,5 @@
-3: LINE-CONT: physical lines indented two or more levels deeper!
-10: STMT-BEG: simple statements not at beginning of physical line!
-11: LINE-CONT: physical lines indented two or more levels deeper!
-14: LINE-CONT: physical lines indented two or more levels deeper!
-17: LINE-CONT: physical lines indented two or more levels deeper!
+3: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+10: STMT-BEG: simple statements should start at the beginning of a physical line!
+11: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+14: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!
+17: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!

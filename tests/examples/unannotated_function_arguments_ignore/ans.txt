@@ -1,1 +1,1 @@
-41: DEAD-NAME: dead module names: 'Example', 'all_annotated', 'asynchronous', 'keyword_only', 'keyword_variadic', 'positional_only', 'positional_or_keyword', 'variadic'!
+41: DEAD-NAME: module names should be used or listed in '__all__': 'Example', 'all_annotated', 'asynchronous', 'keyword_only', 'keyword_variadic', 'positional_only', 'positional_or_keyword', 'variadic'!

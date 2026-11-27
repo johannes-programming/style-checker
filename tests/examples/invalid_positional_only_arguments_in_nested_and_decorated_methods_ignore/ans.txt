@@ -1,1 +1,1 @@
-40: FUNC-ARG: unannotated arguments: 'self'!
+40: FUNC-ARG: function parameters should have type annotations: 'self'!

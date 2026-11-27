@@ -1,10 +1,10 @@
-10: REQD-ORD: declarations not in alphabetical order!
-11: REQD-ORD: declarations not in alphabetical order!
-12: REQD-DUP: duplicate declarations: 'duplicate'!
-12: REQD-ORD: declarations not in alphabetical order!
-17: REQD-MIS: missing declarations: 'missing'!
-18: REQD-MIS: missing declarations: 'initialized'!
-18: REQD-VAL: declaration assigns a value: 'initialized'!
-19: PLAC-BEG: declarations not at beginning: 'late'!
-20: REQD-MIS: missing declarations: 'late'!
-24: DEAD-NAME: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!
+10: REQD-ORD: declarations should be in alphabetical order!
+11: REQD-ORD: declarations should be in alphabetical order!
+12: REQD-DUP: each declaration should occur only once: 'duplicate'!
+12: REQD-ORD: declarations should be in alphabetical order!
+17: REQD-MIS: variables requiring declarations should be declared: 'missing'!
+18: REQD-MIS: variables requiring declarations should be declared: 'initialized'!
+18: REQD-VAL: declarations should not assign a value: 'initialized'!
+19: PLAC-BEG: declarations should appear at the beginning of the scope: 'late'!
+20: REQD-MIS: variables requiring declarations should be declared: 'late'!
+24: DEAD-NAME: module names should be used or listed in '__all__': 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!

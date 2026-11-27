@@ -447,6 +447,9 @@ The supported substitution fields are:
 - ``{desc}``: the rule description, including any relevant details, without
     an appended exclamation mark. It does not include the rule mark.
 
+Every style-rule description uses the word ``should``. Syntax-error
+descriptions instead retain the original Python exception message.
+
 The default format supplies the final exclamation mark. Custom formats can
 omit it, replace it or place it elsewhere.
 

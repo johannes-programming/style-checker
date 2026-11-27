@@ -1,8 +1,8 @@
-4: FUNC-ASGN: reassigned parameters: 'a'!
-5: FUNC-ASGN: reassigned parameters: 'a'!
-6: FUNC-ASGN: reassigned parameters: 'b'!
-7: FUNC-ASGN: reassigned parameters: 'args'!
-8: FUNC-ASGN: reassigned parameters: 'c', 'kwargs'!
-9: FUNC-ASGN: reassigned parameters: 'c'!
-10: FUNC-ASGN: reassigned parameters: 'b'!
-11: FUNC-ASGN: reassigned parameters: 'a'!
+4: FUNC-ASGN: parameters should not be reassigned: 'a'!
+5: FUNC-ASGN: parameters should not be reassigned: 'a'!
+6: FUNC-ASGN: parameters should not be reassigned: 'b'!
+7: FUNC-ASGN: parameters should not be reassigned: 'args'!
+8: FUNC-ASGN: parameters should not be reassigned: 'c', 'kwargs'!
+9: FUNC-ASGN: parameters should not be reassigned: 'c'!
+10: FUNC-ASGN: parameters should not be reassigned: 'b'!
+11: FUNC-ASGN: parameters should not be reassigned: 'a'!

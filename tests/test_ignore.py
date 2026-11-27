@@ -45,7 +45,11 @@ class TestIgnore(unittest.TestCase):
                     ignore=(mark for mark in ("LINE-TW", "REQD-MIS")),
                     outmsg="{desc}",
                 )
-            self.assertEqual(output.getvalue(), "dead module names: 'x'\n" * 2)
+            self.assertEqual(
+                output.getvalue(),
+                "module names should be used or listed in '__all__': 'x'\n"
+                * 2,
+            )
             output = io.StringIO()
             args = [
                 "--ignore=LINE-TW",
@@ -66,9 +70,9 @@ class TestIgnore(unittest.TestCase):
                 self.assertEqual(style_checker.main(args), 1)
             self.assertEqual(
                 output.getvalue(),
-                "dead module names: 'x'\n"
-                "trailing whitespace on physical lines\n"
-                "missing declarations: 'x'\n",
+                "module names should be used or listed in '__all__': 'x'\n"
+                "physical lines should not end with trailing whitespace\n"
+                "variables requiring declarations should be declared: 'x'\n",
             )
 
     def test_empty_ignore_outfile_and_next_file(self: Self, /) -> None:

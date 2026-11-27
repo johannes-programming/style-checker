@@ -1,2 +1,2 @@
-5: REQD-MIS: missing declarations: 'value'!
-5: REQD-VAL: declaration assigns a value: 'value'!
+5: REQD-MIS: variables requiring declarations should be declared: 'value'!
+5: REQD-VAL: declarations should not assign a value: 'value'!

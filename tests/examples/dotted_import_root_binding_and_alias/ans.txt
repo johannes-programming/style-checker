@@ -1,1 +1,1 @@
-5: DEAD-NAME: dead module names: 'path'!
+5: DEAD-NAME: module names should be used or listed in '__all__': 'path'!

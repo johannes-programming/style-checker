@@ -1,1 +1,1 @@
-5: IMPT-WILD: wildcard imports are forbidden!
+5: IMPT-WILD: wildcard imports should not be used!

@@ -1,2 +1,2 @@
-4: REQD-MIS: missing declarations: 'accepted'!
-7: REQD-MIS: missing declarations: 'rejected'!
+4: REQD-MIS: variables requiring declarations should be declared: 'accepted'!
+7: REQD-MIS: variables requiring declarations should be declared: 'rejected'!

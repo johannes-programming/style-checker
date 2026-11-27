@@ -1,1 +1,1 @@
-4: EXEM-IMP: declarations for 'def'/'class'/'import' names: 'worker'!
+4: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'worker'!

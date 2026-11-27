@@ -1,2 +1,2 @@
-7: EXEM-UN: unnecessary declarations: 'unused'!
-9: DEAD-NAME: dead module names: 'g'!
+7: EXEM-UN: unnecessary declarations should be omitted: 'unused'!
+9: DEAD-NAME: module names should be used or listed in '__all__': 'g'!

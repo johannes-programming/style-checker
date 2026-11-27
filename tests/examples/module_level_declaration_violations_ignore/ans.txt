@@ -1,6 +1,6 @@
-10: REQD-ORD: declarations not in alphabetical order!
-11: REQD-ORD: declarations not in alphabetical order!
-12: REQD-DUP: duplicate declarations: 'duplicate'!
-12: REQD-ORD: declarations not in alphabetical order!
-18: REQD-VAL: declaration assigns a value: 'initialized'!
-24: DEAD-NAME: dead module names: 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!
+10: REQD-ORD: declarations should be in alphabetical order!
+11: REQD-ORD: declarations should be in alphabetical order!
+12: REQD-DUP: each declaration should occur only once: 'duplicate'!
+12: REQD-ORD: declarations should be in alphabetical order!
+18: REQD-VAL: declarations should not assign a value: 'initialized'!
+24: DEAD-NAME: module names should be used or listed in '__all__': 'alpha', 'duplicate', 'initialized', 'late', 'missing', 'zebra'!

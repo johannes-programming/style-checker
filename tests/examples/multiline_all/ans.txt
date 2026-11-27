@@ -1,2 +1,2 @@
-3: ALL-ORD: '__all__' items not in alphabetical order!
-4: ALL-STR: '__all__' items must be string literals!
+3: ALL-ORD: '__all__' items should be in alphabetical order!
+4: ALL-STR: '__all__' items should be string literals!

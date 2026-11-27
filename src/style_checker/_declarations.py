@@ -60,37 +60,49 @@ class FunctionViolation:
 
 
 class _Rule(Enum):
-    LINE_NL = "nonempty files must end with a linebreak"
-    LINE_BL = "whitespace-only lines at end of file"
-    LINE_TW = "trailing whitespace on physical lines"
-    LINE_IND = "indentation must be four spaces per level"
-    LINE_CONT = "physical lines indented two or more levels deeper"
-    LINE_DEEP = "simple statements indented more than four levels"
-    STMT_BEG = "simple statements not at beginning of physical line"
-    ALL_IMP = "'__all__' must precede imports"
-    ALL_MIS = "missing '__all__'"
-    ALL_DUP = "multiple '__all__' assignments"
-    ALL_TYPE = "'__all__' must be annotated as 'list[str]'"
-    ALL_LIST = "'__all__' must be assigned a list literal"
-    ALL_STR = "'__all__' items must be string literals"
-    ALL_ORD = "'__all__' items not in alphabetical order"
-    IMPT_WILD = "wildcard imports are forbidden"
-    IMPT_TYPE = "'typing' imports available in 'collections.abc'"
-    DEAD_NAME = "dead module names"
-    FUNC_ARG = "unannotated arguments"
-    FUNC_ASGN = "reassigned parameters"
-    FUNC_KWOR = "keyword-only arguments not in alphabetical order"
-    FUNC_POS = "first argument must be positional-only"
-    PLAC_BEG = "declarations not at beginning"
-    FIN_PLAC = "Final annotations not at namespace indentation level"
-    FIN_VAL = "Final annotation has no assignment"
-    REQD_ORD = "declarations not in alphabetical order"
-    EXEM_IMP = "declarations for 'def'/'class'/'import' names"
-    EXEM_EX = "declarations for 'except' names"
-    REQD_DUP = "duplicate declarations"
-    REQD_MIS = "missing declarations"
-    EXEM_UN = "unnecessary declarations"
-    REQD_VAL = "declaration assigns a value"
+    LINE_NL = "nonempty files should end with a linebreak"
+    LINE_BL = "files should not end with whitespace-only lines"
+    LINE_TW = "physical lines should not end with trailing whitespace"
+    LINE_IND = "indentation should be four spaces per level"
+    LINE_CONT = (
+        "physical lines should not be indented two or more levels deeper "
+        "than the first line"
+    )
+    LINE_DEEP = (
+        "simple statements should not be indented more than four levels"
+    )
+    STMT_BEG = (
+        "simple statements should start at the beginning of a physical line"
+    )
+    ALL_IMP = "'__all__' should precede imports"
+    ALL_MIS = "modules should define '__all__'"
+    ALL_DUP = "'__all__' should be defined only once"
+    ALL_TYPE = "'__all__' should be annotated as 'list[str]'"
+    ALL_LIST = "'__all__' should be assigned a list literal"
+    ALL_STR = "'__all__' items should be string literals"
+    ALL_ORD = "'__all__' items should be in alphabetical order"
+    IMPT_WILD = "wildcard imports should not be used"
+    IMPT_TYPE = (
+        "imports available in 'collections.abc' should come from "
+        "'collections.abc' rather than 'typing'"
+    )
+    DEAD_NAME = "module names should be used or listed in '__all__'"
+    FUNC_ARG = "function parameters should have type annotations"
+    FUNC_ASGN = "parameters should not be reassigned"
+    FUNC_KWOR = "keyword-only arguments should be in alphabetical order"
+    FUNC_POS = "the first argument should be positional-only"
+    PLAC_BEG = "declarations should appear at the beginning of the scope"
+    FIN_PLAC = "Final annotations should be at namespace indentation level"
+    FIN_VAL = "Final annotations should assign a value"
+    REQD_ORD = "declarations should be in alphabetical order"
+    EXEM_IMP = (
+        "'def'/'class'/'import' names should not have separate declarations"
+    )
+    EXEM_EX = "'except' names should not have separate declarations"
+    REQD_DUP = "each declaration should occur only once"
+    REQD_MIS = "variables requiring declarations should be declared"
+    EXEM_UN = "unnecessary declarations should be omitted"
+    REQD_VAL = "declarations should not assign a value"
 
     @property
     def mark(self: Self, /) -> str:

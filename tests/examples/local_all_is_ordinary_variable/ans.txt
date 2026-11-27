@@ -1,2 +1,2 @@
-3: REQD-MIS: missing declarations: '__all__'!
-3: REQD-VAL: declaration assigns a value: '__all__'!
+3: REQD-MIS: variables requiring declarations should be declared: '__all__'!
+3: REQD-VAL: declarations should not assign a value: '__all__'!

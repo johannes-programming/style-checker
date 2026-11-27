@@ -1,1 +1,1 @@
-4: LINE-CONT: physical lines indented two or more levels deeper!
+4: LINE-CONT: physical lines should not be indented two or more levels deeper than the first line!

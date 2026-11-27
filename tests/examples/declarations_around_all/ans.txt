@@ -1,3 +1,3 @@
-3: PLAC-BEG: declarations not at beginning: 'beta'!
-5: DEAD-NAME: dead module names: 'alpha', 'beta'!
-5: REQD-MIS: missing declarations: 'beta'!
+3: PLAC-BEG: declarations should appear at the beginning of the scope: 'beta'!
+5: DEAD-NAME: module names should be used or listed in '__all__': 'alpha', 'beta'!
+5: REQD-MIS: variables requiring declarations should be declared: 'beta'!

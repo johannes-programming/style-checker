@@ -1,2 +1,2 @@
-5: EXEM-IMP: declarations for 'def'/'class'/'import' names: 'Helper'!
-7: EXEM-IMP: declarations for 'def'/'class'/'import' names: 'helper'!
+5: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'Helper'!
+7: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'helper'!

@@ -1,4 +1,4 @@
-4: PLAC-BEG: declarations not at beginning: 'value'!
-6: PLAC-BEG: declarations not at beginning: 'value'!
-6: REQD-DUP: duplicate declarations: 'value'!
-7: REQD-MIS: missing declarations: 'value'!
+4: PLAC-BEG: declarations should appear at the beginning of the scope: 'value'!
+6: PLAC-BEG: declarations should appear at the beginning of the scope: 'value'!
+6: REQD-DUP: each declaration should occur only once: 'value'!
+7: REQD-MIS: variables requiring declarations should be declared: 'value'!

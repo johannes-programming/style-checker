@@ -1,14 +1,14 @@
-7: FUNC-POS: first argument must be positional-only!
-10: FUNC-POS: first argument must be positional-only!
-13: FUNC-POS: first argument must be positional-only!
-16: FUNC-POS: first argument must be positional-only!
-24: FUNC-POS: first argument must be positional-only!
-28: FUNC-POS: first argument must be positional-only!
-41: FUNC-POS: first argument must be positional-only!
-50: FUNC-POS: first argument must be positional-only!
-54: FUNC-POS: first argument must be positional-only!
-63: FUNC-POS: first argument must be positional-only!
-66: FUNC-POS: first argument must be positional-only!
-70: FUNC-POS: first argument must be positional-only!
-77: FUNC-ARG: unannotated arguments: 'self'!
-77: FUNC-POS: first argument must be positional-only!
+7: FUNC-POS: the first argument should be positional-only!
+10: FUNC-POS: the first argument should be positional-only!
+13: FUNC-POS: the first argument should be positional-only!
+16: FUNC-POS: the first argument should be positional-only!
+24: FUNC-POS: the first argument should be positional-only!
+28: FUNC-POS: the first argument should be positional-only!
+41: FUNC-POS: the first argument should be positional-only!
+50: FUNC-POS: the first argument should be positional-only!
+54: FUNC-POS: the first argument should be positional-only!
+63: FUNC-POS: the first argument should be positional-only!
+66: FUNC-POS: the first argument should be positional-only!
+70: FUNC-POS: the first argument should be positional-only!
+77: FUNC-ARG: function parameters should have type annotations: 'self'!
+77: FUNC-POS: the first argument should be positional-only!

@@ -1,1 +1,1 @@
-4: EXEM-UN: unnecessary declarations: 'T'!
+4: EXEM-UN: unnecessary declarations should be omitted: 'T'!

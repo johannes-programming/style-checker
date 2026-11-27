@@ -1,2 +1,2 @@
-6: REQD-ORD: declarations not in alphabetical order!
-14: REQD-VAL: declaration assigns a value: 'wrong'!
+6: REQD-ORD: declarations should be in alphabetical order!
+14: REQD-VAL: declarations should not assign a value: 'wrong'!

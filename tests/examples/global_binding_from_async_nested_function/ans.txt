@@ -1,1 +1,1 @@
-4: REQD-MIS: missing declarations: 'value'!
+4: REQD-MIS: variables requiring declarations should be declared: 'value'!

@@ -1,7 +1,7 @@
-6: REQD-ORD: declarations not in alphabetical order!
-14: REQD-MIS: missing declarations: 'wrong'!
-14: REQD-VAL: declaration assigns a value: 'wrong'!
-16: REQD-MIS: missing declarations: 'missing'!
-23: REQD-DUP: duplicate declarations: 'alpha'!
-23: REQD-ORD: declarations not in alphabetical order!
-26: DEAD-NAME: dead module names: 'bad_order', 'good_example', 'missing_and_initialized'!
+6: REQD-ORD: declarations should be in alphabetical order!
+14: REQD-MIS: variables requiring declarations should be declared: 'wrong'!
+14: REQD-VAL: declarations should not assign a value: 'wrong'!
+16: REQD-MIS: variables requiring declarations should be declared: 'missing'!
+23: REQD-DUP: each declaration should occur only once: 'alpha'!
+23: REQD-ORD: declarations should be in alphabetical order!
+26: DEAD-NAME: module names should be used or listed in '__all__': 'bad_order', 'good_example', 'missing_and_initialized'!

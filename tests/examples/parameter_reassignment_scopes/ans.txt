@@ -1,4 +1,4 @@
-5: FUNC-ASGN: reassigned parameters: 'value'!
-17: FUNC-ASGN: reassigned parameters: 'value'!
-18: FUNC-ASGN: reassigned parameters: 'value'!
-20: FUNC-ASGN: reassigned parameters: 'value'!
+5: FUNC-ASGN: parameters should not be reassigned: 'value'!
+17: FUNC-ASGN: parameters should not be reassigned: 'value'!
+18: FUNC-ASGN: parameters should not be reassigned: 'value'!
+20: FUNC-ASGN: parameters should not be reassigned: 'value'!

@@ -1,1 +1,1 @@
-2: ALL-DUP: multiple '__all__' assignments!
+2: ALL-DUP: '__all__' should be defined only once!
