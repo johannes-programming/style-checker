@@ -1,4 +1,4 @@
 ignore = [
     "IMPT-WILD",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"

@@ -47,7 +47,7 @@ from style_checker import _declarations
 
 ERRMSG_DEFAULT: str
 
-ERRMSG_DEFAULT = "{file}:{line}:{rule}: {desc}"
+ERRMSG_DEFAULT = "{file}:{line}:{rule}: {desc}!"
 
 
 def get_files(

@@ -1,4 +1,4 @@
 ignore = [
     "FUNC-ASGN",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"

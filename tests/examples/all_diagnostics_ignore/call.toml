@@ -3,4 +3,4 @@ ignore = [
     "REQD-MIS",
     "DEAD-NAME",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"

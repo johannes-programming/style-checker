@@ -141,9 +141,7 @@ class _LineIssues:
                 description = rule.value
                 detail = ", ".join(sorted(details - {""}))
                 description = ": ".join(filter(None, (description, detail)))
-                yield FunctionViolation(
-                    path, line, rule.mark, f"{description}!"
-                )
+                yield FunctionViolation(path, line, rule.mark, description)
 
 
 class _SourceLocations:
@@ -2012,7 +2010,7 @@ def check_file(
         rule = "SYN-" + type(exc).__name__
         if not _is_ignored(rule, ignored):
             violations.append(
-                FunctionViolation(path, exc.lineno or 1, rule, exc.msg + "!")
+                FunctionViolation(path, exc.lineno or 1, rule, exc.msg)
             )
         return violations
     return list(issues.violations(path))

@@ -5,4 +5,4 @@ ignore = [
     "REQD-MIS",
     "REQD-MIS",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"

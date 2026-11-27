@@ -58,7 +58,7 @@ class TestReport(unittest.TestCase):
             )
             self.assertEqual(
                 style_checker.parse_args([]).outmsg,
-                "{file}:{line}:{rule}: {desc}",
+                "{file}:{line}:{rule}: {desc}!",
             )
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
@@ -69,4 +69,41 @@ class TestReport(unittest.TestCase):
             self.assertEqual(
                 output.getvalue().splitlines(),
                 ["LINE-TW/2", "REQD-MIS/2", "DEAD-NAME/10", "LINE-TW/10"] * 2,
+            )
+
+    def test_custom_punctuation(self: Self, /) -> None:
+        caught: Any
+        directory: str
+        expected: list[str]
+        output: io.StringIO
+        path: Path
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "example.py"
+            path.write_text("# before  \nbroken =\n", encoding="utf-8")
+            expected = [
+                "!LINE-TW: trailing whitespace on physical lines.",
+                "!SYN-SyntaxError: invalid syntax.",
+            ]
+            output = io.StringIO()
+            with (
+                contextlib.redirect_stdout(output),
+                self.assertRaises(ExceptionGroup) as caught,
+            ):
+                style_checker.run(str(path), outmsg="!{rule}: {desc}.")
+            self.assertEqual(output.getvalue().splitlines(), expected)
+            self.assertEqual(
+                [str(exc) for exc in caught.exception.exceptions], expected
+            )
+            output = io.StringIO()
+            with (
+                contextlib.redirect_stdout(output),
+                self.assertRaises(ExceptionGroup),
+            ):
+                style_checker.run(str(path))
+            self.assertEqual(
+                output.getvalue().splitlines(),
+                [
+                    f"{path}:1:LINE-TW: trailing whitespace on physical lines!",
+                    f"{path}:2:SYN-SyntaxError: invalid syntax!",
+                ],
             )

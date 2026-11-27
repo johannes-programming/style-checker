@@ -10,7 +10,7 @@ ans = [
 ]
 
 [whitespace_all_physical_line_types.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_all_physical_line_types.code]
 "example.py" = "__all__: list[str] = [\"f\"]  \r\n# comment	\r\n 	\r\ndef f() -> None:\r\n    print(\"hello \") \r\n    print(\"\"\"first  \r\n    second\r\n    \"\"\")\r\n# final comment "
@@ -23,7 +23,7 @@ ans = [
 ]
 
 [whitespace_class_and_decorator.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_class_and_decorator.code]
 "example.py" = "__all__: list[str] = [\"C\"]\n@(lambda cls: cls) \nclass C: \n    pass	\n"
@@ -34,7 +34,7 @@ ans = [
 ]
 
 [whitespace_empty_and_whitespace_only_files.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_empty_and_whitespace_only_files.code]
 "example.py" = ""
@@ -46,7 +46,7 @@ ans = [
 ]
 
 [whitespace_empty_and_whitespace_only_files_2.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_empty_and_whitespace_only_files_2.code]
 "example.py" = "\n"
@@ -60,7 +60,7 @@ ans = [
 ]
 
 [whitespace_empty_and_whitespace_only_files_3.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_empty_and_whitespace_only_files_3.code]
 "example.py" = " 	"
@@ -74,7 +74,7 @@ ans = [
 ]
 
 [whitespace_eof_violations_use_last_physical_line.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass"
@@ -87,7 +87,7 @@ ans = [
 ]
 
 [whitespace_eof_violations_use_last_physical_line_2.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line_2.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n"
@@ -101,7 +101,7 @@ ans = [
 ]
 
 [whitespace_eof_violations_use_last_physical_line_3.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line_3.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n\n"
@@ -115,7 +115,7 @@ ans = [
 ]
 
 [whitespace_eof_violations_use_last_physical_line_4.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line_4.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment"
@@ -129,7 +129,7 @@ ans = [
 ]
 
 [whitespace_eof_violations_use_last_physical_line_5.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line_5.code]
 "example.py" = "def f() -> None:\n    unused: int\n    pass\n# final comment\n\n"
@@ -141,7 +141,7 @@ ans = [
 ]
 
 [whitespace_eof_violations_use_last_physical_line_6.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line_6.code]
 "example.py" = "__all__: list[str] = []\nunused: int\n\n"
@@ -152,7 +152,7 @@ ans = [
 ]
 
 [whitespace_interior_blank_lines.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_interior_blank_lines.code]
 "example.py" = "\n__all__: list[str] = []\n\n 	\n\n# last\n"
@@ -161,7 +161,7 @@ outmsg = "{line}: {rule}: {desc}"
 ans = []
 
 [whitespace_line_breaks_and_eof.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_line_breaks_and_eof.code]
 "example.py" = "__all__: list[str] = []\n"
@@ -170,7 +170,7 @@ outmsg = "{line}: {rule}: {desc}"
 ans = []
 
 [whitespace_line_breaks_and_eof_2.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_line_breaks_and_eof_2.code]
 "example.py" = "__all__: list[str] = []\r\n"
@@ -179,7 +179,7 @@ outmsg = "{line}: {rule}: {desc}"
 ans = []
 
 [whitespace_line_breaks_and_eof_3.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_line_breaks_and_eof_3.code]
 "example.py" = "__all__: list[str] = []\r"
@@ -190,7 +190,7 @@ ans = [
 ]
 
 [whitespace_line_breaks_and_eof_4.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_line_breaks_and_eof_4.code]
 "example.py" = "__all__: list[str] = []"
@@ -202,7 +202,7 @@ ans = [
 ]
 
 [whitespace_line_breaks_and_eof_5.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_line_breaks_and_eof_5.code]
 "example.py" = "__all__: list[str] = []	"
@@ -216,7 +216,7 @@ ans = [
 ]
 
 [whitespace_multiple_rules_and_scopes_on_one_line.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_multiple_rules_and_scopes_on_one_line.code]
 "example.py" = "__all__: list[str] = [\"C\"]\nclass C:\n    def f(self): pass  \n"
@@ -230,7 +230,7 @@ ans = [
 ]
 
 [whitespace_trailing_blank_lines.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_trailing_blank_lines.code]
 "example.py" = "__all__: list[str] = []\n\n 	\f\n\n"
@@ -244,7 +244,7 @@ ans = [
 ]
 
 [whitespace_trailing_blank_lines_2.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_trailing_blank_lines_2.code]
 "example.py" = "__all__: list[str] = []\r\n\r\n 	\f\r\n\r\n"
@@ -258,7 +258,7 @@ ans = [
 ]
 
 [whitespace_trailing_blank_lines_3.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_trailing_blank_lines_3.code]
 "example.py" = "__all__: list[str] = []\r\r 	\f\r\r"
@@ -272,7 +272,7 @@ ans = [
 ]
 
 [whitespace_trailing_blank_lines_4.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_trailing_blank_lines_4.code]
 "example.py" = "__all__: list[str] = []\n\n 	"
@@ -284,7 +284,7 @@ ans = [
 ]
 
 [whitespace_trailing_whitespace_and_deep_indentation.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_trailing_whitespace_and_deep_indentation.code]
 "example.py" = "__all__: list[str] = []\nprint(\n        1  \n)  \n"
@@ -297,7 +297,7 @@ ans = [
 ]
 
 [whitespace_trailing_whitespace_and_deep_indentation_2.call]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_trailing_whitespace_and_deep_indentation_2.code]
 "example.py" = "__all__: list[str] = []\nprint(\n        1  \n)  \nif True:\n    pass\n"

@@ -402,8 +402,8 @@ This function is the CLI-rendering of ``run``.
 ``style_checker.parse_args(args: Iterable[str] | None = None) -> Namespace``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``style_checker.run(*include: str, exclude: Iterable[str] = (), ignore: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}:{rule}: {desc}") -> None``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``style_checker.run(*include: str, exclude: Iterable[str] = (), ignore: Iterable[str] = (), outfile: str = "-", outmsg: str = "{file}:{line}:{rule}: {desc}!") -> None``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``run`` checks Python source files and prints a diagnostic report.
 
@@ -438,14 +438,17 @@ suppress anything. Files are still checked, and file-reading errors are not
 suppressed.
 
 ``outmsg`` controls the format of **each diagnostic line**.
-It defaults to ``"{file}:{line}:{rule}: {desc}"``.
+It defaults to ``"{file}:{line}:{rule}: {desc}!"``.
 The supported substitution fields are:
 
 - ``{file}``: the filename containing the violation;
 - ``{line}``: the line number identifying the violation;
 - ``{rule}``: the case-sensitive rule mark; and
-- ``{desc}``: the rule description, including any relevant details, followed
-    by an exclamation mark. It does not include the rule mark.
+- ``{desc}``: the rule description, including any relevant details, without
+    an appended exclamation mark. It does not include the rule mark.
+
+The default format supplies the final exclamation mark. Custom formats can
+omit it, replace it or place it elsewhere.
 
 The checker produces **exactly one report line per distinct combination of
 file, physical line, and rule**. Repeated findings for the same combination
@@ -466,8 +469,8 @@ exempt from both rules. Whitespace-only lines elsewhere are unaffected by
 The checker also reports module-level violations (including invalid or missing
 ``__all__``) and syntax errors. For a syntax error, ``{rule}`` is
 ``"SYN-" + type(err).__name__`` (for example, ``SYN-SyntaxError``,
-``SYN-IndentationError`` or ``SYN-TabError``), and ``{desc}`` is ``err.msg + "!"``. Only style issues
-on physical lines strictly before the reported syntax-error line can be
+``SYN-IndentationError`` or ``SYN-TabError``), and ``{desc}`` is ``err.msg``.
+Only style issues on physical lines strictly before the reported syntax-error line can be
 reported for that file, even when the syntax error itself is ignored.
 Ignoring a full syntax rule mark matches that exact class, not its
 subclasses. Ignoring ``SYN`` matches the entire family. File-reading failures are propagated as exceptions.

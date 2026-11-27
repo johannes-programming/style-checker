@@ -1,4 +1,4 @@
 ignore = [
     "ALL-IMP",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"

@@ -52,7 +52,7 @@ class TestSyntaxErrors(unittest.TestCase):
                 self.assertEqual(exit_status, 1)
             self.assertEqual(
                 output.getvalue(),
-                "SYN-IndentationError: unexpected indent!\n",
+                "SYN-IndentationError: unexpected indent\n",
             )
 
 

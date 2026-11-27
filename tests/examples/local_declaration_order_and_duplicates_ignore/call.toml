@@ -3,4 +3,4 @@ ignore = [
     "REQD-ORD",
     "REQD-VAL",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"

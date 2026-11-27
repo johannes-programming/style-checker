@@ -1,4 +1,4 @@
 ignore = [
     "ALL-STR",
 ]
-outmsg = "{line}: {rule}: {desc}"
+outmsg = "{line}: {rule}: {desc}!"
