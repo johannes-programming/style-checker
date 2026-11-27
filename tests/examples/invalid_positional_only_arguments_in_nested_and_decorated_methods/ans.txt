@@ -7,7 +7,7 @@
 30: FUNC-POS: the first argument should be positional-only!
 33: FUNC-POS: the first argument should be positional-only!
 37: FUNC-POS: the first argument should be positional-only!
-40: FUNC-ARG: function parameters should have type annotations: 'self'!
+40: ANNO-PARA: function parameters should have type annotations: 'self'!
 40: FUNC-POS: the first argument should be positional-only!
 46: FUNC-POS: the first argument should be positional-only!
 50: FUNC-POS: the first argument should be positional-only!

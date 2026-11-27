@@ -1,1 +1,1 @@
-3: REQD-MIS: variables requiring declarations should be declared: 'key', 'value'!
+3: ANNO-MIS: variables requiring declarations should be declared: 'key', 'value'!

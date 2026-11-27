@@ -62,10 +62,10 @@ other rules are checked. Blank and comment-only lines are not used by a
 statement, header or decorator unless they occur within a multiline string.
 The body of a compound statement is not part of its header.
 
-Required Variable Declarations (``REQD``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Annotations (``ANNO``)
+~~~~~~~~~~~~~~~~~~~~~~
 
-``REQD-MIS``
+``ANNO-MIS``
 ^^^^^^^^^^^^
 
 Every variable assigned in a module's namespace must have a type annotation,
@@ -73,28 +73,25 @@ subject to the exemptions described below. A declaration is required whenever
 the variable is subject to these rules. A variable annotated with ``Final``
 requires no separate declaration.
 
-``REQD-VAL``
-^^^^^^^^^^^^
+``ANNO-BARE``
+^^^^^^^^^^^^^
 
 A declaration must not assign a value (for example, ``count: int``, not
 ``count: int = 0``). An annotation with ``Final`` is not a declaration
 and follows the separate rules below.
 
-``REQD-ORD``
-^^^^^^^^^^^^
+``ANNO-SORT``
+^^^^^^^^^^^^^
 
 Declarations must be listed in alphabetical order by variable name.
 
-``REQD-DUP``
-^^^^^^^^^^^^
+``ANNO-ONCE``
+^^^^^^^^^^^^^
 
 Each required declaration must occur exactly once.
 
-Names Exempt from Declarations (``EXEM``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``EXEM-IMP``
-^^^^^^^^^^^^
+``ANNO-PROH``
+^^^^^^^^^^^^^
 
 The declaration requirement does not apply to:
 
@@ -104,15 +101,9 @@ The declaration requirement does not apply to:
 
 These names must not have separate declarations.
 
-``EXEM-EX``
-^^^^^^^^^^^
-
 Temporary exception names introduced by ``except ... as ...``, which remain
 bound only for the duration of the exception handler, must not have separate
 declarations.
-
-``EXEM-UN``
-^^^^^^^^^^^
 
 A declaration for a variable that does not require one is an error.
 The declaration requirement does not apply to:
@@ -121,10 +112,7 @@ The declaration requirement does not apply to:
 * Each ``TypeVar`` and every similar construct, which is exempt from type
     annotation.
 
-Declaration Placement (``PLAC``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``PLAC-BEG``
+``ANNO-TOP``
 ^^^^^^^^^^^^
 
 A declaration must appear before the variable is used and in the declaration
@@ -140,8 +128,8 @@ Only the following may precede that block:
 * ``import`` statements.
 * A module's ``__all__`` definition, which follows the special rules below.
 
-Final Annotations (``FIN``)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``ANNO-FIN``
+^^^^^^^^^^^^
 
 An annotation with ``Final`` or ``Final[T]`` is not a declaration. It must
 not be included in the declaration block and need not be alphabetically
@@ -153,14 +141,8 @@ The checker recognizes ``Final`` imported from ``typing`` or
 applicable or an enclosing module or function namespace. This is static
 recognition of imports, not general type or name resolution.
 
-``FIN-VAL``
-^^^^^^^^^^^
-
 A ``Final`` annotation must assign a value in the same statement, for
 example, ``limit: Final[int] = 10`` or ``limit: Final = 10``.
-
-``FIN-PLAC``
-^^^^^^^^^^^^
 
 A ``Final`` annotation must be a direct statement in its module, function,
 async function or class body. It must not appear inside a suite that does not
@@ -184,21 +166,40 @@ For example:
         adjustment: Final = result + offset
         return adjustment
 
+``ANNO-ALL``
+^^^^^^^^^^^^
+
+``__all__`` must be annotated as ``list[str]``.
+
+``ANNO-PARA``
+^^^^^^^^^^^^^
+
+Every function parameter must have a type annotation, regardless of parameter kind.
+This includes the first parameter (such as ``self`` or ``cls``), as well
+as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
+Function parameters do not need separate declarations in the function body.
+
+``ANNO-RET``
+^^^^^^^^^^^^
+
+Every ``def`` and ``async def`` must have an explicit return type annotation,
+including methods, constructors, nested functions, generators, and functions
+with no return value (use ``-> None`` for the latter when appropriate).
+Lambda expressions are exempt because Python does not support return
+annotations on lambdas. The checker checks presence, not type correctness.
+A missing annotation is reported on the physical line of the signature's
+closing colon.
+
 The ``__all__`` Variable (``ALL``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The module-level ``__all__`` variable is exempt from the general declaration
-rules and must instead satisfy all of the following requirements.
+rules and must satisfy ``ANNO-ALL`` above and the following requirements.
 
 ``ALL-MIS``
 ^^^^^^^^^^^
 
 Every module must define ``__all__``, even if it is an empty list.
-
-``ALL-TYPE``
-^^^^^^^^^^^^
-
-``__all__`` must be annotated as ``list[str]``.
 
 ``ALL-LIST``
 ^^^^^^^^^^^^
@@ -231,14 +232,6 @@ Function Scopes and Parameters (``FUNC``)
 
 The general declaration rules also apply to variables in every ``def`` and
 ``async def`` body. The special rules for ``__all__`` apply only at module level.
-
-``FUNC-ARG``
-^^^^^^^^^^^^
-
-Every function parameter must have a type annotation, regardless of parameter kind.
-This includes the first parameter (such as ``self`` or ``cls``), as well
-as positional-only, keyword-only, ``*args``, and ``**kwargs`` parameters.
-Function parameters do not need separate declarations in the function body.
 
 ``FUNC-ASGN``
 ^^^^^^^^^^^^^
@@ -427,7 +420,8 @@ syntax errors. Unknown marks have no effect. With no ignore arguments, all
 findings are reported. On the command line, repeat ``--ignore=MARK`` to
 combine filters, for example::
 
-    python -m style_checker --ignore=LINE-TW --ignore=REQD-MIS example.py
+    python -m style_checker --ignore=LINE-TW --ignore=ANNO-MIS example.py
+    python -m style_checker --ignore=ANNO example.py
     python -m style_checker --ignore=LINE --ignore=SYN example.py
     python -m style_checker --ignore=SYN-IndentationError example.py
     python -m style_checker --ignore= example.py

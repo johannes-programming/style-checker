@@ -1,1 +1,1 @@
-1: ALL-TYPE: '__all__' should be annotated as 'list[str]'!
+1: ANNO-ALL: '__all__' should be annotated as 'list[str]'!

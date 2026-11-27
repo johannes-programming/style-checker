@@ -1,1 +1,2 @@
+4: ANNO-RET: functions should have return type annotations!
 9: DEAD-NAME: module names should be used or listed in '__all__': 'foo'!

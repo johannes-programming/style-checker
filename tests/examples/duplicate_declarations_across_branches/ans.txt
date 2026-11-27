@@ -1,4 +1,4 @@
-4: PLAC-BEG: declarations should appear at the beginning of the scope: 'value'!
-6: PLAC-BEG: declarations should appear at the beginning of the scope: 'value'!
-6: REQD-DUP: each declaration should occur only once: 'value'!
-7: REQD-MIS: variables requiring declarations should be declared: 'value'!
+4: ANNO-TOP: declarations should appear at the beginning of the scope: 'value'!
+6: ANNO-ONCE: each declaration should occur only once: 'value'!
+6: ANNO-TOP: declarations should appear at the beginning of the scope: 'value'!
+7: ANNO-MIS: variables requiring declarations should be declared: 'value'!

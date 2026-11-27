@@ -1,3 +1,4 @@
-7: PLAC-BEG: declarations should appear at the beginning of the scope: 'zebra'!
-8: REQD-MIS: variables requiring declarations should be declared: 'zebra'!
+4: ANNO-RET: functions should have return type annotations!
+7: ANNO-TOP: declarations should appear at the beginning of the scope: 'zebra'!
+8: ANNO-MIS: variables requiring declarations should be declared: 'zebra'!
 9: DEAD-NAME: module names should be used or listed in '__all__': 'bad_order'!

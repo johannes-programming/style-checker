@@ -1,5 +1,5 @@
 ignore = [
-    "PLAC-BEG",
-    "REQD-MIS",
+    "ANNO-TOP",
+    "ANNO-MIS",
 ]
 outmsg = "{line}: {rule}: {desc}!"

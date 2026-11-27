@@ -1,3 +1,6 @@
-14: REQD-MIS: variables requiring declarations should be declared: 'wrong'!
-16: REQD-MIS: variables requiring declarations should be declared: 'missing'!
+4: ANNO-RET: functions should have return type annotations!
+12: ANNO-RET: functions should have return type annotations!
+14: ANNO-MIS: variables requiring declarations should be declared: 'wrong'!
+16: ANNO-MIS: variables requiring declarations should be declared: 'missing'!
+20: ANNO-RET: functions should have return type annotations!
 26: DEAD-NAME: module names should be used or listed in '__all__': 'bad_order', 'good_example', 'missing_and_initialized'!

@@ -1,6 +1,6 @@
 ignore = [
-    "REQD-DUP",
-    "REQD-ORD",
-    "REQD-VAL",
+    "ANNO-ONCE",
+    "ANNO-SORT",
+    "ANNO-BARE",
 ]
 outmsg = "{line}: {rule}: {desc}!"

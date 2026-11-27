@@ -1,4 +1,4 @@
-6: REQD-MIS: variables requiring declarations should be declared: 'value'!
-6: REQD-VAL: declarations should not assign a value: 'value'!
-10: REQD-MIS: variables requiring declarations should be declared: 'other'!
-10: REQD-VAL: declarations should not assign a value: 'other'!
+6: ANNO-BARE: declarations should not assign a value: 'value'!
+6: ANNO-MIS: variables requiring declarations should be declared: 'value'!
+10: ANNO-BARE: declarations should not assign a value: 'other'!
+10: ANNO-MIS: variables requiring declarations should be declared: 'other'!

@@ -16,6 +16,7 @@ At module level and inside every ``def`` or ``async def``:
 * ``Final`` annotations are initialized in place, outside the declaration
     block and at the indentation level of their namespace (also in classes);
 * every function parameter must have a type annotation;
+* every function definition must have a return type annotation;
 * function parameters must not be reassigned;
 * undecorated methods and functions directly decorated by ``@classmethod``
     must have a positional-only first parameter.
@@ -77,7 +78,7 @@ class _Rule(Enum):
     ALL_IMP = "'__all__' should precede imports"
     ALL_MIS = "modules should define '__all__'"
     ALL_DUP = "'__all__' should be defined only once"
-    ALL_TYPE = "'__all__' should be annotated as 'list[str]'"
+    ANNO_ALL = "'__all__' should be annotated as 'list[str]'"
     ALL_LIST = "'__all__' should be assigned a list literal"
     ALL_STR = "'__all__' items should be string literals"
     ALL_ORD = "'__all__' items should be in alphabetical order"
@@ -87,22 +88,18 @@ class _Rule(Enum):
         "'collections.abc' rather than 'typing'"
     )
     DEAD_NAME = "module names should be used or listed in '__all__'"
-    FUNC_ARG = "function parameters should have type annotations"
+    ANNO_PARA = "function parameters should have type annotations"
+    ANNO_RET = "functions should have return type annotations"
     FUNC_ASGN = "parameters should not be reassigned"
     FUNC_KWOR = "keyword-only arguments should be in alphabetical order"
     FUNC_POS = "the first argument should be positional-only"
-    PLAC_BEG = "declarations should appear at the beginning of the scope"
-    FIN_PLAC = "Final annotations should be at namespace indentation level"
-    FIN_VAL = "Final annotations should assign a value"
-    REQD_ORD = "declarations should be in alphabetical order"
-    EXEM_IMP = (
-        "'def'/'class'/'import' names should not have separate declarations"
-    )
-    EXEM_EX = "'except' names should not have separate declarations"
-    REQD_DUP = "each declaration should occur only once"
-    REQD_MIS = "variables requiring declarations should be declared"
-    EXEM_UN = "unnecessary declarations should be omitted"
-    REQD_VAL = "declarations should not assign a value"
+    ANNO_TOP = "declarations should appear at the beginning of the scope"
+    ANNO_FIN = "Final annotations should assign a value at namespace indentation level"
+    ANNO_SORT = "declarations should be in alphabetical order"
+    ANNO_PROH = "prohibited declarations should be omitted"
+    ANNO_ONCE = "each declaration should occur only once"
+    ANNO_MIS = "variables requiring declarations should be declared"
+    ANNO_BARE = "declarations should not assign a value"
 
     @property
     def mark(self: Self, /) -> str:
@@ -273,6 +270,28 @@ class _SourceLocations:
     def parameter_end(self: Self, /, arg: ast.arg) -> int:
         return self.following(arg, {",", ")", "="})
 
+    def return_annotation_end(
+        self: Self,
+        /,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+    ) -> int:
+        # The missing annotation is established at the header's colon.
+        depth: int
+        index: int
+        start: int
+        token: tokenize.TokenInfo
+        depth = 0
+        start = bisect_left(self.positions, (node.lineno, node.col_offset))
+        for index in range(start, len(self.tokens)):
+            token = self.tokens[index]
+            if token.string in {"(", "[", "{"}:
+                depth += 1
+            elif token.string in {")", "]", "}"}:
+                depth -= 1
+            elif token.string == ":" and depth == 0:
+                return token.start[0]
+        return node.lineno
+
     def positional_only_end(
         self: Self,
         /,
@@ -429,7 +448,7 @@ def _check_module_all(
             line = locations.following(stmt.targets[0], {"="})
         else:
             line = stmt.lineno
-        issues.add(line, _Rule.ALL_TYPE)
+        issues.add(line, _Rule.ANNO_ALL)
     value = (
         stmt.value if isinstance(stmt, (ast.AnnAssign, ast.Assign)) else None
     )
@@ -1412,10 +1431,8 @@ def _check_finals(
             continue
         finals.add(id(statement))
         line = _declaration_line(statement, locations)
-        if id(statement) not in direct:
-            issues.add(line, _Rule.FIN_PLAC)
-        if statement.value is None:
-            issues.add(line, _Rule.FIN_VAL)
+        if id(statement) not in direct or statement.value is None:
+            issues.add(line, _Rule.ANNO_FIN)
     return finals, imports
 
 
@@ -1538,7 +1555,9 @@ def _check_scope(
             (locations.parameter_end(arg), arg.arg)
             for arg in _unannotated_parameters(node)
         )
-        issues.names(_Rule.FUNC_ARG, findings)
+        issues.names(_Rule.ANNO_PARA, findings)
+        if node.returns is None:
+            issues.add(locations.return_annotation_end(node), _Rule.ANNO_RET)
         greatest = ""
         for arg in args.kwonlyargs:
             if arg.arg < greatest:
@@ -1576,7 +1595,7 @@ def _check_scope(
         if id(statement) not in declaration_nodes
         and isinstance(statement.target, ast.Name)
     )
-    issues.names(_Rule.PLAC_BEG, findings)
+    issues.names(_Rule.ANNO_TOP, findings)
     greatest = ""
     declaration_lines = {}
     for statement in leading_decls:
@@ -1584,7 +1603,7 @@ def _check_scope(
         name = statement.target.id
         line = _declaration_line(statement, locations)
         if name < greatest:
-            issues.add(line, _Rule.REQD_ORD)
+            issues.add(line, _Rule.ANNO_SORT)
         greatest = max(greatest, name)
         _first_line(declaration_lines, name, line)
 
@@ -1592,12 +1611,12 @@ def _check_scope(
         (max(declaration_lines[name], facts.non_variable_lines[name]), name)
         for name in declared & facts.non_variable_bindings
     )
-    issues.names(_Rule.EXEM_IMP, findings)
+    issues.names(_Rule.ANNO_PROH, findings)
     findings = (
         (max(declaration_lines[name], facts.exception_lines[name]), name)
         for name in declared & facts.exception_bindings
     )
-    issues.names(_Rule.EXEM_EX, findings)
+    issues.names(_Rule.ANNO_PROH, findings)
 
     seen = set()
     duplicates = []
@@ -1609,7 +1628,7 @@ def _check_scope(
         if name in seen:
             duplicates.append((_declaration_line(statement, locations), name))
         seen.add(name)
-    issues.names(_Rule.REQD_DUP, iter(duplicates))
+    issues.names(_Rule.ANNO_ONCE, iter(duplicates))
 
     binding_lines = facts.binding_lines.copy()
     for name, line in external_assignments.items():
@@ -1618,7 +1637,7 @@ def _check_scope(
         (binding_lines[name], name)
         for name in locals_that_need_declarations - declared
     )
-    issues.names(_Rule.REQD_MIS, findings)
+    issues.names(_Rule.ANNO_MIS, findings)
     unnecessary = (
         declared
         - locals_that_need_declarations
@@ -1635,7 +1654,7 @@ def _check_scope(
         else:
             line = scope_end
         unnecessary_lines.append((line, name))
-    issues.names(_Rule.EXEM_UN, iter(unnecessary_lines))
+    issues.names(_Rule.ANNO_PROH, iter(unnecessary_lines))
 
     # Explicitly reject annotation-with-assignment anywhere in the function
     # body when its target is a simple local name.
@@ -1646,7 +1665,7 @@ def _check_scope(
         and statement.value is not None
         and statement.target.id not in exempt
     )
-    issues.names(_Rule.REQD_VAL, findings)
+    issues.names(_Rule.ANNO_BARE, findings)
 
 
 def _external_assignments(

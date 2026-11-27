@@ -1,5 +1,5 @@
 ignore = [
     "DEAD-NAME",
-    "REQD-MIS",
+    "ANNO-MIS",
 ]
 outmsg = "{line}: {rule}: {desc}!"

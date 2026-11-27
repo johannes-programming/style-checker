@@ -1,6 +1,6 @@
-5: REQD-MIS: variables requiring declarations should be declared: 'first'!
-6: REQD-MIS: variables requiring declarations should be declared: 'remaining'!
-7: REQD-MIS: variables requiring declarations should be declared: 'whole'!
-11: REQD-MIS: variables requiring declarations should be declared: 'value'!
-13: REQD-MIS: variables requiring declarations should be declared: 'rest'!
-16: REQD-MIS: variables requiring declarations should be declared: 'imag', 'real'!
+5: ANNO-MIS: variables requiring declarations should be declared: 'first'!
+6: ANNO-MIS: variables requiring declarations should be declared: 'remaining'!
+7: ANNO-MIS: variables requiring declarations should be declared: 'whole'!
+11: ANNO-MIS: variables requiring declarations should be declared: 'value'!
+13: ANNO-MIS: variables requiring declarations should be declared: 'rest'!
+16: ANNO-MIS: variables requiring declarations should be declared: 'imag', 'real'!

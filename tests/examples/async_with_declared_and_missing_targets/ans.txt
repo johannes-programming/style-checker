@@ -1,1 +1,1 @@
-4: REQD-MIS: variables requiring declarations should be declared: 'second'!
+4: ANNO-MIS: variables requiring declarations should be declared: 'second'!

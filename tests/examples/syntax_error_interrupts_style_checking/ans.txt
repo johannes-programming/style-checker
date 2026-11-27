@@ -1,2 +1,2 @@
-2: REQD-MIS: variables requiring declarations should be declared: 'value'!
+2: ANNO-MIS: variables requiring declarations should be declared: 'value'!
 4: SYN-SyntaxError: invalid syntax!

@@ -42,7 +42,7 @@ class TestIgnore(unittest.TestCase):
             ):
                 style_checker.run(
                     *files,
-                    ignore=(mark for mark in ("LINE-TW", "REQD-MIS")),
+                    ignore=(mark for mark in ("LINE-TW", "ANNO-MIS")),
                     outmsg="{desc}",
                 )
             self.assertEqual(
@@ -53,7 +53,7 @@ class TestIgnore(unittest.TestCase):
             output = io.StringIO()
             args = [
                 "--ignore=LINE-TW",
-                "--ignore=REQD-MIS",
+                "--ignore=ANNO-MIS",
                 "--ignore=DEAD-NAME",
                 *files,
             ]
@@ -61,18 +61,18 @@ class TestIgnore(unittest.TestCase):
                 exit_status = style_checker.main(args)
                 self.assertEqual(exit_status, 0)
             self.assertEqual(output.getvalue(), "")
-            args = ["--ignore=LINE-TW", "--ignore=REQD-MIS"]
+            args = ["--ignore=LINE-TW", "--ignore=ANNO-MIS"]
             parsed_ignore = style_checker.parse_args(args).ignore
-            self.assertEqual(parsed_ignore, ["LINE-TW", "REQD-MIS"])
+            self.assertEqual(parsed_ignore, ["LINE-TW", "ANNO-MIS"])
             output = io.StringIO()
             args = ["--ignore=UNKNOWN", "--outmsg={desc}", files[0]]
             with contextlib.redirect_stdout(output):
                 self.assertEqual(style_checker.main(args), 1)
             self.assertEqual(
                 output.getvalue(),
+                "variables requiring declarations should be declared: 'x'\n"
                 "module names should be used or listed in '__all__': 'x'\n"
-                "physical lines should not end with trailing whitespace\n"
-                "variables requiring declarations should be declared: 'x'\n",
+                "physical lines should not end with trailing whitespace\n",
             )
 
     def test_empty_ignore_outfile_and_next_file(self: Self, /) -> None:

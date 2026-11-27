@@ -2,7 +2,7 @@ ignore = [
     "UNKNOWN",
     "tw",
     "Dead",
-    "REQD-MIS",
-    "REQD-MIS",
+    "ANNO-MIS",
+    "ANNO-MIS",
 ]
 outmsg = "{line}: {rule}: {desc}!"

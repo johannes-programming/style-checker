@@ -1,1 +1,1 @@
-9: EXEM-EX: 'except' names should not have separate declarations: 'error'!
+9: ANNO-PROH: prohibited declarations should be omitted: 'error'!

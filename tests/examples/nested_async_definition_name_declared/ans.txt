@@ -1,1 +1,1 @@
-4: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'worker'!
+4: ANNO-PROH: prohibited declarations should be omitted: 'worker'!

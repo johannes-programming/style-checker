@@ -1,2 +1,2 @@
-5: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'Helper'!
-7: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'helper'!
+5: ANNO-PROH: prohibited declarations should be omitted: 'Helper'!
+7: ANNO-PROH: prohibited declarations should be omitted: 'helper'!

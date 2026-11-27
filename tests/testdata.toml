@@ -68,8 +68,8 @@ outmsg = "{line}: {rule}: {desc}!"
 [whitespace_eof_violations_use_last_physical_line]
 ans = [
     "3: ALL-MIS: modules should define '__all__'!",
+    "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
     "3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "3: EXEM-UN: unnecessary declarations should be omitted: 'unused'!",
     "3: LINE-NL: nonempty files should end with a linebreak!",
 ]
 
@@ -82,8 +82,8 @@ outmsg = "{line}: {rule}: {desc}!"
 [whitespace_eof_violations_use_last_physical_line_2]
 ans = [
     "3: ALL-MIS: modules should define '__all__'!",
+    "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
     "3: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "3: EXEM-UN: unnecessary declarations should be omitted: 'unused'!",
 ]
 
 [whitespace_eof_violations_use_last_physical_line_2.call]
@@ -95,8 +95,8 @@ outmsg = "{line}: {rule}: {desc}!"
 [whitespace_eof_violations_use_last_physical_line_3]
 ans = [
     "4: ALL-MIS: modules should define '__all__'!",
+    "4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
     "4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "4: EXEM-UN: unnecessary declarations should be omitted: 'unused'!",
     "4: LINE-BL: files should not end with whitespace-only lines!",
 ]
 
@@ -109,8 +109,8 @@ outmsg = "{line}: {rule}: {desc}!"
 [whitespace_eof_violations_use_last_physical_line_4]
 ans = [
     "4: ALL-MIS: modules should define '__all__'!",
+    "4: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
     "4: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "4: EXEM-UN: unnecessary declarations should be omitted: 'unused'!",
     "4: LINE-NL: nonempty files should end with a linebreak!",
 ]
 
@@ -123,8 +123,8 @@ outmsg = "{line}: {rule}: {desc}!"
 [whitespace_eof_violations_use_last_physical_line_5]
 ans = [
     "5: ALL-MIS: modules should define '__all__'!",
+    "5: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
     "5: DEAD-NAME: module names should be used or listed in '__all__': 'f'!",
-    "5: EXEM-UN: unnecessary declarations should be omitted: 'unused'!",
     "5: LINE-BL: files should not end with whitespace-only lines!",
 ]
 
@@ -136,7 +136,7 @@ outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_eof_violations_use_last_physical_line_6]
 ans = [
-    "3: EXEM-UN: unnecessary declarations should be omitted: 'unused'!",
+    "3: ANNO-PROH: prohibited declarations should be omitted: 'unused'!",
     "3: LINE-BL: files should not end with whitespace-only lines!",
 ]
 
@@ -209,7 +209,8 @@ outmsg = "{line}: {rule}: {desc}!"
 
 [whitespace_multiple_rules_and_scopes_on_one_line]
 ans = [
-    "3: FUNC-ARG: function parameters should have type annotations: 'self'!",
+    "3: ANNO-PARA: function parameters should have type annotations: 'self'!",
+    "3: ANNO-RET: functions should have return type annotations!",
     "3: FUNC-POS: the first argument should be positional-only!",
     "3: LINE-TW: physical lines should not end with trailing whitespace!",
     "3: STMT-BEG: simple statements should start at the beginning of a physical line!",

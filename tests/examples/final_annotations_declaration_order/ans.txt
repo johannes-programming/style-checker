@@ -1,5 +1,5 @@
-6: PLAC-BEG: declarations should appear at the beginning of the scope: 'ordinary'!
-7: REQD-MIS: variables requiring declarations should be declared: 'ordinary'!
-14: PLAC-BEG: declarations should appear at the beginning of the scope: 'late'!
-15: REQD-MIS: variables requiring declarations should be declared: 'late'!
-16: EXEM-UN: unnecessary declarations should be omitted: 'redundant'!
+6: ANNO-TOP: declarations should appear at the beginning of the scope: 'ordinary'!
+7: ANNO-MIS: variables requiring declarations should be declared: 'ordinary'!
+14: ANNO-TOP: declarations should appear at the beginning of the scope: 'late'!
+15: ANNO-MIS: variables requiring declarations should be declared: 'late'!
+16: ANNO-PROH: prohibited declarations should be omitted: 'redundant'!

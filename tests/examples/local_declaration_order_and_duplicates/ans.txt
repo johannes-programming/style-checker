@@ -1,7 +1,10 @@
-6: REQD-ORD: declarations should be in alphabetical order!
-14: REQD-MIS: variables requiring declarations should be declared: 'wrong'!
-14: REQD-VAL: declarations should not assign a value: 'wrong'!
-16: REQD-MIS: variables requiring declarations should be declared: 'missing'!
-23: REQD-DUP: each declaration should occur only once: 'alpha'!
-23: REQD-ORD: declarations should be in alphabetical order!
+4: ANNO-RET: functions should have return type annotations!
+6: ANNO-SORT: declarations should be in alphabetical order!
+12: ANNO-RET: functions should have return type annotations!
+14: ANNO-BARE: declarations should not assign a value: 'wrong'!
+14: ANNO-MIS: variables requiring declarations should be declared: 'wrong'!
+16: ANNO-MIS: variables requiring declarations should be declared: 'missing'!
+20: ANNO-RET: functions should have return type annotations!
+23: ANNO-ONCE: each declaration should occur only once: 'alpha'!
+23: ANNO-SORT: declarations should be in alphabetical order!
 26: DEAD-NAME: module names should be used or listed in '__all__': 'bad_order', 'good_example', 'missing_and_initialized'!

@@ -1,2 +1,2 @@
-4: REQD-MIS: variables requiring declarations should be declared: 'accepted'!
-7: REQD-MIS: variables requiring declarations should be declared: 'rejected'!
+4: ANNO-MIS: variables requiring declarations should be declared: 'accepted'!
+7: ANNO-MIS: variables requiring declarations should be declared: 'rejected'!

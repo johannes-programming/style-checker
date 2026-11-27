@@ -39,8 +39,8 @@ class TestReport(unittest.TestCase):
             relative = os.path.relpath(late)
             expected = []
             messages = [
+                "2:ANNO-MIS: variables requiring declarations should be declared: 'x'!",
                 "2:LINE-TW: physical lines should not end with trailing whitespace!",
-                "2:REQD-MIS: variables requiring declarations should be declared: 'x'!",
                 "10:DEAD-NAME: module names should be used or listed in '__all__': 'x'!",
                 "10:LINE-TW: physical lines should not end with trailing whitespace!",
             ]
@@ -68,7 +68,7 @@ class TestReport(unittest.TestCase):
                 self.assertEqual(exit_status, 1)
             self.assertEqual(
                 output.getvalue().splitlines(),
-                ["LINE-TW/2", "REQD-MIS/2", "DEAD-NAME/10", "LINE-TW/10"] * 2,
+                ["ANNO-MIS/2", "LINE-TW/2", "DEAD-NAME/10", "LINE-TW/10"] * 2,
             )
 
     def test_custom_punctuation(self: Self, /) -> None:

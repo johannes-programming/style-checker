@@ -1,2 +1,5 @@
-6: REQD-ORD: declarations should be in alphabetical order!
-14: REQD-VAL: declarations should not assign a value: 'wrong'!
+4: ANNO-RET: functions should have return type annotations!
+6: ANNO-SORT: declarations should be in alphabetical order!
+12: ANNO-RET: functions should have return type annotations!
+14: ANNO-BARE: declarations should not assign a value: 'wrong'!
+20: ANNO-RET: functions should have return type annotations!

@@ -1,2 +1,2 @@
-8: EXEM-IMP: 'def'/'class'/'import' names should not have separate declarations: 'deque'!
+8: ANNO-PROH: prohibited declarations should be omitted: 'deque'!
 10: DEAD-NAME: module names should be used or listed in '__all__': 'example'!

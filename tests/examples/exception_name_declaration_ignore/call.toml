@@ -1,4 +1,4 @@
 ignore = [
-    "EXEM-EX",
+    "ANNO-PROH",
 ]
 outmsg = "{line}: {rule}: {desc}!"

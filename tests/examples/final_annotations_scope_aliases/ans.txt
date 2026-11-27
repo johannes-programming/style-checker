@@ -1,4 +1,4 @@
-18: REQD-MIS: variables requiring declarations should be declared: 'local'!
-18: REQD-VAL: declarations should not assign a value: 'local'!
-24: REQD-MIS: variables requiring declarations should be declared: 'value'!
-24: REQD-VAL: declarations should not assign a value: 'value'!
+18: ANNO-BARE: declarations should not assign a value: 'local'!
+18: ANNO-MIS: variables requiring declarations should be declared: 'local'!
+24: ANNO-BARE: declarations should not assign a value: 'value'!
+24: ANNO-MIS: variables requiring declarations should be declared: 'value'!
