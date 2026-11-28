@@ -1,4 +1,4 @@
 ignore = [
-    "TYPE-PARA",
+    "TYPE-PRMS",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

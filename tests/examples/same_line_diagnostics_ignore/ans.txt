@@ -1,2 +1,2 @@
 2: ALL-DEAD: unused module names should be listed in '__all__': 'x'!
-2: TYPE-MIS: variables requiring declarations should be declared: 'x'!
+2: TYPE-VARS: variables requiring declarations should be declared: 'x'!

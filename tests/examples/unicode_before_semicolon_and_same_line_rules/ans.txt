@@ -1,3 +1,3 @@
 3: LINE-STMT: simple statements should start at the beginning of a physical line!
 3: SYM-SEMI: semicolons should not be used!
-3: TYPE-MIS: variables requiring declarations should be declared: 'apple', 'zebra', 'é'!
+3: TYPE-VARS: variables requiring declarations should be declared: 'apple', 'zebra', 'é'!

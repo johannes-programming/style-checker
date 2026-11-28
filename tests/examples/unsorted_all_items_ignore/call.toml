@@ -1,4 +1,4 @@
 ignore = [
-    "ALL-ORD",
+    "ALL-SORT",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

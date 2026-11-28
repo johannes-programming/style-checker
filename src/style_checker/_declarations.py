@@ -77,20 +77,19 @@ class _Rule(Enum):
     LINE_STMT = (
         "simple statements should start at the beginning of a physical line"
     )
-    ALL_IMP = "'__all__' should precede imports"
-    ALL_MIS = "modules should define '__all__'"
-    ALL_DUP = "'__all__' should be defined only once"
+    ALL_TOP = "'__all__' should precede imports"
+    ALL_ONCE = "'__all__' should be defined exactly once"
     TYPE_ALL = "'__all__' should be annotated as 'list[str]'"
     ALL_LIST = "'__all__' should be assigned a list literal"
     ALL_STR = "'__all__' items should be string literals"
-    ALL_ORD = "'__all__' items should be in alphabetical order"
+    ALL_SORT = "'__all__' items should be in alphabetical order"
     SYM_WILD = "wildcard imports should not be used"
     SYM_SEMI = "semicolons should not be used"
     TYPE_UPDT = "annotations should use modern alternatives to typing aliases"
     TYPE_NONE = "None should be the last member of a union annotation"
     TYPE_BRKT = "annotations should not contain unnecessary parentheses"
     ALL_DEAD = "unused module names should be listed in '__all__'"
-    TYPE_PARA = "function parameters should have type annotations"
+    TYPE_PRMS = "function parameters should have type annotations"
     TYPE_RET = "functions should have return type annotations"
     DEF_RPLC = "parameters should not be reassigned"
     DEF_SORT = "keyword-only arguments should be in alphabetical order"
@@ -103,7 +102,7 @@ class _Rule(Enum):
     TYPE_SORT = "declarations should be in alphabetical order"
     TYPE_PROH = "prohibited declarations should be omitted"
     TYPE_ONCE = "each declaration should occur only once"
-    TYPE_MIS = "variables requiring declarations should be declared"
+    TYPE_VARS = "variables requiring declarations should be declared"
     TYPE_BARE = "declarations should not assign a value"
 
     @property
@@ -442,14 +441,14 @@ def _check_module_all(
                 if locations.tokens[i].string == "from"
             )
             line = next(indices, line)
-        issues.add(line, _Rule.ALL_IMP)
+        issues.add(line, _Rule.ALL_TOP)
         break
     if not matches:
-        issues.add(locations.last_line, _Rule.ALL_MIS)
+        issues.add(locations.last_line, _Rule.ALL_ONCE)
         return
     _, stmt = matches[0]
     for _, repeated in matches[1:]:
-        issues.add(repeated.lineno, _Rule.ALL_DUP)
+        issues.add(repeated.lineno, _Rule.ALL_ONCE)
 
     if not (
         isinstance(stmt, ast.AnnAssign)
@@ -485,7 +484,7 @@ def _check_module_all(
         ):
             issues.add(line, _Rule.ALL_STR)
         elif greatest is not None and item.value < greatest:
-            issues.add(line, _Rule.ALL_ORD)
+            issues.add(line, _Rule.ALL_SORT)
         else:
             greatest = item.value
 
@@ -1557,7 +1556,7 @@ def _check_scope(
             (locations.parameter_end(arg), arg.arg)
             for arg in _unannotated_parameters(node)
         )
-        issues.names(_Rule.TYPE_PARA, findings)
+        issues.names(_Rule.TYPE_PRMS, findings)
         if node.returns is None:
             issues.add(locations.return_annotation_end(node), _Rule.TYPE_RET)
         greatest = ""
@@ -1639,7 +1638,7 @@ def _check_scope(
         (binding_lines[name], name)
         for name in locals_that_need_declarations - declared
     )
-    issues.names(_Rule.TYPE_MIS, findings)
+    issues.names(_Rule.TYPE_VARS, findings)
     unnecessary = (
         declared
         - locals_that_need_declarations

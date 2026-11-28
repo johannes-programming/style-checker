@@ -1,1 +1,1 @@
-2: ALL-DUP: '__all__' should be defined only once!
+2: ALL-ONCE: '__all__' should be defined exactly once!

@@ -1,2 +1,2 @@
-13: TYPE-MIS: variables requiring declarations should be declared: 'source'!
-14: TYPE-MIS: variables requiring declarations should be declared: 'tree'!
+13: TYPE-VARS: variables requiring declarations should be declared: 'source'!
+14: TYPE-VARS: variables requiring declarations should be declared: 'tree'!

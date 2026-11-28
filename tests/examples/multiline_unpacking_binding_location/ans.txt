@@ -1,1 +1,1 @@
-6: TYPE-MIS: variables requiring declarations should be declared: 'left', 'right'!
+6: TYPE-VARS: variables requiring declarations should be declared: 'left', 'right'!

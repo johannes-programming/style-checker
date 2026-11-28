@@ -1,3 +1,3 @@
-2: TYPE-MIS: variables requiring declarations should be declared: 'first'!
-2: TYPE-MIS: variables requiring declarations should be declared: 'middle'!
-2: TYPE-MIS: variables requiring declarations should be declared: 'last'!
+2: TYPE-VARS: variables requiring declarations should be declared: 'first'!
+2: TYPE-VARS: variables requiring declarations should be declared: 'middle'!
+2: TYPE-VARS: variables requiring declarations should be declared: 'last'!

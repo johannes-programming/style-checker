@@ -1,1 +1,1 @@
-2: TYPE-PARA: function parameters should have type annotations: 'apple', 'kwargs', 'middle', 'option', 'rest', 'zebra'!
+2: TYPE-PRMS: function parameters should have type annotations: 'apple', 'kwargs', 'middle', 'option', 'rest', 'zebra'!

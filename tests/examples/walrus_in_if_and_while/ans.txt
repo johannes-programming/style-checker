@@ -1,2 +1,2 @@
-3: TYPE-MIS: variables requiring declarations should be declared: 'found'!
-5: TYPE-MIS: variables requiring declarations should be declared: 'remaining'!
+3: TYPE-VARS: variables requiring declarations should be declared: 'found'!
+5: TYPE-VARS: variables requiring declarations should be declared: 'remaining'!

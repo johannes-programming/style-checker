@@ -1,2 +1,2 @@
-4: TYPE-MIS: variables requiring declarations should be declared: 'accepted'!
-7: TYPE-MIS: variables requiring declarations should be declared: 'rejected'!
+4: TYPE-VARS: variables requiring declarations should be declared: 'accepted'!
+7: TYPE-VARS: variables requiring declarations should be declared: 'rejected'!

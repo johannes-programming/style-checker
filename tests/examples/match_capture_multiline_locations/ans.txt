@@ -1,6 +1,6 @@
-5: TYPE-MIS: variables requiring declarations should be declared: 'first'!
-6: TYPE-MIS: variables requiring declarations should be declared: 'remaining'!
-7: TYPE-MIS: variables requiring declarations should be declared: 'whole'!
-11: TYPE-MIS: variables requiring declarations should be declared: 'value'!
-13: TYPE-MIS: variables requiring declarations should be declared: 'rest'!
-16: TYPE-MIS: variables requiring declarations should be declared: 'imag', 'real'!
+5: TYPE-VARS: variables requiring declarations should be declared: 'first'!
+6: TYPE-VARS: variables requiring declarations should be declared: 'remaining'!
+7: TYPE-VARS: variables requiring declarations should be declared: 'whole'!
+11: TYPE-VARS: variables requiring declarations should be declared: 'value'!
+13: TYPE-VARS: variables requiring declarations should be declared: 'rest'!
+16: TYPE-VARS: variables requiring declarations should be declared: 'imag', 'real'!

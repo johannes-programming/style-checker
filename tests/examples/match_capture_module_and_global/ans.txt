@@ -1,3 +1,3 @@
-3: TYPE-MIS: variables requiring declarations should be declared: 'unused'!
-8: TYPE-MIS: variables requiring declarations should be declared: 'global_capture'!
+3: TYPE-VARS: variables requiring declarations should be declared: 'unused'!
+8: TYPE-VARS: variables requiring declarations should be declared: 'global_capture'!
 9: ALL-DEAD: unused module names should be listed in '__all__': 'unused'!

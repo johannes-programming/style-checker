@@ -1,2 +1,2 @@
-1: ALL-IMP: '__all__' should precede imports!
+1: ALL-TOP: '__all__' should precede imports!
 3: ALL-STR: '__all__' items should be string literals!

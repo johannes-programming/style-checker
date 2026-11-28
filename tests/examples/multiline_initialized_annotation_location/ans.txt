@@ -1,2 +1,2 @@
 5: TYPE-BARE: declarations should not assign a value: 'value'!
-5: TYPE-MIS: variables requiring declarations should be declared: 'value'!
+5: TYPE-VARS: variables requiring declarations should be declared: 'value'!

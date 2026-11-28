@@ -1,1 +1,1 @@
-1: ALL-ORD: '__all__' items should be in alphabetical order!
+1: ALL-SORT: '__all__' items should be in alphabetical order!

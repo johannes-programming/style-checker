@@ -42,7 +42,7 @@ class TestIgnore(unittest.TestCase):
             ):
                 style_checker.run(
                     *files,
-                    ignore=(mark for mark in ("LINE-TW", "TYPE-MIS")),
+                    ignore=(mark for mark in ("LINE-TW", "TYPE-VARS")),
                     outmsg="{desc}\n",
                 )
             self.assertEqual(
@@ -52,7 +52,7 @@ class TestIgnore(unittest.TestCase):
             output = io.StringIO()
             args = [
                 "--ignore=LINE-TW",
-                "--ignore=TYPE-MIS",
+                "--ignore=TYPE-VARS",
                 "--ignore=ALL-DEAD",
                 *files,
             ]
@@ -60,9 +60,9 @@ class TestIgnore(unittest.TestCase):
                 exit_status = style_checker.main(args)
                 self.assertEqual(exit_status, 0)
             self.assertEqual(output.getvalue(), "")
-            args = ["--ignore=LINE-TW", "--ignore=TYPE-MIS"]
+            args = ["--ignore=LINE-TW", "--ignore=TYPE-VARS"]
             parsed_ignore = style_checker.parse_args(args).ignore
-            self.assertEqual(parsed_ignore, ["LINE-TW", "TYPE-MIS"])
+            self.assertEqual(parsed_ignore, ["LINE-TW", "TYPE-VARS"])
             output = io.StringIO()
             args = ["--ignore=UNKNOWN", "--outmsg={desc}\n", files[0]]
             with contextlib.redirect_stdout(output):

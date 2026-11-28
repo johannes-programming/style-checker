@@ -62,8 +62,8 @@ The body of a compound statement is not part of its header.
 Annotations (``TYPE``)
 ~~~~~~~~~~~~~~~~~~~~~~
 
-``"TYPE-MIS"``
-^^^^^^^^^^^^^^
+``"TYPE-VARS"``
+^^^^^^^^^^^^^^^
 
 Every variable assigned in a module's namespace must have a type annotation,
 subject to the exemptions described below. A declaration is required whenever
@@ -168,7 +168,7 @@ For example:
 
 ``__all__`` must be annotated as ``list[str]``.
 
-``"TYPE-PARA"``
+``"TYPE-PRMS"``
 ^^^^^^^^^^^^^^^
 
 Every function parameter must have a type annotation, regardless of parameter kind.
@@ -262,10 +262,12 @@ The ``__all__`` Variable (``ALL``)
 The module-level ``__all__`` variable is exempt from the general declaration
 rules and must satisfy ``TYPE-ALL`` above and the following requirements.
 
-``"ALL-MIS"``
-^^^^^^^^^^^^^
+``"ALL-ONCE"``
+^^^^^^^^^^^^^^
 
-Every module must define ``__all__``, even if it is an empty list.
+Every module must define ``__all__`` exactly once, even if it is an empty list.
+A missing definition is reported at the end of the module; each repeated
+definition is reported on its own line.
 
 ``"ALL-LIST"``
 ^^^^^^^^^^^^^^
@@ -277,21 +279,16 @@ Every module must define ``__all__``, even if it is an empty list.
 
 The elements of ``__all__`` must be string literals.
 
-``"ALL-ORD"``
-^^^^^^^^^^^^^
+``"ALL-SORT"``
+^^^^^^^^^^^^^^
 
 The elements of ``__all__`` must be in alphabetical order.
 
-``"ALL-IMP"``
+``"ALL-TOP"``
 ^^^^^^^^^^^^^
 
 The definition of ``__all__`` must precede all imports except
 ``from __future__`` imports.
-
-``"ALL-DUP"``
-^^^^^^^^^^^^^
-
-``__all__`` must be defined only once.
 
 ``"ALL-DEAD"``
 ^^^^^^^^^^^^^^
@@ -478,7 +475,7 @@ syntax errors. Unknown marks have no effect. With no ignore arguments, all
 findings are reported. On the command line, repeat ``--ignore=MARK`` to
 combine filters, for example::
 
-    python -m style_checker --ignore=LINE-TW --ignore=TYPE-MIS example.py
+    python -m style_checker --ignore=LINE-TW --ignore=TYPE-VARS example.py
     python -m style_checker --ignore=TYPE example.py
     python -m style_checker --ignore=LINE --ignore=SYN example.py
     python -m style_checker --ignore=SYN-IndentationError example.py

@@ -1,2 +1,2 @@
-1: ALL-IMP: '__all__' should precede imports!
-2: ALL-MIS: modules should define '__all__'!
+1: ALL-TOP: '__all__' should precede imports!
+2: ALL-ONCE: '__all__' should be defined exactly once!

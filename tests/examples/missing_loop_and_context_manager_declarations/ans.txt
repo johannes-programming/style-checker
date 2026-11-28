@@ -1,4 +1,4 @@
-7: TYPE-MIS: variables requiring declarations should be declared: 'file'!
-17: TYPE-MIS: variables requiring declarations should be declared: 'line'!
-28: TYPE-MIS: variables requiring declarations should be declared: 'stream'!
+7: TYPE-VARS: variables requiring declarations should be declared: 'file'!
+17: TYPE-VARS: variables requiring declarations should be declared: 'line'!
+28: TYPE-VARS: variables requiring declarations should be declared: 'stream'!
 33: ALL-DEAD: unused module names should be listed in '__all__': 'bar', 'baz', 'foo'!

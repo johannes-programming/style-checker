@@ -1,2 +1,2 @@
 5: TYPE-TOP: declarations should appear at the beginning of the scope: 'second'!
-7: TYPE-MIS: variables requiring declarations should be declared: 'second'!
+7: TYPE-VARS: variables requiring declarations should be declared: 'second'!

@@ -1,4 +1,4 @@
 ignore = [
-    "ALL-IMP",
+    "ALL-TOP",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

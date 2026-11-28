@@ -1,1 +1,1 @@
-4: TYPE-MIS: variables requiring declarations should be declared: 'second'!
+4: TYPE-VARS: variables requiring declarations should be declared: 'second'!

@@ -1,2 +1,2 @@
 3: TYPE-TOP: declarations should appear at the beginning of the scope: 'alpha'!
-4: TYPE-MIS: variables requiring declarations should be declared: 'alpha'!
+4: TYPE-VARS: variables requiring declarations should be declared: 'alpha'!

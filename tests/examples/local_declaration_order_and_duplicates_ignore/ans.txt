@@ -1,6 +1,6 @@
 4: TYPE-RET: functions should have return type annotations!
 12: TYPE-RET: functions should have return type annotations!
-14: TYPE-MIS: variables requiring declarations should be declared: 'wrong'!
-16: TYPE-MIS: variables requiring declarations should be declared: 'missing'!
+14: TYPE-VARS: variables requiring declarations should be declared: 'wrong'!
+16: TYPE-VARS: variables requiring declarations should be declared: 'missing'!
 20: TYPE-RET: functions should have return type annotations!
 26: ALL-DEAD: unused module names should be listed in '__all__': 'bad_order', 'good_example', 'missing_and_initialized'!

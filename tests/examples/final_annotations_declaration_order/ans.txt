@@ -1,5 +1,5 @@
 6: TYPE-TOP: declarations should appear at the beginning of the scope: 'ordinary'!
-7: TYPE-MIS: variables requiring declarations should be declared: 'ordinary'!
+7: TYPE-VARS: variables requiring declarations should be declared: 'ordinary'!
 14: TYPE-TOP: declarations should appear at the beginning of the scope: 'late'!
-15: TYPE-MIS: variables requiring declarations should be declared: 'late'!
+15: TYPE-VARS: variables requiring declarations should be declared: 'late'!
 16: TYPE-PROH: prohibited declarations should be omitted: 'redundant'!

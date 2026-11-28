@@ -11,4 +11,4 @@
 66: DEF-SELF: the first argument should be positional-only!
 70: DEF-SELF: the first argument should be positional-only!
 77: DEF-SELF: the first argument should be positional-only!
-77: TYPE-PARA: function parameters should have type annotations: 'self'!
+77: TYPE-PRMS: function parameters should have type annotations: 'self'!

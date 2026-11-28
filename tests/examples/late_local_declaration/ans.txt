@@ -1,4 +1,4 @@
 4: TYPE-RET: functions should have return type annotations!
 7: TYPE-TOP: declarations should appear at the beginning of the scope: 'zebra'!
-8: TYPE-MIS: variables requiring declarations should be declared: 'zebra'!
+8: TYPE-VARS: variables requiring declarations should be declared: 'zebra'!
 9: ALL-DEAD: unused module names should be listed in '__all__': 'bad_order'!

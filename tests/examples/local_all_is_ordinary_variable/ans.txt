@@ -1,2 +1,2 @@
 3: TYPE-BARE: declarations should not assign a value: '__all__'!
-3: TYPE-MIS: variables requiring declarations should be declared: '__all__'!
+3: TYPE-VARS: variables requiring declarations should be declared: '__all__'!

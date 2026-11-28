@@ -1,4 +1,4 @@
 18: TYPE-BARE: declarations should not assign a value: 'local'!
-18: TYPE-MIS: variables requiring declarations should be declared: 'local'!
+18: TYPE-VARS: variables requiring declarations should be declared: 'local'!
 24: TYPE-BARE: declarations should not assign a value: 'value'!
-24: TYPE-MIS: variables requiring declarations should be declared: 'value'!
+24: TYPE-VARS: variables requiring declarations should be declared: 'value'!

@@ -1,5 +1,5 @@
 ignore = [
     "ALL-DEAD",
-    "TYPE-MIS",
+    "TYPE-VARS",
 ]
 outmsg = "{line}: {rule}: {desc}!\n"

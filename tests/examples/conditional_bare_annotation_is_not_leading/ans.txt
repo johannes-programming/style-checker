@@ -1,2 +1,2 @@
 4: TYPE-TOP: declarations should appear at the beginning of the scope: 'value'!
-5: TYPE-MIS: variables requiring declarations should be declared: 'value'!
+5: TYPE-VARS: variables requiring declarations should be declared: 'value'!
